@@ -1,0 +1,81 @@
+use clap::Parser;
+use se::{FilesReader, Function, Line, Status, StdinReader};
+use std::{path::PathBuf, str::FromStr};
+
+macro_rules! unwrap {
+    ( $f:expr ) => {
+        $f.unwrap_or_else(|err| {
+            eprintln!("Error: {}", err);
+            std::process::exit(1)
+        })
+    };
+}
+
+fn main() {
+    let args = parse_args();
+
+    let program = unwrap!(if let Some(path) = &args.script.path {
+        Function::try_from(path)
+    } else if let Some(command) = &args.script.command {
+        Function::from_str(command)
+    } else {
+        unreachable!()
+    });
+
+    let mut reader: Box<dyn Iterator<Item = std::io::Result<Line>>> = if args.files.is_empty() {
+        Box::new(StdinReader::default())
+    } else {
+        Box::new(FilesReader::from(args.files))
+    };
+
+    let (status, count) = unwrap!(program.process(&mut reader, args.all));
+
+    if args.count {
+        println!("{}", count)
+    }
+    if let Status::Quit(code) = status {
+        std::process::exit(code)
+    }
+}
+
+#[derive(Parser)]
+struct Args {
+    /// Print all the lines (except the ones that were deleted)
+    #[arg(short, long)]
+    all: bool,
+
+    /// Print the number of matches
+    #[arg(short, long)]
+    count: bool,
+
+    #[command(flatten)]
+    script: Script,
+
+    /// Files that are processed
+    #[arg(name = "FILE")]
+    files: Vec<PathBuf>,
+}
+
+#[derive(Parser)]
+#[group(multiple = true, required = true)]
+struct Script {
+    /// Commands that are executed
+    #[arg(allow_hyphen_values = true)]
+    command: Option<String>,
+
+    /// Read the commands from the file
+    #[arg(short = 'f', long = "file")]
+    path: Option<PathBuf>,
+}
+
+fn parse_args() -> Args {
+    let mut args = Args::parse();
+    if args.script.path.is_some() {
+        if let Some(arg) = args.script.command {
+            // it's not a command, dumbo
+            args.files.insert(0, arg.into());
+            args.script.command = None;
+        }
+    }
+    args
+}

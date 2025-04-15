@@ -1,0 +1,16 @@
+[package]
+name = "se"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.37", features = ["derive"] }
+regex = "1.11.1"
+unescape = "0.1.0"
+
+[dev-dependencies]
+test-case = "3.3.1"
+
+[profile.release]
+strip = "symbols"
+lto = true
