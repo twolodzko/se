@@ -1,0 +1,112 @@
+use clap::Parser;
+use se::{Error, Program, Reader, Result, Status};
+use std::{
+    fs::OpenOptions,
+    io::{BufWriter, Write},
+    path::PathBuf,
+    process::ExitCode,
+    str::FromStr,
+};
+
+fn main() -> ExitCode {
+    let args = parse_args();
+    match run(args) {
+        Ok(code) => code,
+        Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => ExitCode::SUCCESS,
+        Err(err) => {
+            eprintln!("error: {}", err);
+            ExitCode::FAILURE
+        }
+    }
+}
+
+#[derive(Parser)]
+struct Args {
+    /// Print all the lines (except the ones that were deleted)
+    #[arg(short, long)]
+    all: bool,
+
+    /// Print the number of matches
+    #[arg(short, long)]
+    count: bool,
+
+    /// Write output to a file
+    #[arg(short, long, value_name = "FILE")]
+    output: Option<PathBuf>,
+
+    #[command(flatten)]
+    script: Script,
+
+    /// Files that are processed
+    #[arg(value_name = "FILE")]
+    files: Vec<PathBuf>,
+}
+
+#[derive(Parser)]
+#[group(multiple = true, required = true)]
+struct Script {
+    /// Commands that are executed
+    #[arg(allow_hyphen_values = true)]
+    command: Option<String>,
+
+    /// Read the commands from the file
+    #[arg(short = 'f', long = "file", value_name = "FILE")]
+    path: Option<PathBuf>,
+}
+
+impl TryFrom<Script> for Program {
+    type Error = Error;
+    fn try_from(value: Script) -> Result<Self> {
+        if let Some(path) = &value.path {
+            Program::try_from(path)
+        } else if let Some(command) = &value.command {
+            Program::from_str(command)
+        } else {
+            unreachable!()
+        }
+    }
+}
+
+fn run(args: Args) -> Result<ExitCode> {
+    let mut program = Program::try_from(args.script)?;
+    let mut reader = Reader::from(args.files.as_ref());
+
+    let mut out = if let Some(path) = args.output {
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(path)?;
+        Box::new(BufWriter::new(file))
+    } else {
+        let mut out: Box<dyn Write> = Box::new(std::io::stdout().lock());
+        if !args.files.is_empty() {
+            out = Box::new(BufWriter::new(out))
+        }
+        out
+    };
+
+    let (status, count) = program.run(&mut reader, args.all, &mut out)?;
+    if args.count {
+        writeln!(out, "{count}")?;
+    }
+    out.flush()?;
+
+    if let Status::Quit(code) = status {
+        Ok(ExitCode::from(code))
+    } else {
+        Ok(ExitCode::SUCCESS)
+    }
+}
+
+fn parse_args() -> Args {
+    let mut args = Args::parse();
+    if args.script.path.is_some()
+        && let Some(arg) = args.script.command
+    {
+        // it's not a command, dumbo
+        args.files.insert(0, arg.into());
+        args.script.command = None;
+    }
+    args
+}

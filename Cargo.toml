@@ -1,0 +1,18 @@
+[package]
+name = "se"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.37", features = ["derive"] }
+memchr = "2.8.3"
+regex = "1.11.1"
+unescaper = "0.2.0"
+
+[dev-dependencies]
+test-case = "3.3.1"
+
+[profile.release]
+codegen-units = 1
+strip = "symbols"
+lto = true
