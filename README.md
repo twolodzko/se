@@ -156,6 +156,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `grep -c 'sed' README.md`      | `se -c '/sed/' README.md`       |
 | `wc -l README.md`              | `se -c '' README.md`            |
 | `wc -l README.md`              | `se '$=' README.md`             |
+| `yes`                          | `echo 'yes' \| se ':x p bx'`    |
 
 \* – but `se` understands unicode.
 
@@ -175,9 +176,11 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=pPlnhgxjJrzd] | '\' Character | Quit | Keep | String | Substitute
+GoTo           = 'b' String
+Command        = [=pPlnhgxjJrzd] | '\' Character | Quit | GoTo | Keep | String | Substitute
 
-Instruction    = Address? Command*
+Label          = ':' String
+Instruction    = Label? Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
 ```
 

@@ -1,7 +1,7 @@
 use super::{
     address, command,
     reader::{FileReader, Reader, StringReader},
-    utils::{self, skip_whitespace},
+    utils::{self, read_label, skip_whitespace},
 };
 use crate::{
     address::Address,
@@ -9,7 +9,7 @@ use crate::{
     program::{Action, Program},
     Error,
 };
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 impl TryFrom<&std::path::PathBuf> for Program {
     type Error = Error;
@@ -38,6 +38,23 @@ fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>), Error
         parse_instruction(reader, &mut actions, &mut finally)?;
         skip_whitespace(reader);
     }
+
+    let mut labels: HashMap<String, usize> = HashMap::new();
+    for (i, a) in actions.iter().enumerate() {
+        if let Action::Command(Command::Label(l)) = a {
+            labels.insert(l.to_string(), i);
+        }
+    }
+    for a in actions.iter_mut() {
+        if let Action::Command(Command::GoTo(l, i)) = a {
+            if let Some(v) = labels.get(l) {
+                *i = *v;
+            } else {
+                return Err(Error::Custom(format!("unknown label: '{}'", l)));
+            }
+        }
+    }
+
     Ok((actions, finally))
 }
 
@@ -46,23 +63,48 @@ fn parse_instruction<R: Reader>(
     actions: &mut Vec<Action>,
     finally: &mut Vec<Command>,
 ) -> Result<(), Error> {
-    // [address][commands]
+    // [:label][address][commands]
+    skip_whitespace(reader);
+    let label = parse_label(reader)?;
     utils::skip_whitespace(reader);
     let address = address::parse(reader)?;
     utils::skip_whitespace(reader);
     let commands = command::parse(reader)?;
 
     if address == Address::Final {
+        if label.is_some() {
+            return Err(Error::Custom(
+                "final block should not be labeled".to_string(),
+            ));
+        }
         for cmd in commands.into_iter() {
+            if matches!(cmd, Command::GoTo(_, _)) {
+                return Err(Error::Custom(
+                    "branching should not happen in the final block".to_string(),
+                ));
+            }
             finally.push(cmd);
         }
     } else {
+        if let Some(label) = label {
+            actions.push(Action::Command(Command::Label(label)));
+        }
         actions.push(Action::Condition(address, commands.len()));
         for cmd in commands.into_iter() {
             actions.push(Action::Command(cmd));
         }
     }
     Ok(())
+}
+
+fn parse_label<R: Reader>(reader: &mut R) -> Result<Option<String>, Error> {
+    if let Some(':') = reader.peek()? {
+        reader.next()?;
+        skip_whitespace(reader);
+        Ok(Some(read_label(reader)?))
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]

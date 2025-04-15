@@ -70,6 +70,9 @@ impl Program {
                         pos += jump;
                     }
                 }
+                Action::Command(command::Command::GoTo(_, n)) => {
+                    pos = *n;
+                }
                 Action::Command(cmd) => {
                     let s = cmd.run(pattern, hold, reader)?;
                     if s != Status::Normal {

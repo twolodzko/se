@@ -1,6 +1,6 @@
 use super::{
     reader::Reader,
-    utils::{parse_regex, read_integer, skip_line, skip_whitespace},
+    utils::{parse_regex, read_integer, read_label, skip_line, skip_whitespace},
 };
 use crate::{
     command::Command::{self, *},
@@ -58,6 +58,11 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
                     s.parse().map_err(Error::ParseInt)?
                 };
                 Quit(code)
+            }
+            'b' => {
+                skip_whitespace(reader);
+                let label = read_label(reader)?;
+                GoTo(label, 0)
             }
             '\'' | '"' => {
                 let msg = unescape(read_until(reader, c)?)?;

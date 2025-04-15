@@ -34,3 +34,19 @@ pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Option<Regex>, Er
     }
     Ok(Some(Regex::from_str(&regex)?))
 }
+
+pub(crate) fn read_label<R: Reader>(reader: &mut R) -> Result<String, Error> {
+    let mut label = String::new();
+    while let Some(c) = reader.peek()? {
+        if c.is_alphanumeric() {
+            reader.next()?;
+            label.push(c);
+        } else {
+            break;
+        }
+    }
+    if label.is_empty() {
+        return Err(Error::Custom("empty label".to_string()));
+    }
+    Ok(label)
+}
