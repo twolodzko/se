@@ -5,16 +5,15 @@ use crate::{
         Command::{self, *},
     },
     editor::Instruction,
+    reader::Reader,
     Editor, Error,
 };
-use std::{iter::Peekable, str::Chars};
 
-pub fn parse(input: &str) -> Result<Editor, Error> {
-    let chars = &mut input.chars().peekable();
+pub fn parse<R: Reader>(reader: &mut R) -> Result<Editor, Error> {
     let mut instructions = Vec::new();
     loop {
-        instructions.push(parse_instruction(chars)?);
-        if chars.peek().is_none() {
+        instructions.push(parse_instruction(reader)?);
+        if reader.peek()?.is_none() {
             break;
         }
     }
@@ -24,29 +23,29 @@ pub fn parse(input: &str) -> Result<Editor, Error> {
     })
 }
 
-fn parse_instruction(chars: &mut Peekable<Chars>) -> Result<Instruction, Error> {
-    skip_whitespace(chars);
-    let address = parse_addrs(chars)?;
-    skip_whitespace(chars);
-    let commands = parse_cmds(chars)?;
+fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
+    skip_whitespace(reader);
+    let address = parse_addrs(reader)?;
+    skip_whitespace(reader);
+    let commands = parse_cmds(reader)?;
     Ok(Instruction { address, commands })
 }
 
-fn parse_addrs(chars: &mut Peekable<Chars>) -> Result<Address, Error> {
+fn parse_addrs<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     let mut addrs = Vec::new();
     let mut has_any = false;
     loop {
-        let mut addr = parse_brackets(chars)?;
+        let mut addr = parse_brackets(reader)?;
         match addr {
             Always => has_any = true,
             Set(ref mut rhs) => addrs.append(rhs),
             _ => addrs.push(addr),
         }
 
-        skip_whitespace(chars);
-        if let Some(',') = chars.peek() {
-            chars.next();
-            skip_whitespace(chars);
+        skip_whitespace(reader);
+        if let Some(',') = reader.peek()? {
+            reader.next()?;
+            skip_whitespace(reader);
         } else {
             break;
         }
@@ -62,29 +61,29 @@ fn parse_addrs(chars: &mut Peekable<Chars>) -> Result<Address, Error> {
     Ok(Set(addrs))
 }
 
-fn parse_brackets(chars: &mut Peekable<Chars>) -> Result<Address, Error> {
-    if let Some('(') = chars.peek() {
-        chars.next();
-        skip_whitespace(chars);
-        let addr = parse_addrs(chars)?;
-        skip_whitespace(chars);
-        if chars.next() != Some(')') {
+fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address, Error> {
+    if let Some('(') = reader.peek()? {
+        reader.next()?;
+        skip_whitespace(reader);
+        let addr = parse_addrs(reader)?;
+        skip_whitespace(reader);
+        if reader.next()? != Some(')') {
             return Err(Error::Missing(')'));
         }
-        Ok(maybe_negate(addr, chars))
+        Ok(maybe_negate(addr, reader)?)
     } else {
-        let addr = parse_range(chars)?;
-        skip_whitespace(chars);
-        Ok(maybe_negate(addr, chars))
+        let addr = parse_range(reader)?;
+        skip_whitespace(reader);
+        Ok(maybe_negate(addr, reader)?)
     }
 }
 
-fn parse_range(chars: &mut Peekable<Chars>) -> Result<Address, Error> {
-    let lhs = parse_simple_addr(chars)?.unwrap_or(Always);
-    skip_whitespace(chars);
-    if let Some('-') = chars.peek() {
-        chars.next();
-        let rhs = parse_simple_addr(chars)?.unwrap_or(Never);
+fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
+    let lhs = parse_simple_addr(reader)?.unwrap_or(Always);
+    skip_whitespace(reader);
+    if let Some('-') = reader.peek()? {
+        reader.next()?;
+        let rhs = parse_simple_addr(reader)?.unwrap_or(Never);
         if let (Location(lo), Location(hi)) = (&lhs, &rhs) {
             if lo > hi {
                 return Err(Error::InvalidAddr(format!(
@@ -98,15 +97,15 @@ fn parse_range(chars: &mut Peekable<Chars>) -> Result<Address, Error> {
     Ok(lhs)
 }
 
-fn parse_simple_addr(chars: &mut Peekable<Chars>) -> Result<Option<Address>, Error> {
-    if let Some(&c) = chars.peek() {
+fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error> {
+    if let Some(c) = reader.peek()? {
         match c {
             '/' => {
-                chars.next();
-                return Ok(Some(Regex(parse_regex(chars)?)));
+                reader.next()?;
+                return Ok(Some(Regex(parse_regex(reader)?)));
             }
             c if c.is_ascii_digit() => {
-                let s = read_integer(chars);
+                let s = read_integer(reader)?;
                 return match s.parse() {
                     Ok(num) => {
                         if num == 0 {
@@ -119,10 +118,10 @@ fn parse_simple_addr(chars: &mut Peekable<Chars>) -> Result<Option<Address>, Err
             }
             '*' => {
                 // the "any" match is default, no need to specify
-                chars.next();
+                reader.next()?;
             }
             '$' => {
-                chars.next();
+                reader.next()?;
                 return Ok(Some(Never));
             }
             _ => (),
@@ -131,33 +130,33 @@ fn parse_simple_addr(chars: &mut Peekable<Chars>) -> Result<Option<Address>, Err
     Ok(None)
 }
 
-fn maybe_negate(addr: Address, chars: &mut Peekable<Chars>) -> Address {
-    match chars.peek() {
+fn maybe_negate<R: Reader>(addr: Address, reader: &mut R) -> Result<Address, Error> {
+    match reader.peek()? {
         Some('!') => {
-            chars.next();
-            !addr
+            reader.next()?;
+            Ok(!addr)
         }
-        _ => addr,
+        _ => Ok(addr),
     }
 }
 
-fn parse_cmds(chars: &mut Peekable<Chars>) -> Result<Vec<Command>, Error> {
+fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
     let mut cmds = Vec::new();
-    while let Some(c) = chars.next() {
+    while let Some(c) = reader.next()? {
         let cmd = match c {
             ';' => break,
             'p' => Print,
             'l' => Escape,
             's' => {
-                skip_whitespace(chars);
-                parse_substitute(chars)?
+                skip_whitespace(reader);
+                parse_substitute(reader)?
             }
             '=' => LineNumber,
             'n' => Newline,
             'd' => Delete,
             'q' => {
-                skip_whitespace(chars);
-                let s = read_integer(chars);
+                skip_whitespace(reader);
+                let s = read_integer(reader)?;
                 let code = if s.is_empty() {
                     0
                 } else {
@@ -166,7 +165,7 @@ fn parse_cmds(chars: &mut Peekable<Chars>) -> Result<Vec<Command>, Error> {
                 Quit(code)
             }
             '\'' | '"' => {
-                let msg = unescape(read_until(chars, c)?)?;
+                let msg = unescape(read_until(reader, c)?)?;
                 Insert(msg)
             }
             c if c.is_whitespace() => continue,
@@ -177,23 +176,23 @@ fn parse_cmds(chars: &mut Peekable<Chars>) -> Result<Vec<Command>, Error> {
     Ok(cmds)
 }
 
-fn parse_substitute(chars: &mut Peekable<Chars>) -> Result<Command, Error> {
-    if chars.next() != Some('/') {
+fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
+    if reader.next()? != Some('/') {
         return Err(Error::Missing('/'));
     }
 
     // Parse: s/src/dst/[limit]
-    let src = parse_regex(chars)?;
-    let dst = unescape(read_until(chars, '/')?)?;
-    skip_whitespace(chars);
+    let src = parse_regex(reader)?;
+    let dst = unescape(read_until(reader, '/')?)?;
+    skip_whitespace(reader);
 
     let mut limit = 0;
-    if let Some(c) = chars.peek() {
-        if *c == 'g' {
-            chars.next();
+    if let Some(c) = reader.peek()? {
+        if c == 'g' {
+            reader.next()?;
             // g is default, no need to update the limit
         } else if c.is_ascii_digit() {
-            limit = read_integer(chars).parse().map_err(Error::ParseInt)?;
+            limit = read_integer(reader)?.parse().map_err(Error::ParseInt)?;
         }
     }
 
@@ -204,13 +203,13 @@ fn parse_substitute(chars: &mut Peekable<Chars>) -> Result<Command, Error> {
     }))
 }
 
-fn read_until(chars: &mut Peekable<Chars>, delim: char) -> Result<String, Error> {
+fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
     let mut acc = String::new();
-    while let Some(c) = chars.next() {
+    while let Some(c) = reader.next()? {
         match c {
             c if c == delim => return Ok(acc),
             '\\' => {
-                if let Some(e) = chars.next() {
+                if let Some(e) = reader.next()? {
                     if e != delim {
                         acc.push(c);
                     }
@@ -226,30 +225,33 @@ fn read_until(chars: &mut Peekable<Chars>, delim: char) -> Result<String, Error>
     Err(Error::Missing('/'))
 }
 
-fn skip_whitespace(chars: &mut Peekable<Chars>) {
-    while chars.peek().is_some_and(|c| c.is_whitespace()) {
-        chars.next();
+fn skip_whitespace<R: Reader>(reader: &mut R) {
+    while reader
+        .peek()
+        .is_ok_and(|x| x.is_some_and(|c| c.is_whitespace()))
+    {
+        let _ = reader.next();
     }
 }
 
-fn read_integer(chars: &mut Peekable<Chars>) -> String {
+fn read_integer<R: Reader>(reader: &mut R) -> Result<String, Error> {
     let mut num = String::new();
     loop {
-        match chars.peek() {
-            Some(c) if c.is_ascii_digit() => num.push(*c),
+        match reader.peek()? {
+            Some(c) if c.is_ascii_digit() => num.push(c),
             _ => break,
         }
-        chars.next();
+        reader.next()?;
     }
-    num
+    Ok(num)
 }
 
 fn unescape(s: String) -> Result<String, Error> {
     unescape::unescape(&s).ok_or(Error::ParsingError(s))
 }
 
-fn parse_regex(chars: &mut Peekable<Chars>) -> Result<regex::Regex, Error> {
-    let regex = read_until(chars, '/')?;
+fn parse_regex<R: Reader>(reader: &mut R) -> Result<regex::Regex, Error> {
+    let regex = read_until(reader, '/')?;
     regex::Regex::new(&regex).map_err(Error::Regex)
 }
 
@@ -259,7 +261,7 @@ mod tests {
         address::Address::*,
         command::{Command::*, Replacer},
         editor::Instruction,
-        Editor,
+        Editor, StringReader,
     };
     use test_case::test_case;
 
@@ -398,7 +400,7 @@ mod tests {
         },
     ]); "multiple instructions")]
     fn parse(input: &str, expected: Editor) {
-        let result = crate::parse(input).unwrap();
+        let result = crate::parse(&mut StringReader::from(input.to_string())).unwrap();
         assert_eq!(result, expected)
     }
 }

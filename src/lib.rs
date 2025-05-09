@@ -2,7 +2,14 @@ mod address;
 mod command;
 mod editor;
 mod parser;
-pub use {command::Action, editor::Editor, parser::parse};
+mod reader;
+use std::string::FromUtf8Error;
+pub use {
+    command::Action,
+    editor::Editor,
+    parser::parse,
+    reader::{FileReader, StringReader},
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Line(pub usize, pub String);
@@ -17,6 +24,7 @@ pub enum Error {
     Unexpected(char),
     InvalidAddr(String),
     ParsingError(String),
+    FromUtf8Error(FromUtf8Error),
 }
 
 impl std::fmt::Display for Error {
@@ -27,6 +35,7 @@ impl std::fmt::Display for Error {
             Fmt(msg) => msg.fmt(f),
             Regex(msg) => msg.fmt(f),
             ParseInt(msg) => msg.fmt(f),
+            FromUtf8Error(msg) => msg.fmt(f),
             Missing(c) => write!(f, "missing '{}'", c),
             Unexpected(c) => write!(f, "unexpected '{}'", c),
             InvalidAddr(a) => write!(f, "invalid address: {}", a),

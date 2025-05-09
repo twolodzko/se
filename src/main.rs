@@ -1,5 +1,5 @@
 use clap::Parser;
-use seed::{parse, Action, Editor, Error};
+use seed::{parse, Action, Editor, Error, FileReader, StringReader};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -7,6 +7,7 @@ use std::{
 };
 
 #[derive(Parser)]
+// #[command(override_usage = "seed [-a] [-c] [-f SCRIPT|COMMAND] [FILE]...")]
 struct Args {
     /// Print all the lines (except the ones that were deleted)
     #[arg(short, long)]
@@ -16,11 +17,21 @@ struct Args {
     #[arg(short, long)]
     count: bool,
 
-    /// Commands that are executed
-    script: String,
+    #[command(flatten)]
+    script: Script,
 
     /// File that is processed
     file: Vec<PathBuf>,
+}
+
+#[derive(Parser)]
+#[group(multiple = true, required = true)]
+struct Script {
+    #[arg(short = 'f', long = "file")]
+    script: Option<PathBuf>,
+
+    /// Commands that are executed
+    command: Option<String>,
 }
 
 macro_rules! unwrap {
@@ -33,12 +44,21 @@ macro_rules! unwrap {
 }
 
 fn main() {
-    use Action::*;
+    let mut args = Args::parse();
 
-    let args = Args::parse();
-    let editor = &mut unwrap!(parse(&args.script));
+    let res = if let Some(script) = args.script.script {
+        if let Some(arg) = args.script.command {
+            args.file.insert(0, arg.into());
+            args.script.command = None;
+        }
+        parse(&mut unwrap!(FileReader::try_from(script)))
+    } else {
+        let command = args.script.command.unwrap();
+        parse(&mut StringReader::from(command))
+    };
+    let editor = &mut unwrap!(res);
 
-    let mut action = None;
+    let mut action = Action::None;
     let mut count = 0;
 
     if args.file.is_empty() {
@@ -50,7 +70,7 @@ fn main() {
             let reader = BufReader::new(file);
             let (a, c) = run(editor, reader, args.all);
             count += c;
-            if let Quit(_) = a {
+            if let Action::Quit(_) = a {
                 action = a;
                 break;
             }
@@ -60,7 +80,7 @@ fn main() {
     if args.count {
         println!("{}", count)
     }
-    if let Quit(code) = action {
+    if let Action::Quit(code) = action {
         std::process::exit(code)
     }
 }
