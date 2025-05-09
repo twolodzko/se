@@ -7,7 +7,6 @@ use std::{
 };
 
 #[derive(Parser)]
-// #[command(override_usage = "seed [-a] [-c] [-f SCRIPT|COMMAND] [FILE]...")]
 struct Args {
     /// Print all the lines (except the ones that were deleted)
     #[arg(short, long)]
@@ -20,13 +19,15 @@ struct Args {
     #[command(flatten)]
     script: Script,
 
-    /// File that is processed
-    file: Vec<PathBuf>,
+    /// Files that are processed
+    #[arg(name = "FILE")]
+    files: Vec<PathBuf>,
 }
 
 #[derive(Parser)]
 #[group(multiple = true, required = true)]
 struct Script {
+    /// Read the commands from the file
     #[arg(short = 'f', long = "file")]
     script: Option<PathBuf>,
 
@@ -48,7 +49,7 @@ fn main() {
 
     let res = if let Some(script) = args.script.script {
         if let Some(arg) = args.script.command {
-            args.file.insert(0, arg.into());
+            args.files.insert(0, arg.into());
             args.script.command = None;
         }
         parse(&mut unwrap!(FileReader::try_from(script)))
@@ -61,11 +62,11 @@ fn main() {
     let mut action = Action::None;
     let mut count = 0;
 
-    if args.file.is_empty() {
+    if args.files.is_empty() {
         let reader = BufReader::new(std::io::stdin());
         (action, count) = run(editor, reader, args.all);
     } else {
-        for path in args.file.iter() {
+        for path in args.files.iter() {
             let file = unwrap!(File::open(path).map_err(Error::Io));
             let reader = BufReader::new(file);
             let (a, c) = run(editor, reader, args.all);

@@ -47,3 +47,7 @@ benchmark: build
 
 install:
     cargo install --path .
+
+lines:
+    @ find . -name '*.rs' -exec wc -l {} \;
+    @ find . -name '*.rs' -exec cat {} \; | wc -l
