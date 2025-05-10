@@ -159,10 +159,7 @@ fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             }
             'p' => Print,
             'l' => Escape,
-            's' => {
-                skip_whitespace(reader);
-                parse_substitute(reader)?
-            }
+            's' => parse_substitute(reader)?,
             '=' => LineNumber,
             'n' => Newline,
             'd' => Delete,
@@ -204,7 +201,6 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     // Parse: s/src/dst/[limit]
     let src = parse_regex(reader)?;
     let dst = unescape(read_until(reader, '/')?)?;
-    skip_whitespace(reader);
 
     let mut limit = 0;
     if let Some(c) = reader.peek()? {
@@ -441,14 +437,6 @@ mod tests {
                 limit: 0,
             })],
     }]); "substitute with global count")]
-    #[test_case(r"s   /abc/def/   5", Editor::new(vec![Instruction{
-        address: Always,
-        commands: vec![Substitute(Replacer{
-                regex: regex::Regex::new("abc").unwrap(),
-                template: "def".to_string(),
-                limit: 5,
-            })],
-    }]); "substitute with count after spaces")]
     #[test_case(r"/abc/s/def/ghi/g", Editor::new(vec![Instruction{
         address: Regex(regex::Regex::new("abc").unwrap()),
         commands: vec![Substitute(Replacer{
