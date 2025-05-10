@@ -116,6 +116,19 @@ lines containing the word "sed" would be printed twice, because of matching addr
   and here it would be infinite. Using `$` outside of range would never match.
 * `seed` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
 
+|      `sed`       |       `seed`        |
+|------------------|---------------------|
+| `=`              | `=np`               |
+| `i text`         | `p "text"`          |
+| `a text`         | `"text" p`          |
+| `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
+| `s/src/dst/`     | `s/src/dst/1`       |
+| `s/src/dst/g`    | `s/src/dst/`        |
+| `s/src/dst/flag` | `s/(?flag)src/dst/` |
+| `s/(src)/\1/g`   | `s/(src)/$1/`       |
+| `1,5p`           | `1-5p`              |
+| `$p`             | (no alternative)    |
+ 
 
  [`sed`]: https://www.gnu.org/software/sed/manual/sed.html
  [Rust's Regex]: https://docs.rs/regex/latest/regex/
