@@ -29,7 +29,7 @@ pub enum Command {
     /// q[code]
     Quit(i32),
     /// no-op
-    NoOp,
+    Nothing,
 }
 
 #[derive(Debug, Clone)]

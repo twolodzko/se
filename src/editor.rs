@@ -53,7 +53,7 @@ impl Editor {
         }
 
         if matched {
-            Some((buffer.1, NoOp))
+            Some((buffer.1, Nothing))
         } else {
             None
         }

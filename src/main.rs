@@ -1,5 +1,9 @@
 use clap::Parser;
-use seed::{parse, Command, Editor, Error, FileReader, StringReader};
+use seed::{
+    parse,
+    Command::{self, *},
+    Editor, Error, FileReader, StringReader,
+};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -59,7 +63,7 @@ fn main() {
     };
     let editor = &mut unwrap!(res);
 
-    let mut command = Command::NoOp;
+    let mut command = Nothing;
     let mut count = 0;
 
     if args.files.is_empty() {
@@ -71,7 +75,7 @@ fn main() {
             let reader = BufReader::new(file);
             let (c, n) = run(editor, reader, args.all);
             count += n;
-            if let Command::Quit(_) = c {
+            if let Quit(_) = c {
                 command = c;
                 break;
             }
@@ -87,13 +91,11 @@ fn main() {
 }
 
 fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Command, usize) {
-    use Command::*;
-
     let mut count = 0;
-    let mut command = Command::NoOp;
+    let mut command = Nothing;
 
     for line in reader.lines() {
-        command = Command::NoOp;
+        command = Nothing;
         let mut buffer = unwrap!(line);
 
         if let Some((b, c)) = editor.apply(&buffer) {
