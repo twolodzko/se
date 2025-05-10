@@ -130,6 +130,32 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `1,5p`           | `1-5p`              |
 | `$p`             | (no alternative)    |
  
+## Grammar
+
+```text
+Always         = '*'
+Never          = '$'
+Location       = [1-9][0-9]*
+Regex          = '/' [^/]* '/'
+WholeLine      = '^' [^$]* '$'
+AddressAtom    = Always | Never | Location | Regex | WholeLine
+Range          = SimpleAddress '-' SimpleAddress
+Brackets       = SimpleAddress | '(' Address ')'
+Negate         = ( Brackets | Range ) '!'? 
+Address        = [ Negate ',' ]+ Negate
+
+Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
+String         = '"' [^"]* '"' | "'" [^']* "'"
+Quit           = 'q' ( [1-9][0-9]* )?
+Command        = [=plnhcgvxzd] | Quit | String | Substitute
+
+Instruction    = Address? Command?
+Script         = ( Instruction ( ';' | '.' ) )*
+```
+
+The delimited sequences like `'/' [^/]* '/'` allow escaping of the character
+equal to the final delimiter with `\` (for example `/\//`), so `[^/]*` assumes the escape character.
+
 
  [`sed`]: https://www.gnu.org/software/sed/manual/sed.html
  [Rust's Regex]: https://docs.rs/regex/latest/regex/
