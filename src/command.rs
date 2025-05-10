@@ -2,23 +2,23 @@ use crate::Line;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
-    // p
+    /// p
     Print,
-    // l
+    /// l
     Escape,
-    // =
+    /// =
     LineNumber,
-    // n
+    /// n
     Newline,
-    // "string" or 'string'
+    /// "string" or 'string'
     Insert(String),
-    // s/src/dst/[limit]
+    /// s/src/dst/[limit]
     Substitute(Replacer),
-    // d
+    /// d
     Delete,
-    // .
+    /// .
     Stop,
-    // q[code]
+    /// q[code]
     Quit(i32),
 }
 
@@ -55,7 +55,8 @@ impl Command {
             Newline => println!(),
             Insert(s) => print!("{}", s),
             Substitute(r) => line.1 = r.replace(&line.1),
-            Delete | Stop => return Action::Skip,
+            Delete => return Action::Delete,
+            Stop => return Action::Next,
             Quit(code) => return Action::Quit(*code),
         }
         Action::None
@@ -64,7 +65,12 @@ impl Command {
 
 #[derive(Debug, PartialEq)]
 pub enum Action {
+    /// no-op
     None,
-    Skip,
+    /// clear the buffer, stop processing further instructions
+    Delete,
+    /// stop processing further instructions
+    Next,
+    /// stop processing further input, return the exit code
     Quit(i32),
 }

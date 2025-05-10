@@ -102,7 +102,7 @@ fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Action, 
             count += 1;
         }
 
-        if action == Skip {
+        if action == Delete {
             continue;
         }
         if print_all {
