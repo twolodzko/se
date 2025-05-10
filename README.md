@@ -149,7 +149,7 @@ String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' ( [1-9][0-9]* )?
 Command        = [=plnhcgvxzd] | Quit | String | Substitute
 
-Instruction    = Address? Command?
+Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
 ```
 
