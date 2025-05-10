@@ -126,6 +126,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/src/dst/g`    | `s/src/dst/`        |
 | `s/src/dst/flag` | `s/(?flag)src/dst/` |
 | `s/(src)/\1/g`   | `s/(src)/$1/`       |
+| `s/(src)/&/g`    | `s/(src)/$0/`       |
 | `1,5p`           | `1-5p`              |
 | `$p`             | (no alternative)    |
  
