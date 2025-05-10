@@ -8,7 +8,7 @@
 seed [OPTIONS] <SCRIPT> [FILE]...
 ```
 
-where `<SCRIPT>` contains instructions (separated by `;` or '.', see below) of the form
+where `<SCRIPT>` contains instructions (separated by `;` or `.`, see below) of the form
 
 ```
 [address][!][command]
