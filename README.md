@@ -11,7 +11,7 @@ seed [OPTIONS] <SCRIPT> [FILE]...
 where `<SCRIPT>` contains instructions (separated by `;` or `.`, see below) of the form
 
 ```
-[address][!][command]
+[address][command]
 ```
 
 The `command` is executed for each line from the input the `[FILE]`'s that matches the `address`.
