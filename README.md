@@ -150,7 +150,7 @@ Quit           = 'q' ( [1-9][0-9]* )?
 Command        = [=plnhcgvxzd] | Quit | String | Substitute
 
 Instruction    = Address? Command?
-Script         = ( Instruction ( ';' | '.' ) )*
+Script         = ( Instruction ( ';' | '.' ) )* Instruction?
 ```
 
 The delimited sequences like `'/' [^/]* '/'` allow escaping of the character
