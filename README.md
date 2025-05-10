@@ -79,6 +79,7 @@ When script contains multiple instructions, they can be delimited with `;` or `.
 * `.` marks the final instruction. If the address of the instruction would positively match,
   the processing of the line would stop after running the command,
   all the following instructions would be skipped.
+  In a way, `.` works like the command `d`, but it does not clear the buffer.
 
 For example, the script
 

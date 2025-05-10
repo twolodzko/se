@@ -151,7 +151,7 @@ fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
         let cmd = match c {
             ';' => break,
             '.' => {
-                cmds.push(End);
+                cmds.push(Stop);
                 break;
             }
             'p' => Print,

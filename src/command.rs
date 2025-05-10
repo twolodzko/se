@@ -17,7 +17,7 @@ pub(crate) enum Command {
     // d
     Delete,
     // .
-    End,
+    Stop,
     // q[code]
     Quit(i32),
 }
@@ -55,8 +55,7 @@ impl Command {
             Newline => println!(),
             Insert(s) => print!("{}", s),
             Substitute(r) => line.1 = r.replace(&line.1),
-            Delete => return Action::Skip,
-            End => return Action::End,
+            Delete | Stop => return Action::Skip,
             Quit(code) => return Action::Quit(*code),
         }
         Action::None
@@ -67,6 +66,5 @@ impl Command {
 pub enum Action {
     None,
     Skip,
-    End,
     Quit(i32),
 }
