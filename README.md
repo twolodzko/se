@@ -129,7 +129,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/(src)/&/g`    | `s/(src)/$0/`       |
 | `1,5p`           | `1-5p`              |
 | `$p`             | (no alternative)    |
- 
+
 ## Grammar
 
 ```text
