@@ -4,6 +4,7 @@ use crate::{address::Address, command::Command, Line};
 pub struct Editor {
     pub(crate) instructions: Vec<Instruction>,
     pub(crate) counter: usize,
+    hold: String,
 }
 
 #[derive(Debug, PartialEq)]
@@ -13,11 +14,11 @@ pub(crate) struct Instruction {
 }
 
 impl Editor {
-    #[cfg(test)]
     pub(crate) fn new(instructions: Vec<Instruction>) -> Self {
         Self {
             instructions,
             counter: 0,
+            hold: String::new(),
         }
     }
 
@@ -33,6 +34,17 @@ impl Editor {
                 for cmd in instruction.commands.iter() {
                     match &cmd {
                         Delete | Stop | Quit(_) => return Some((buffer.1, cmd.clone())),
+                        Copy => {
+                            self.hold = buffer.1.to_string();
+                        }
+                        Paste => {
+                            buffer.1 = self.hold.to_string();
+                        }
+                        Exchange => {
+                            let tmp = self.hold.to_string();
+                            self.hold = buffer.1.to_string();
+                            buffer.1 = tmp;
+                        }
                         _ => cmd.apply(&mut buffer),
                     }
                 }

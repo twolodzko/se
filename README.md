@@ -23,21 +23,20 @@ Same as `sed`, it can be used for string search and replace in files.
 
 ## How it works?
 
-`seed` works in a [similar way as `sed`](https://www.gnu.org/software/sed/manual/sed.html#Execution-Cycle).
-It uses a buffer, called *pattern space* in `sed`.
+`seed` works in a [similar way as `sed`](https://www.gnu.org/software/sed/manual/sed.html#Execution-Cycle):
 
+> `sed` maintains two data buffers: the active *pattern* space, and the auxiliary *hold* space.
+> Both are initially empty.
+>
 > `sed` operates by performing the following cycle on each line of input: first, `sed` reads one line from
 > the input stream, removes any trailing newline, and places it in the pattern space.
 > Then commands are executed; each command can have an address associated to it: addresses are a kind
 > of condition code, and a command is only executed if the condition is verified before the command
 > is to be executed.
 >
-> When the end of the script is reached, unless the `-n` option is in use, the contents of
+> When the end of the script is reached [...] the contents of
 > pattern space are printed out to the output stream, adding back the trailing newline if
 > it was removed. Then the next cycle starts for the next input line.
-
-The difference is that `seed` does not use the second buffer (*hold space*)
-and by default works like `sed -n` (see below).
 
 ## Addresses
 
@@ -59,13 +58,17 @@ and by default works like `sed -n` (see below).
 
 ## Commands
 
-* `p` - print the content of the buffer as-is.
-* `l` - print the content of the buffer after escaping the characters with Rust's
+* `p` - print the content of the pattern space as-is.
+* `l` - print the content of the pattern space after escaping the characters with Rust's
   [std::char::escape_default](https://doc.rust-lang.org/std/primitive.char.html#method.escape_default).
-* `s/src/dst/[limit]` - use regular expression to replace `src` with `dst` in the buffer.
+* `s/src/dst/[limit]` - use regular expression to replace `src` with `dst` in the pattern space.
 * `=` - print the line number.
 * `n` - print the newline character.
-* `d` - clear the content of the buffer and immediately start processing next line.
+* `h` or `c` - copy the content of the pattern space to the hold space.
+* `g` or `v` - copy the content of the hold space to the pattern space.
+* `x` - exchange the content of the pattern space with content of the hold space.
+* `z` - empties the content of pattern space. It is the same as `s/.*//`, but is more efficient.
+* `d` - clear the content of the pattern space and immediately start processing next line.
 * `"string"` or `'string'` - print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
 * `q [code]` - exit with the `code` exit code (0 by default).
@@ -75,11 +78,11 @@ and by default works like `sed -n` (see below).
 When script contains multiple instructions, they can be delimited with `;` or `.`.
 
 * `;` is used for chaining instructions. After processing the instruction,
-  the buffer would be processed using the following instruction.
+  the pattern space would be processed using the following instruction.
 * `.` marks the final instruction. If the address of the instruction would positively match,
   the processing of the line would stop after running the command,
   all the following instructions would be skipped.
-  In a way, `.` works like the command `d`, but it does not clear the buffer.
+  In a way, `.` works like the command `d`, but it does not clear the pattern space.
 
 For example, the script
 

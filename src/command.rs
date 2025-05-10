@@ -20,6 +20,8 @@ pub enum Command {
     Paste,
     /// x
     Exchange,
+    /// z
+    Reset,
     /// d
     Delete,
     /// .
@@ -63,6 +65,7 @@ impl Command {
             Newline => println!(),
             Insert(s) => print!("{}", s),
             Substitute(r) => line.1 = r.replace(&line.1),
+            Reset => line.1.clear(),
             _ => (),
         }
     }

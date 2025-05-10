@@ -17,10 +17,7 @@ pub fn parse<R: Reader>(reader: &mut R) -> Result<Editor, Error> {
             break;
         }
     }
-    Ok(Editor {
-        instructions,
-        counter: 0,
-    })
+    Ok(Editor::new(instructions))
 }
 
 fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
@@ -163,6 +160,10 @@ fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             '=' => LineNumber,
             'n' => Newline,
             'd' => Delete,
+            'z' => Reset,
+            'h' | 'c' => Copy,
+            'g' | 'v' => Paste,
+            'x' => Exchange,
             'q' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;
