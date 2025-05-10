@@ -146,7 +146,7 @@ Address        = ( Negate ',' )+ Negate
 
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
-Quit           = 'q' ( [1-9][0-9]* )?
+Quit           = 'q' [0-9]*
 Command        = [=plnhcgvxzd] | Quit | String | Substitute
 
 Instruction    = Address? Command*
