@@ -1,5 +1,4 @@
 use crate::Line;
-use std::fmt::Display;
 
 #[derive(Debug)]
 pub(crate) enum Address {
@@ -85,7 +84,7 @@ impl std::ops::Not for Address {
     }
 }
 
-impl Display for Address {
+impl std::fmt::Display for Address {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Address::*;
         match self {

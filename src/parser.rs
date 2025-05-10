@@ -80,6 +80,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     skip_whitespace(reader);
     if let Some('-') = reader.peek()? {
         reader.next()?;
+        skip_whitespace(reader);
         let rhs = parse_simple_addr(reader)?.unwrap_or(Never);
         if let (Location(lo), Location(hi)) = (&lhs, &rhs) {
             if lo > hi {
@@ -97,6 +98,11 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
 fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error> {
     if let Some(c) = reader.peek()? {
         match c {
+            '#' => {
+                skip_line(reader);
+                skip_whitespace(reader);
+                return parse_simple_addr(reader);
+            }
             '/' => {
                 reader.next()?;
                 let regex = parse_regex(reader)?;
@@ -177,6 +183,10 @@ fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             '\'' | '"' => {
                 let msg = unescape(read_until(reader, c)?)?;
                 Insert(msg)
+            }
+            '#' => {
+                skip_line(reader);
+                continue;
             }
             c if c.is_whitespace() => continue,
             _ => return Err(Error::Unexpected(c)),
@@ -262,10 +272,14 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
 fn skip_whitespace<R: Reader>(reader: &mut R) {
     while reader
         .peek()
-        .is_ok_and(|x| x.is_some_and(|c| c.is_whitespace()))
+        .is_ok_and(|o| o.is_some_and(|c| c.is_whitespace()))
     {
         let _ = reader.next();
     }
+}
+
+fn skip_line<R: Reader>(reader: &mut R) {
+    while reader.next().is_ok_and(|o| o.is_some_and(|c| c != '\n')) {}
 }
 
 fn read_integer<R: Reader>(reader: &mut R) -> Result<String, Error> {
@@ -335,6 +349,10 @@ mod tests {
         address: Between(Box::new(Location(13)), Box::new(Location(72)), false),
         commands: Vec::new(),
     }]); "range")]
+    #[test_case(" 13  -   72 ", Editor::new(vec![Instruction{
+        address: Between(Box::new(Location(13)), Box::new(Location(72)), false),
+        commands: Vec::new(),
+    }]); "range with spaces")]
     #[test_case("13-72!", Editor::new(vec![Instruction{
         address: Negate(Box::new(Between(Box::new(Location(13)), Box::new(Location(72)), false))),
         commands: Vec::new(),

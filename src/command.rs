@@ -70,3 +70,31 @@ impl Command {
         }
     }
 }
+
+impl std::fmt::Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Command::*;
+        match self {
+            Print => write!(f, "p"),
+            Escape => write!(f, "l"),
+            LineNumber => write!(f, "="),
+            Newline => write!(f, "n"),
+            Insert(s) => write!(f, "'{}'", s),
+            Substitute(r) => write!(f, "{}", r),
+            Copy => write!(f, "h"),
+            Paste => write!(f, "g"),
+            Exchange => write!(f, "x"),
+            Reset => write!(f, "z"),
+            Delete => write!(f, "d"),
+            Stop => write!(f, "."),
+            Quit(c) => write!(f, "q{}", c),
+            Nothing => write!(f, ""),
+        }
+    }
+}
+
+impl std::fmt::Display for Replacer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "s/{}/{}/{}", self.regex, self.template, self.limit)
+    }
+}

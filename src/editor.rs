@@ -59,3 +59,35 @@ impl Editor {
         }
     }
 }
+
+impl std::fmt::Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut commands = self
+            .commands
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>()
+            .join(" ");
+        if let Some(c) = commands.chars().last() {
+            if c != '.' {
+                commands.push(' ');
+                commands.push(';');
+            }
+        }
+        write!(f, "{} {}", self.address, commands,)
+    }
+}
+
+impl std::fmt::Display for Editor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.instructions
+                .iter()
+                .map(|c| c.to_string())
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
+    }
+}
