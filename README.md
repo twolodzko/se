@@ -133,12 +133,10 @@ lines containing the word "sed" would be printed twice, because of matching addr
 ## Grammar
 
 ```text
-Always         = '*'
-Never          = '$'
 Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
-AddressAtom    = Always | Never | Location | Regex | WholeLine
+AddressAtom    = '*' | '$' | Location | Regex | WholeLine
 Range          = SimpleAddress? '-' SimpleAddress?
 Brackets       = SimpleAddress | '(' Address ')'
 Negate         = ( Brackets | Range ) '!'? 
