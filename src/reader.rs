@@ -72,7 +72,8 @@ impl Reader for FileReader {
 impl FileReader {
     fn next_line(&mut self) -> Result<bool, Error> {
         if let Some(res) = self.file.next() {
-            let line = res.map_err(Error::Io)?;
+            let mut line = res.map_err(Error::Io)?;
+            line.push('\n');
             self.chars = StringReader::from(line);
             return Ok(true);
         }
