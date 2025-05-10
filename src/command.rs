@@ -1,7 +1,7 @@
 use crate::Line;
 
-#[derive(Debug, PartialEq)]
-pub(crate) enum Command {
+#[derive(Debug, PartialEq, Clone)]
+pub enum Command {
     /// p
     Print,
     /// l
@@ -14,16 +14,24 @@ pub(crate) enum Command {
     Insert(String),
     /// s/src/dst/[limit]
     Substitute(Replacer),
+    /// h
+    Copy,
+    /// g
+    Paste,
+    /// x
+    Exchange,
     /// d
     Delete,
     /// .
     Stop,
     /// q[code]
     Quit(i32),
+    /// no-op
+    NoOp,
 }
 
-#[derive(Debug)]
-pub(crate) struct Replacer {
+#[derive(Debug, Clone)]
+pub struct Replacer {
     pub(crate) regex: regex::Regex,
     pub(crate) template: String,
     pub(crate) limit: usize,
@@ -46,7 +54,7 @@ impl PartialEq for Replacer {
 }
 
 impl Command {
-    pub(crate) fn apply(&self, line: &mut Line) -> Action {
+    pub(crate) fn apply(&self, line: &mut Line) {
         use Command::*;
         match self {
             Print => println!("{}", line.1),
@@ -55,22 +63,7 @@ impl Command {
             Newline => println!(),
             Insert(s) => print!("{}", s),
             Substitute(r) => line.1 = r.replace(&line.1),
-            Delete => return Action::Delete,
-            Stop => return Action::Next,
-            Quit(code) => return Action::Quit(*code),
+            _ => (),
         }
-        Action::None
     }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Action {
-    /// no-op
-    None,
-    /// clear the buffer, stop processing further instructions
-    Delete,
-    /// stop processing further instructions
-    Next,
-    /// stop processing further input, return the exit code
-    Quit(i32),
 }

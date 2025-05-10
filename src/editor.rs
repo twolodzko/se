@@ -1,8 +1,4 @@
-use crate::{
-    address::Address,
-    command::{Action, Command},
-    Line,
-};
+use crate::{address::Address, command::Command, Line};
 
 #[derive(Debug, PartialEq)]
 pub struct Editor {
@@ -25,7 +21,9 @@ impl Editor {
         }
     }
 
-    pub fn apply(&mut self, line: &str) -> Option<(String, Action)> {
+    pub fn apply(&mut self, line: &str) -> Option<(String, Command)> {
+        use Command::*;
+
         self.counter += 1;
         let mut matched = false;
         let mut buffer = Line(self.counter, line.to_string());
@@ -33,9 +31,9 @@ impl Editor {
         for instruction in self.instructions.iter_mut() {
             if instruction.address.matches(&buffer) {
                 for cmd in instruction.commands.iter() {
-                    use Action::*;
-                    if let act @ (Quit(_) | Delete | Next) = cmd.apply(&mut buffer) {
-                        return Some((buffer.1, act));
+                    match &cmd {
+                        Delete | Stop | Quit(_) => return Some((buffer.1, cmd.clone())),
+                        _ => cmd.apply(&mut buffer),
                     }
                 }
                 matched = true;
@@ -43,7 +41,7 @@ impl Editor {
         }
 
         if matched {
-            Some((buffer.1, Action::None))
+            Some((buffer.1, NoOp))
         } else {
             None
         }

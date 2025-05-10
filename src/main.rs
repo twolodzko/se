@@ -1,5 +1,5 @@
 use clap::Parser;
-use seed::{parse, Action, Editor, Error, FileReader, StringReader};
+use seed::{parse, Command, Editor, Error, FileReader, StringReader};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -59,20 +59,20 @@ fn main() {
     };
     let editor = &mut unwrap!(res);
 
-    let mut action = Action::None;
+    let mut command = Command::NoOp;
     let mut count = 0;
 
     if args.files.is_empty() {
         let reader = BufReader::new(std::io::stdin());
-        (action, count) = run(editor, reader, args.all);
+        (command, count) = run(editor, reader, args.all);
     } else {
         for path in args.files.iter() {
             let file = unwrap!(File::open(path).map_err(Error::Io));
             let reader = BufReader::new(file);
-            let (a, c) = run(editor, reader, args.all);
-            count += c;
-            if let Action::Quit(_) = a {
-                action = a;
+            let (c, n) = run(editor, reader, args.all);
+            count += n;
+            if let Command::Quit(_) = c {
+                command = c;
                 break;
             }
         }
@@ -81,37 +81,37 @@ fn main() {
     if args.count {
         println!("{}", count)
     }
-    if let Action::Quit(code) = action {
+    if let Command::Quit(code) = command {
         std::process::exit(code)
     }
 }
 
-fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Action, usize) {
-    use Action::*;
+fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Command, usize) {
+    use Command::*;
 
     let mut count = 0;
-    let mut action = None;
+    let mut command = Command::NoOp;
 
     for line in reader.lines() {
-        action = None;
+        command = Command::NoOp;
         let mut buffer = unwrap!(line);
 
-        if let Some((b, a)) = editor.apply(&buffer) {
+        if let Some((b, c)) = editor.apply(&buffer) {
             buffer = b;
-            action = a;
+            command = c;
             count += 1;
         }
 
-        if action == Delete {
+        if command == Delete {
             continue;
         }
         if print_all {
             println!("{}", buffer)
         }
-        if let Quit(_) = action {
+        if let Quit(_) = command {
             break;
         }
     }
 
-    (action, count)
+    (command, count)
 }

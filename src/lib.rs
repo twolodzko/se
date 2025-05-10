@@ -5,7 +5,7 @@ mod parser;
 mod reader;
 use std::string::FromUtf8Error;
 pub use {
-    command::Action,
+    command::Command,
     editor::Editor,
     parser::parse,
     reader::{FileReader, StringReader},
