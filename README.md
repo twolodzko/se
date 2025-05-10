@@ -51,6 +51,7 @@ and by default works like `sed -n` (see below).
   Using `$` anywhere but range end is pointless, as it is a no-op.
 * `/regex/` matches the lines that match the regular expression specified between `/.../`.
   Regular expressions can be used as bounds of the ranges.
+* `^regex$` can be used instead of `/^regex$/` when matching the whole line.
 * `addr1,addr2,...,addrN` matches any of the addresses.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
@@ -68,6 +69,27 @@ and by default works like `sed -n` (see below).
 * `"string"` or `'string'` - print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
 * `q [code]` - exit with the `code` exit code (0 by default).
+
+## Multiple instructions
+
+When script contains multiple instructions, they can be delimited with `;` or `.`.
+
+* `;` is used for chaining instructions. After processing the instruction,
+  the buffer would be processed using the following instruction.
+* `.` marks the final instruction. If the address of the instruction would positively match,
+  the processing of the line would stop after running the command,
+  all the following instructions would be skipped.
+
+For example, the script
+
+```text
+/sed/ ">> " p .
+      "   " p
+```
+
+when applied to this README would print it's content prepending each line containing the word "sed"
+with ">> " and every other line (no address) with "   ". If `;` was used instead of `.`, the
+lines containing the word "sed" would be printed twice, because of matching addresses in the both instructions.
 
 ## Differences from `sed`
 

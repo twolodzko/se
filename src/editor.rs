@@ -34,7 +34,7 @@ impl Editor {
             if instruction.address.matches(&buffer) {
                 for cmd in instruction.commands.iter() {
                     use Action::*;
-                    if let act @ (Quit(_) | Skip) = cmd.apply(&mut buffer) {
+                    if let act @ (Quit(_) | Skip | End) = cmd.apply(&mut buffer) {
                         return Some((buffer.1, act));
                     }
                 }

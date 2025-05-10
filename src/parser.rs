@@ -102,7 +102,12 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error
         match c {
             '/' => {
                 reader.next()?;
-                return Ok(Some(Regex(parse_regex(reader)?)));
+                let regex = parse_regex(reader)?;
+                return Ok(Some(Regex(regex)));
+            }
+            '^' => {
+                let regex = parse_whole_line_regex(reader)?;
+                return Ok(Some(Regex(regex)));
             }
             c if c.is_ascii_digit() => {
                 let s = read_integer(reader)?;
@@ -145,6 +150,10 @@ fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
     while let Some(c) = reader.next()? {
         let cmd = match c {
             ';' => break,
+            '.' => {
+                cmds.push(End);
+                break;
+            }
             'p' => Print,
             'l' => Escape,
             's' => {
@@ -203,6 +212,30 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     }))
 }
 
+fn parse_whole_line_regex<R: Reader>(reader: &mut R) -> Result<regex::Regex, Error> {
+    let mut acc = String::new();
+    while let Some(c) = reader.next()? {
+        match c {
+            '\\' => {
+                if let Some(e) = reader.next()? {
+                    acc.push(c);
+                    acc.push(e);
+                } else {
+                    acc.push(c);
+                    return Err(Error::InvalidAddr(acc));
+                }
+            }
+            _ => {
+                acc.push(c);
+                if c == '$' {
+                    return regex::Regex::new(&acc).map_err(Error::Regex);
+                }
+            }
+        }
+    }
+    Err(Error::Missing('$'))
+}
+
 fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
     let mut acc = String::new();
     while let Some(c) = reader.next()? {
@@ -222,7 +255,7 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
             _ => acc.push(c),
         }
     }
-    Err(Error::Missing('/'))
+    Err(Error::Missing(delim))
 }
 
 fn skip_whitespace<R: Reader>(reader: &mut R) {
@@ -305,6 +338,26 @@ mod tests {
         address: Negate(Box::new(Between(Box::new(Location(13)), Box::new(Location(72)), false))),
         commands: Vec::new(),
     }]); "range negated")]
+    #[test_case("/abc/", Editor::new(vec![Instruction{
+        address: Regex(regex::Regex::new("abc").unwrap()),
+        commands: Vec::new(),
+    }]); "regex match")]
+    #[test_case(r"/abc\//", Editor::new(vec![Instruction{
+        address: Regex(regex::Regex::new("abc/").unwrap()),
+        commands: Vec::new(),
+    }]); "regex match with escape")]
+    #[test_case("^abc$", Editor::new(vec![Instruction{
+        address: Regex(regex::Regex::new("^abc$").unwrap()),
+        commands: Vec::new(),
+    }]); "whole line regex match")]
+    #[test_case(r"^\$abc$", Editor::new(vec![Instruction{
+        address: Regex(regex::Regex::new(r"^\$abc$").unwrap()),
+        commands: Vec::new(),
+    }]); "whole line regex match with escape")]
+    #[test_case(r"^\$$", Editor::new(vec![Instruction{
+        address: Regex(regex::Regex::new(r"^\$$").unwrap()),
+        commands: Vec::new(),
+    }]); "whole line only dollar")]
     #[test_case("/abc/-/def/", Editor::new(vec![Instruction{
         address: Between(
             Box::new(Regex(regex::Regex::new("abc").unwrap())),
