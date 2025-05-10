@@ -4,13 +4,13 @@
 
 `seed` is a command-line utility similar to [`sed`]. It can be called as
 
-```
+```text
 seed [OPTIONS] <SCRIPT> [FILE]...
 ```
 
 where `<SCRIPT>` contains instructions (separated by `;` or `.`, see below) of the form
 
-```
+```text
 [address][command]
 ```
 
