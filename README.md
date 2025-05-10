@@ -58,20 +58,20 @@ Same as `sed`, it can be used for string search and replace in files.
 
 ## Commands
 
-* `p` - print the content of the pattern space as-is.
-* `l` - print the content of the pattern space after escaping the characters with Rust's
+* `p` – print the content of the pattern space as-is.
+* `l` – print the content of the pattern space after escaping the characters with Rust's
   [std::char::escape_default](https://doc.rust-lang.org/std/primitive.char.html#method.escape_default).
-* `s/src/dst/[limit]` - use regular expression to replace `src` with `dst` in the pattern space.
-* `=` - print the line number.
-* `n` - print the newline character.
+* `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
+* `=` – print the line number.
+* `n` – print the newline character.
 * `h` or `c` - copy the content of the pattern space to the hold space.
 * `g` or `v` - copy the content of the hold space to the pattern space.
-* `x` - exchange the content of the pattern space with content of the hold space.
-* `z` - empties the content of pattern space. It is the same as `s/.*//`, but is more efficient.
-* `d` - clear the content of the pattern space and immediately start processing next line.
-* `"string"` or `'string'` - print the `string`. The `string` can contain special escape
+* `x` – exchange the content of the pattern space with content of the hold space.
+* `z` – empties the content of pattern space. It is the same as `s/.*//`, but is more efficient.
+* `d` – clear the content of the pattern space and immediately start processing next line.
+* `"string"` or `'string'` – print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
-* `q [code]` - exit with the `code` exit code (0 by default).
+* `q [code]` – exit with the `code` exit code (0 by default).
 
 ## Multiple instructions
 
