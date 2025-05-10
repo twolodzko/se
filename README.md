@@ -154,7 +154,8 @@ Script         = ( Instruction ( ';' | '.' ) )*
 ```
 
 The delimited sequences like `'/' [^/]* '/'` allow escaping of the character
-equal to the final delimiter with `\` (for example `/\//`), so `[^/]*` assumes the escape character.
+equal to the final delimiter with `\` (for example `/\//`), so technically `[^/]*`
+assumes the escape character and in fact means the `([^/]|\/)*` regular expression.
 
 
  [`sed`]: https://www.gnu.org/software/sed/manual/sed.html
