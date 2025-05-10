@@ -142,7 +142,7 @@ AddressAtom    = Always | Never | Location | Regex | WholeLine
 Range          = SimpleAddress '-' SimpleAddress
 Brackets       = SimpleAddress | '(' Address ')'
 Negate         = ( Brackets | Range ) '!'? 
-Address        = [ Negate ',' ]+ Negate
+Address        = ( Negate ',' )+ Negate
 
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
