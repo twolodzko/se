@@ -142,8 +142,8 @@ WholeLine      = '^' [^$]* '$'
 AddressAtom    = '*' | '$' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
-Negate         = ( Brackets | Range ) '!'? 
-Address        = ( Negate ',' )+ Negate
+Negated         = ( Brackets | Range ) '!'? 
+Address        = ( Negated ',' )+ Negated
 
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
