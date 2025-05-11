@@ -140,8 +140,8 @@ Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
 AddressAtom    = '*' | '$' | Location | Regex | WholeLine
-Range          = SimpleAddress? '-' SimpleAddress?
-Brackets       = SimpleAddress | '(' Address ')'
+Range          = AddressAtom? '-' AddressAtom?
+Brackets       = AddressAtom | '(' Address ')'
 Negate         = ( Brackets | Range ) '!'? 
 Address        = ( Negate ',' )+ Negate
 
