@@ -23,7 +23,7 @@ Same as `sed`, it can be used for string search and replace in files.
 
 ## How it works?
 
-`seed` works in a [similar way as `sed`](https://www.gnu.org/software/sed/manual/sed.html#Execution-Cycle):
+`seed` works in a [similar way as `sed`]:
 
 > `sed` maintains two data buffers: the active *pattern* space, and the auxiliary *hold* space.
 > Both are initially empty.
@@ -62,7 +62,7 @@ Same as `sed`, it can be used for string search and replace in files.
 
 * `p` – print the content of the pattern space as-is.
 * `l` – print the content of the pattern space after escaping the characters with Rust's
-  [std::char::escape_default](https://doc.rust-lang.org/std/primitive.char.html#method.escape_default).
+  [std::char::escape_default].
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
 * `=` – print the line number.
 * `n` – print the newline character.
@@ -101,7 +101,8 @@ lines containing the word "sed" would be printed twice, because of matching addr
 
 * Using [Rust's Regex] regular expression syntax, including the syntax for flags
   e.g. `/(?i)regex/` is used instead of `/regex/i`. The flags can be used in
-  matches as well as substitutions.
+  matches as well as substitutions. With `(?x)` flag it is possible to write regular
+  expressions in [verbose mode], which can include comments.
 * Using `$N` for substitutions instead of `\N`.
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
   but instead reading commands directly e.g. `=p` (actually `=np`, see above) is equivalent to `{ = ; p }` in `sed`.
@@ -158,5 +159,8 @@ equal to the final delimiter with `\` (for example `/\//`), so technically `[^/]
 assumes the escape character and in fact means the `([^/]|\/)*` regular expression.
 
 
- [`sed`]: https://www.gnu.org/software/sed/manual/sed.html
- [Rust's Regex]: https://docs.rs/regex/latest/regex/
+[`sed`]: https://www.gnu.org/software/sed/manual/sed.html
+[Rust's Regex]: https://docs.rs/regex/latest/regex/
+[verbose mode]: https://docs.rs/regex/latest/regex/?search=verbose#example-verbose-mode
+[std::char::escape_default]: https://doc.rust-lang.org/std/primitive.char.html#method.escape_default
+[similar way as `sed`]: https://www.gnu.org/software/sed/manual/sed.html#Execution-Cycle
