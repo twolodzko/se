@@ -7,7 +7,7 @@ use crate::{
     Error,
 };
 
-pub(crate) fn parse_addrs<R: Reader>(reader: &mut R) -> Result<Address, Error> {
+pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     let mut addrs = Vec::new();
     let mut has_any = false;
     loop {
@@ -41,7 +41,7 @@ fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     if let Some('(') = reader.peek()? {
         reader.next()?;
         skip_whitespace(reader);
-        let addr = parse_addrs(reader)?;
+        let addr = parse(reader)?;
         skip_whitespace(reader);
         if reader.next()? != Some(')') {
             return Err(Error::Missing(')'));

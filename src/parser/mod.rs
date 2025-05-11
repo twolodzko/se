@@ -5,10 +5,7 @@ mod regex_reader;
 mod utils;
 
 use crate::{editor::Instruction, Editor, Error};
-use address::parse_addrs;
-use command::parse_cmds;
 use reader::Reader;
-use utils::skip_whitespace;
 
 pub use reader::{FileReader, StringReader};
 
@@ -24,10 +21,11 @@ pub fn parse<R: Reader>(reader: &mut R) -> Result<Editor, Error> {
 }
 
 fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
-    skip_whitespace(reader);
-    let address = parse_addrs(reader)?;
-    skip_whitespace(reader);
-    let commands = parse_cmds(reader)?;
+    // [address][commands]
+    utils::skip_whitespace(reader);
+    let address = address::parse(reader)?;
+    utils::skip_whitespace(reader);
+    let commands = command::parse(reader)?;
     Ok(Instruction { address, commands })
 }
 

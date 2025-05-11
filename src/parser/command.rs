@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-pub(crate) fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
+pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
     let mut cmds = Vec::new();
     while let Some(c) = reader.next()? {
         let cmd = match c {
