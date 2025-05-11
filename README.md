@@ -51,6 +51,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `/regex/` matches the lines that match the regular expression specified between `/.../`.
   Regular expressions can be used as bounds of the ranges.
 * `^regex$` can be used instead of `/^regex$/` when matching the whole line.
+  Because in other cases regular expressions are delimited with `/.../`,
+  even when not using slashes `\/` would be interpreted a escaped slash.
 * `addr1,addr2,...,addrN` matches any of the addresses.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,

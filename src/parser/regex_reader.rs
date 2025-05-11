@@ -184,14 +184,19 @@ mod tests {
         "slash in whole line"
     )]
     #[test_case(
+        r"^\/$",
+        r"^/$";
+        "escaped slash in whole line"
+    )]
+    #[test_case(
         r"^\\/$",
         r"^\\/$";
-        "unescaped slash in whole line"
+        "backslashes and unescaped slash in whole line"
     )]
     #[test_case(
         r"^\\\/$",
         r"^\\/$";
-        "escaped slash in whole line"
+        "backslashes and escaped slash in whole line"
     )]
     fn read(input: &str, expected: &str) {
         let reader = &mut StringReader::from(input.to_string());
