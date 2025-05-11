@@ -6,7 +6,7 @@ test:
 
 build:
     cargo build --release
-    cp ./target/release/seed ./
+    cp ./target/release/se ./
 
 benchmark: build
     #!/bin/bash
@@ -25,11 +25,11 @@ benchmark: build
 
     bench 2000 \
         'sed "/sed/ =" README.md' \
-        './target/release/seed -a "/sed/ =n" README.md'
+        './target/release/se -a "/sed/ =n" README.md'
 
     bench 2000 \
         'sed -n "/sed/ { s/default/kitty/g ; p ; }" README.md' \
-        './target/release/seed "/sed/ s/default/kitty/g p" README.md'
+        './target/release/se "/sed/ s/default/kitty/g p" README.md'
 
     # big
 
@@ -39,11 +39,11 @@ benchmark: build
 
     bench 100 \
         'sed -n "/love/ s/love/####/gp" IMDB-Dataset.csv' \
-        './target/release/seed "/love/ s/love/####/gp" IMDB-Dataset.csv'
+        './target/release/se "/love/ s/love/####/gp" IMDB-Dataset.csv'
 
     bench 100 \
         'sed "/love/ s/love/####/gp" IMDB-Dataset.csv' \
-        './target/release/seed -a "/love/ s/love/####/gp" IMDB-Dataset.csv'
+        './target/release/se -a "/love/ s/love/####/gp" IMDB-Dataset.csv'
 
 install:
     cargo install --path .

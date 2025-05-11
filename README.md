@@ -1,11 +1,11 @@
-# seed
+# se
 
 ## Syntax
 
-`seed` is a command-line utility similar to [`sed`]. It can be called as
+`se` is a command-line utility similar to [`sed`]. It can be called as
 
 ```text
-seed [OPTIONS] <SCRIPT> [FILE]...
+se [OPTIONS] <SCRIPT> [FILE]...
 ```
 
 where `<SCRIPT>` contains instructions (separated by `;` or `.`, see below) of the form
@@ -23,7 +23,7 @@ Same as `sed`, it can be used for string search and replace in files.
 
 ## How it works?
 
-`seed` works in a [similar way as `sed`]:
+`se` works in a [similar way as `sed`]:
 
 > `sed` maintains two data buffers: the active *pattern* space, and the auxiliary *hold* space.
 > Both are initially empty.
@@ -117,9 +117,9 @@ lines containing the word "sed" would be printed twice, because of matching addr
   As a consequence `5-$` would match all the lines starting from the fifth in both cases,
   but in `sed` the `$` would be the last line so the range would be finite,
   and here it would be infinite. Using `$` outside of range would never match.
-* `seed` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
+* `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
 
-|      `sed`       |       `seed`        |
+|      `sed`       |       `se`        |
 |------------------|---------------------|
 | `=`              | `=np`               |
 | `i text`         | `p "text"`          |

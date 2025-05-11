@@ -1,5 +1,5 @@
 use clap::Parser;
-use seed::{
+use se::{
     parse,
     Command::{self, *},
     Editor, Error, FileReader, StringReader,
