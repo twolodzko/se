@@ -27,7 +27,7 @@ fn read_until<R: Reader>(
         match c {
             c if c == delim => {
                 acc.push(c);
-                break;
+                return Ok(());
             }
             '\\' => {
                 if let Some(e) = reader.next()? {
@@ -51,7 +51,7 @@ fn read_until<R: Reader>(
             _ => acc.push(c),
         }
     }
-    Ok(())
+    Err(Error::Missing(delim))
 }
 
 fn read_brackets<R: Reader>(
@@ -67,9 +67,13 @@ fn read_brackets<R: Reader>(
             acc.push(c);
             match c {
                 // flag for inline definition
-                ':' => read_until(reader, ')', local_verbose, acc)?,
+                ':' => {
+                    read_until(reader, ')', local_verbose, acc)?;
+                    return Ok(verbose);
+                }
                 // finished reading the flag definition
                 ')' => return Ok(local_verbose),
+                // verbose flag
                 'x' => local_verbose = true,
                 '-' => {
                     if let Some('x') = reader.peek()? {
@@ -78,13 +82,15 @@ fn read_brackets<R: Reader>(
                         local_verbose = false;
                     }
                 }
+                // other flags
                 _ => (),
             }
         }
+        Err(Error::Missing(')'))
     } else {
         read_until(reader, ')', verbose, acc)?;
+        Ok(verbose)
     }
-    Ok(verbose)
 }
 
 fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<(), Error> {
