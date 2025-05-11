@@ -1,0 +1,173 @@
+use crate::{reader::Reader, Error};
+
+pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String, Error> {
+    let mut acc = String::new();
+    match reader.next()? {
+        Some('/') => {
+            read_until(reader, '/', false, &mut acc)?;
+            acc.pop();
+        }
+        Some('^') => {
+            acc.push('^');
+            read_until(reader, '$', false, &mut acc)?;
+        }
+        Some(c) => return Err(Error::Unexpected(c)),
+        _ => unreachable!(),
+    }
+    Ok(acc)
+}
+
+fn read_until<R: Reader>(
+    reader: &mut R,
+    delim: char,
+    mut verbose: bool,
+    acc: &mut String,
+) -> Result<(), Error> {
+    while let Some(c) = reader.next()? {
+        match c {
+            c if c == delim => {
+                acc.push(c);
+                break;
+            }
+            '\\' => {
+                if let Some(e) = reader.next()? {
+                    if e != '/' {
+                        acc.push(c);
+                    }
+                    acc.push(e);
+                } else {
+                    acc.push(c);
+                    return Err(Error::InvalidAddr(acc.to_string()));
+                }
+            }
+            '(' => {
+                acc.push(c);
+                verbose = read_brackets(reader, verbose, acc)?;
+            }
+            '#' if verbose => {
+                acc.push(c);
+                read_line(reader, acc)?;
+            }
+            _ => acc.push(c),
+        }
+    }
+    Ok(())
+}
+
+fn read_brackets<R: Reader>(
+    reader: &mut R,
+    verbose: bool,
+    acc: &mut String,
+) -> Result<bool, Error> {
+    let mut local_verbose = verbose;
+    if let Some('?') = reader.peek()? {
+        acc.push('?');
+        reader.next()?;
+        while let Some(c) = reader.next()? {
+            acc.push(c);
+            match c {
+                ':' => {
+                    read_until(reader, ')', local_verbose, acc)?;
+                    return Ok(verbose);
+                }
+                ')' => return Ok(local_verbose),
+                'x' => local_verbose = true,
+                '-' => {
+                    if let Some('x') = reader.peek()? {
+                        reader.next()?;
+                        acc.push('x');
+                        local_verbose = false;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+    Ok(local_verbose)
+}
+
+fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<(), Error> {
+    while let Some(c) = reader.next()? {
+        acc.push(c);
+        if c == '\n' {
+            break;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::read_regex;
+    use crate::reader::StringReader;
+    use test_case::test_case;
+
+    #[test_case(
+        r"//<not this>",
+        r"";
+        "empty"
+    )]
+    #[test_case(
+        r"/abc/<not this>",
+        r"abc";
+        "constant"
+    )]
+    #[test_case(
+        r"/\//<not this>",
+        r"/";
+        "slash"
+    )]
+    #[test_case(
+        r"/\n\t/<not this>",
+        r"\n\t";
+        "escaped chars"
+    )]
+    #[test_case(
+        r"^$<not this>",
+        r"^$";
+        "empty whole line"
+    )]
+    #[test_case(
+        r"/(abc)/<not this>",
+        r"(abc)";
+        "brackets"
+    )]
+    #[test_case(
+        r"/(a((b)(c)d)e(f))/<not this>",
+        r"(a((b)(c)d)e(f))";
+        "many brackets"
+    )]
+    #[test_case(
+        r"/(?x) # /comment/
+        abc/<not this>",
+        r"(?x) # /comment/
+        abc";
+        "verbose"
+    )]
+    #[test_case(
+        r"/(?-x)#/<not this>",
+        r"(?-x)#";
+        "negated verbose"
+    )]
+    #[test_case(
+        r"/(?x: # /comment/
+        abc)#def/<not this>",
+        r"(?x: # /comment/
+        abc)#def";
+        "inline verbose"
+    )]
+    // FIXME
+    // #[test_case(
+    //     r"/((?x) # /comment/
+    //     abc)#def/<not this>",
+    //     r"((?x) # /comment/
+    //     abc)#def";
+    //     "local verbose"
+    // )]
+    fn read(input: &str, expected: &str) {
+        let reader = &mut StringReader::from(input.to_string());
+        let result = read_regex(reader).unwrap();
+        assert_eq!(result, expected);
+        regex::Regex::new(&result).expect("regex should parse");
+    }
+}

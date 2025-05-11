@@ -6,6 +6,7 @@ use crate::{
     },
     editor::Instruction,
     reader::Reader,
+    regex_reader::read_regex,
     Editor, Error,
 };
 
@@ -103,13 +104,8 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error
                 skip_whitespace(reader);
                 return parse_simple_addr(reader);
             }
-            '/' => {
-                reader.next()?;
+            '/' | '^' => {
                 let regex = parse_regex(reader)?;
-                return Ok(Some(Regex(regex)));
-            }
-            '^' => {
-                let regex = parse_whole_line_regex(reader)?;
                 return Ok(Some(Regex(regex)));
             }
             c if c.is_ascii_digit() => {
@@ -194,7 +190,7 @@ fn parse_cmds<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
 }
 
 fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
-    if reader.next()? != Some('/') {
+    if reader.peek()? != Some('/') {
         return Err(Error::Missing('/'));
     }
 
@@ -217,30 +213,6 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
         template: dst,
         limit,
     }))
-}
-
-fn parse_whole_line_regex<R: Reader>(reader: &mut R) -> Result<regex::Regex, Error> {
-    let mut acc = String::new();
-    while let Some(c) = reader.next()? {
-        match c {
-            '\\' => {
-                if let Some(e) = reader.next()? {
-                    acc.push(c);
-                    acc.push(e);
-                } else {
-                    acc.push(c);
-                    return Err(Error::InvalidAddr(acc));
-                }
-            }
-            _ => {
-                acc.push(c);
-                if c == '$' {
-                    return regex::Regex::new(&acc).map_err(Error::Regex);
-                }
-            }
-        }
-    }
-    Err(Error::Missing('$'))
 }
 
 fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
@@ -274,7 +246,7 @@ fn skip_whitespace<R: Reader>(reader: &mut R) {
     }
 }
 
-fn skip_line<R: Reader>(reader: &mut R) {
+pub fn skip_line<R: Reader>(reader: &mut R) {
     while reader.next().is_ok_and(|o| o.is_some_and(|c| c != '\n')) {}
 }
 
@@ -295,7 +267,7 @@ fn unescape(s: String) -> Result<String, Error> {
 }
 
 fn parse_regex<R: Reader>(reader: &mut R) -> Result<regex::Regex, Error> {
-    let regex = read_until(reader, '/')?;
+    let regex = read_regex(reader)?;
     regex::Regex::new(&regex).map_err(Error::Regex)
 }
 
