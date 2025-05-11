@@ -41,9 +41,7 @@ impl Editor {
                             buffer.1 = self.hold.to_string();
                         }
                         Exchange => {
-                            let tmp = self.hold.to_string();
-                            self.hold = buffer.1.to_string();
-                            buffer.1 = tmp;
+                            std::mem::swap(&mut self.hold, &mut buffer.1);
                         }
                         _ => cmd.apply(&mut buffer),
                     }
