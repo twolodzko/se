@@ -94,7 +94,7 @@ For example, the script
 ```
 
 when applied to this README would print it's content prepending each line containing the word "sed"
-with ">> " and every other line (no address) with "   ". If `;` was used instead of `.`, the
+with ">> " and every other line (no address) with spaces. If `;` was used instead of `.`, the
 lines containing the word "sed" would be printed twice, because of matching addresses in the both instructions.
 
 ## Differences from `sed`
@@ -153,10 +153,6 @@ Command        = [=plnhcgvxzd] | Quit | String | Substitute
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
 ```
-
-The delimited sequences like `'/' [^/]* '/'` allow escaping of the character
-equal to the final delimiter with `\` (for example `/\//`), so technically `[^/]*`
-assumes the escape character and in fact means the `([^/]|\/)*` regular expression.
 
 
 [`sed`]: https://www.gnu.org/software/sed/manual/sed.html
