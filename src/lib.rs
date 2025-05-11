@@ -2,15 +2,13 @@ mod address;
 mod command;
 mod editor;
 mod parser;
-mod reader;
-mod regex_reader;
 
 use std::string::FromUtf8Error;
 pub use {
     command::Command,
     editor::Editor,
     parser::parse,
-    reader::{FileReader, StringReader},
+    parser::{FileReader, StringReader},
 };
 
 #[derive(Debug, PartialEq, Clone)]

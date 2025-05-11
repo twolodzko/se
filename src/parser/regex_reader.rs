@@ -1,4 +1,5 @@
-use crate::{reader::Reader, Error};
+use super::reader::Reader;
+use crate::Error;
 
 pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String, Error> {
     let mut acc = String::new();
@@ -106,7 +107,7 @@ fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::read_regex;
-    use crate::reader::StringReader;
+    use crate::parser::reader::StringReader;
     use test_case::test_case;
 
     #[test_case(
@@ -176,6 +177,21 @@ mod tests {
         r"(?x) abc ((?-x) #/# ) # /comment//
         end";
         "verbose canceled"
+    )]
+    #[test_case(
+        r"^/$",
+        r"^/$";
+        "slash in whole line"
+    )]
+    #[test_case(
+        r"^\\/$",
+        r"^\\/$";
+        "unescaped slash in whole line"
+    )]
+    #[test_case(
+        r"^\\\/$",
+        r"^\\/$";
+        "escaped slash in whole line"
     )]
     fn read(input: &str, expected: &str) {
         let reader = &mut StringReader::from(input.to_string());
