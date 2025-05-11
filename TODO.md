@@ -1,2 +1,0 @@
-* Comments, especially in regexes
-* 
