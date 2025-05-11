@@ -66,10 +66,9 @@ fn read_brackets<R: Reader>(
         while let Some(c) = reader.next()? {
             acc.push(c);
             match c {
-                ':' => {
-                    read_until(reader, ')', local_verbose, acc)?;
-                    return Ok(verbose);
-                }
+                // flag for inline definition
+                ':' => read_until(reader, ')', local_verbose, acc)?,
+                // finished reading the flag definition
                 ')' => return Ok(local_verbose),
                 'x' => local_verbose = true,
                 '-' => {
@@ -82,8 +81,10 @@ fn read_brackets<R: Reader>(
                 _ => (),
             }
         }
+    } else {
+        read_until(reader, ')', verbose, acc)?;
     }
-    Ok(local_verbose)
+    Ok(verbose)
 }
 
 fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<(), Error> {
@@ -156,14 +157,20 @@ mod tests {
         abc)#def";
         "inline verbose"
     )]
-    // FIXME
-    // #[test_case(
-    //     r"/((?x) # /comment/
-    //     abc)#def/<not this>",
-    //     r"((?x) # /comment/
-    //     abc)#def";
-    //     "local verbose"
-    // )]
+    #[test_case(
+        r"/((?x) # /comment/
+        abc)#def/<not this>",
+        r"((?x) # /comment/
+        abc)#def";
+        "local verbose"
+    )]
+    #[test_case(
+        r"/(?x) abc ((?-x) #/# ) # /comment//
+        end/<not this>",
+        r"(?x) abc ((?-x) #/# ) # /comment//
+        end";
+        "verbose canceled"
+    )]
     fn read(input: &str, expected: &str) {
         let reader = &mut StringReader::from(input.to_string());
         let result = read_regex(reader).unwrap();
