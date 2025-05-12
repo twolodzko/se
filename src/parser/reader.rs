@@ -32,7 +32,7 @@ impl Reader for StringReader {
 
 pub struct FileReader {
     file: Lines<BufReader<File>>,
-    chars: StringReader,
+    buffer: StringReader,
 }
 
 impl TryFrom<PathBuf> for FileReader {
@@ -41,14 +41,17 @@ impl TryFrom<PathBuf> for FileReader {
     fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
         let file = BufReader::new(File::open(value).map_err(Error::Io)?).lines();
         let chars = StringReader::from(String::new());
-        Ok(FileReader { file, chars })
+        Ok(FileReader {
+            file,
+            buffer: chars,
+        })
     }
 }
 
 impl Reader for FileReader {
     fn next(&mut self) -> Result<Option<char>, Error> {
         loop {
-            if let c @ Some(_) = self.chars.next()? {
+            if let c @ Some(_) = self.buffer.next()? {
                 return Ok(c);
             }
             if !self.next_line()? {
@@ -59,7 +62,7 @@ impl Reader for FileReader {
 
     fn peek(&mut self) -> Result<Option<char>, Error> {
         loop {
-            if let c @ Some(_) = self.chars.peek()? {
+            if let c @ Some(_) = self.buffer.peek()? {
                 return Ok(c);
             }
             if !self.next_line()? {
@@ -74,7 +77,7 @@ impl FileReader {
         if let Some(res) = self.file.next() {
             let mut line = res.map_err(Error::Io)?;
             line.push('\n');
-            self.chars = StringReader::from(line);
+            self.buffer = StringReader::from(line);
             return Ok(true);
         }
         Ok(false)
