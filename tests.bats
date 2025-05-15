@@ -88,12 +88,12 @@ teardown() {
 }
 
 @test "Replace all like in sed" {
-   run diff <(sed -nE 's/in (`sed`)/__&__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__${0}__/p' README.md)
+   run diff <(sed -nE 's/in (`sed`)/__&__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__$0__/p' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Replace captured group like in sed" {
-   run diff <(sed -nE 's/in (`sed`)/__\1__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__${1}__/p' README.md)
+   run diff <(sed -nE 's/in (`sed`)/__\1__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__$1__/p' README.md)
    [ "$status" -eq 0 ]
 }
 

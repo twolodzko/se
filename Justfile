@@ -1,13 +1,20 @@
 
-test:
+test: unit-test integration-test
+
+unit-test:
     cargo fmt
     cargo clippy
     cargo test
+
+integration-test: build
     bats tests.bats
 
 build:
     cargo build --release
     cp ./target/release/se ./
+
+install:
+    cargo install --path .
 
 benchmark: build
     #!/bin/bash
@@ -46,8 +53,9 @@ benchmark: build
         'sed "/love/ s/love/####/gp" IMDB-Dataset.csv' \
         './target/release/se -a "/love/ s/love/####/gp" IMDB-Dataset.csv'
 
-install:
-    cargo install --path .
+    bench 100 \
+        'sed -n "s/love/####/gp" IMDB-Dataset.csv' \
+        './target/release/se "/love/ s/love/####/gp" IMDB-Dataset.csv'
 
 lines:
     @ find . -name '*.rs' -exec wc -l {} \;

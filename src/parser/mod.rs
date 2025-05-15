@@ -175,6 +175,14 @@ mod tests {
                 limit: 0,
             })],
     }]); "condense match and substitute")]
+    #[test_case(r"s/(abc)/__$123__/", Editor::new(vec![Instruction{
+        address: Always,
+        commands: vec![Substitute(Replacer{
+                regex: regex::Regex::new("(abc)").unwrap(),
+                template: "__${123}__".to_string(),
+                limit: 0,
+    })],
+    }]); "substitute with numbered group")]
     #[test_case(r"1d;3d;7d", Editor::new(vec![
         Instruction{
             address: Location(1),

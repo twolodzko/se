@@ -62,7 +62,7 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
 
     // Parse: s/src/dst/[limit]
     let src = parse_regex(reader)?;
-    let dst = unescape(read_until(reader, '/')?)?;
+    let dst = read_template(reader)?;
 
     let mut limit = 0;
     if let Some(c) = reader.peek()? {
@@ -81,6 +81,42 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     }))
 }
 
+fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
+    let delim = '/';
+    let mut acc = String::new();
+    while let Some(c) = reader.peek()? {
+        match c {
+            c if c == delim => {
+                reader.next()?;
+                return unescape(acc);
+            }
+            c if c.is_ascii_digit() => {
+                // replace $N with ${N}
+                // "$123something" string is interpreted as "${123}something" rather than "${123something}"
+                acc.push('{');
+                acc.push_str(&read_integer(reader)?);
+                acc.push('}');
+            }
+            '\\' => {
+                reader.next()?;
+                if let Some(e) = reader.next()? {
+                    if e != delim {
+                        acc.push(c);
+                    }
+                    acc.push(e);
+                } else {
+                    break;
+                }
+            }
+            _ => {
+                reader.next()?;
+                acc.push(c)
+            }
+        }
+    }
+    Err(Error::Missing(delim))
+}
+
 fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
     let mut acc = String::new();
     while let Some(c) = reader.next()? {
@@ -93,8 +129,7 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
                     }
                     acc.push(e);
                 } else {
-                    acc.push(c);
-                    return Err(Error::InvalidAddr(acc));
+                    break;
                 }
             }
             _ => acc.push(c),
