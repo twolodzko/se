@@ -118,12 +118,13 @@ lines containing the word "sed" would be printed twice, because of matching addr
   but in `sed` the `$` would be the last line so the range would be finite,
   and here it would be infinite. Using `$` outside of range would never match.
 * `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
+* `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
 
 |      `sed`       |       `se`        |
 |------------------|---------------------|
 | `=`              | `=np`               |
-| `i text`         | `p "text"`          |
-| `a text`         | `"text" p`          |
+| `i text`         | `p "text" n`        |
+| `a text`         | `"text" n p`        |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
 | `s/src/dst/`     | `s/src/dst/1`       |
 | `s/src/dst/g`    | `s/src/dst/`        |
@@ -142,7 +143,7 @@ WholeLine      = '^' [^$]* '$'
 AddressAtom    = '*' | '$' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
-Negated         = ( Brackets | Range ) '!'? 
+Negated         = ( Brackets | Range ) '!'?
 Address        = ( Negated ',' )+ Negated
 
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?

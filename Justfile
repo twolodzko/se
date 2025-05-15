@@ -3,6 +3,7 @@ test:
     cargo fmt
     cargo clippy
     cargo test
+    bats tests.bats
 
 build:
     cargo build --release
