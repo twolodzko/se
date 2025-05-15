@@ -85,8 +85,6 @@ When script contains multiple instructions, they can be delimited with `;` or `.
   the processing of the line would stop after running the command,
   all the following instructions would be skipped.
   In a way, `.` works like the command `d`, but it does not clear the pattern space.
-* `ins1 ; ins2 . ins3` works similar to a logical chain of instructions `(ins1 and ins2) or ins3`,
-  with `;` having higher operator precedence than `.`.
 
 For example, the script
 
