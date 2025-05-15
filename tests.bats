@@ -38,6 +38,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Clear buffer" {
+	run diff <(./se -a '/sed/ z' README.md) <(sed '/sed/ z' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Use negation" {
    run diff <(./se '(1-3)! p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
