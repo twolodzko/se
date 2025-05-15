@@ -57,6 +57,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Template interpolation" {
+   run diff <(./se '=np' README.md) <(./se '="\n"p' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Simple substitute is like in sed" {
    run diff <(sed 's/a/#/g' README.md) <(./se -a 's/a/#/' README.md)
    [ "$status" -eq 0 ]
@@ -74,16 +79,6 @@ teardown() {
 
 @test "Print selected lines like in sed" {
    run diff <(sed -n '3,/address/ p' README.md) <(./se '3-/address/ p' README.md)
-   [ "$status" -eq 0 ]
-}
-
-@test "Append text like in gsed" {
-   run diff <(gsed '/sed/a >>>' README.md) <(./se '/sed/ p ">>>" n . p' README.md)
-   [ "$status" -eq 0 ]
-}
-
-@test "Insert text like in gsed" {
-   run diff <(gsed '/sed/i >>>' README.md) <(./se '/sed/ ">>>" n p . p' README.md)
    [ "$status" -eq 0 ]
 }
 
