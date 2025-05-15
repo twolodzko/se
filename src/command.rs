@@ -14,6 +14,8 @@ pub enum Command {
     Insert(String),
     /// s/src/dst/[limit]
     Substitute(Replacer),
+    /// y/src/dst/
+    Translate(String, String),
     /// h
     Copy,
     /// g
@@ -65,6 +67,20 @@ impl Command {
             Newline => println!(),
             Insert(s) => print!("{}", s),
             Substitute(r) => line.1 = r.replace(&line.1),
+            Translate(src, dst) => {
+                line.1 = line
+                    .1
+                    .chars()
+                    .map(|c| {
+                        for (s, d) in std::iter::zip(src.chars(), dst.chars()) {
+                            if c == s {
+                                return d;
+                            }
+                        }
+                        c
+                    })
+                    .collect()
+            }
             Reset => line.1.clear(),
             _ => (),
         }
@@ -81,6 +97,7 @@ impl std::fmt::Display for Command {
             Newline => write!(f, "n"),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r) => write!(f, "{}", r),
+            Translate(s, d) => write!(f, "y/{}/{}/", s, d),
             Copy => write!(f, "h"),
             Paste => write!(f, "g"),
             Exchange => write!(f, "x"),
