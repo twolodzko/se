@@ -8,7 +8,7 @@
 se [OPTIONS] <SCRIPT> [FILE]...
 ```
 
-where `<SCRIPT>` contains instructions (separated by `;` or `.`, see [below](#Multiple instructions)) of the form
+where `<SCRIPT>` contains instructions (separated by `;` or `.`, see [below](#multiple-instructions)) of the form
 
 ```text
 [address][command]
