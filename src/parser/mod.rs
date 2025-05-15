@@ -181,16 +181,8 @@ mod tests {
                 regex: regex::Regex::new("(abc)").unwrap(),
                 template: "__${123}__".to_string(),
                 limit: 0,
-            })],
+    })],
     }]); "substitute with numbered group")]
-    #[test_case(r"y/abc/123/", Editor::new(vec![Instruction{
-        address: Always,
-        commands: vec![Translate(String::from("abc"), String::from("123"))],
-    }]); "translate")]
-    #[test_case(r"y/\/\n/\t\//", Editor::new(vec![Instruction{
-        address: Always,
-        commands: vec![Translate(String::from("/\n"), String::from("\t/"))],
-    }]); "translate with escaped")]
     #[test_case(r"1d;3d;7d", Editor::new(vec![
         Instruction{
             address: Location(1),

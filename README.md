@@ -64,8 +64,6 @@ Same as `sed`, it can be used for string search and replace in files.
 * `l` – print the content of the pattern space after escaping the characters with Rust's
   [std::char::escape_default].
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
-* `y/src/dst/` – translate any characters from pattern space that match characters in `src`
-  with corresponding characters in `dst`.
 * `=` – print the line number.
 * `n` – print the newline character.
 * `h` or `c` - copy the content of the pattern space to the hold space.
