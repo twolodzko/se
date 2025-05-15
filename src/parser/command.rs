@@ -88,9 +88,9 @@ fn parse_translate<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     }
     let src = unescape(read_until(reader, '/')?)?;
     let dst = unescape(read_until(reader, '/')?)?;
-    if src.len() != dst.len() {
+    if src.len() < dst.len() {
         return Err(Error::Custom(format!(
-            "lengths of '{}' and '{}' differ",
+            "invalid command: y/{}/{}/",
             src, dst
         )));
     }

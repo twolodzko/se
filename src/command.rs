@@ -68,23 +68,25 @@ impl Command {
             Insert(s) => print!("{}", s),
             Substitute(r) => line.1 = r.replace(&line.1),
             Translate(src, dst) => {
-                line.1 = line
-                    .1
-                    .chars()
-                    .map(|c| {
-                        for (s, d) in std::iter::zip(src.chars(), dst.chars()) {
-                            if c == s {
-                                return d;
-                            }
-                        }
-                        c
-                    })
-                    .collect()
+                if dst.is_empty() {
+                    line.1 = line.1.chars().filter(|c| !src.contains(*c)).collect()
+                } else {
+                    line.1 = line.1.chars().map(|c| translate(c, src, dst)).collect()
+                }
             }
             Reset => line.1.clear(),
             _ => (),
         }
     }
+}
+
+fn translate(c: char, src: &str, dst: &str) -> char {
+    for (s, d) in std::iter::zip(src.chars(), dst.chars().cycle()) {
+        if c == s {
+            return d;
+        }
+    }
+    c
 }
 
 impl std::fmt::Display for Command {
