@@ -137,3 +137,19 @@ EOF
    run diff <(sed -n '{x;p;}' README.md) <(./se 'xp' README.md)
    [ "$status" -eq 0 ]
 }
+
+bash_line_marker() {
+   while IFS="" read -r line || [ -n "$line" ]
+   do
+      if [[ "$line" =~ "sed" ]]; then
+         printf '>%s\n' "$line"
+      else
+         printf ' %s\n' "$line"
+      fi
+   done <README.md
+}
+
+@test "The stop behavior works as intended" {
+   run diff <(bash_line_marker) <(./se '/sed/ ">" p . " " p' README.md)
+   [ "$status" -eq 0 ]
+}
