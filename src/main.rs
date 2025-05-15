@@ -31,12 +31,12 @@ struct Args {
 #[derive(Parser)]
 #[group(multiple = true, required = true)]
 struct Script {
+    /// Commands that are executed
+    command: Option<String>,
+
     /// Read the commands from the file
     #[arg(short = 'f', long = "file")]
     script: Option<PathBuf>,
-
-    /// Commands that are executed
-    command: Option<String>,
 }
 
 macro_rules! unwrap {
