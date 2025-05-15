@@ -138,6 +138,8 @@ bash_line_marker() {
    do
       if [[ "$line" =~ "sed" ]]; then
          printf '>>> %s\n' "$line"
+      elif [[ "$line" =~ "the" ]]; then
+         printf '*** %s\n' "$line"
       else
          printf '    %s\n' "$line"
       fi
@@ -145,6 +147,6 @@ bash_line_marker() {
 }
 
 @test "The stop behavior works as intended" {
-   run diff <(bash_line_marker) <(./se '/sed/ ">>> " p . "    " p' README.md)
+   run diff <(bash_line_marker) <(./se '/sed/ ">>> " p . /the/ "*** " p . "    " p' README.md)
    [ "$status" -eq 0 ]
 }
