@@ -1,12 +1,23 @@
 #!/usr/bin/env bats
 
+is_gsed() {
+   sed --version >/dev/null 2>&1
+}
+
+setup() {
+   if ! is_gsed && command -v gsed >/dev/null 2>&1 ; then
+      sed() {
+         gsed "$@"
+      }
+   fi
+}
+
 teardown() {
     rm -f /tmp/script.sed
 }
 
 @test "Fails with no arguments" {
-	run ./se
-	[ "$status" -ne 0 ]
+	! ./se
 }
 
 @test "Using q command results in proper error code" {
@@ -35,11 +46,6 @@ teardown() {
 
 @test "Delete lines" {
 	run diff <(./se -a '/sed/ d' README.md) <(sed '/sed/ d' README.md)
-   [ "$status" -eq 0 ]
-}
-
-@test "Clear buffer" {
-	run diff <(./se -a '/sed/ z' README.md) <(sed '/sed/ z' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -153,5 +159,29 @@ bash_line_marker() {
 
 @test "The stop behavior works as intended" {
    run diff <(bash_line_marker) <(./se '/sed/ ">>> " p . /the/ "*** " p . "    " p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+only_for_gsed() {
+   if ! is_gsed ; then
+      skip "This works only on GNU Sed"
+   fi
+}
+
+@test "Clear buffer like gsed" {
+   only_for_gsed
+   run diff <(./se -a '/sed/ z' README.md) <(sed '/sed/ z' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Append text like gsed" {
+   only_for_gsed
+   run diff <(sed '/sed/a >>>' README.md) <(./se '/sed/ p ">>>" n . p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Insert text like gsed" {
+   only_for_gsed
+   run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ ">>>" n p . p' README.md)
    [ "$status" -eq 0 ]
 }
