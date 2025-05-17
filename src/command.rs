@@ -14,8 +14,6 @@ pub enum Command {
     Insert(String),
     /// s/src/dst/[limit]
     Substitute(Regex, String, usize),
-    /// `regex`
-    Extract(Regex),
     /// h
     Copy,
     /// g
@@ -46,13 +44,6 @@ impl Command {
             Substitute(regex, template, limit) => {
                 line.1 = regex.0.replacen(&line.1, *limit, template).to_string()
             }
-            Extract(e) => {
-                if let Some(c) = e.0.captures(&line.1) {
-                    if let Some(s) = if c.len() > 1 { c.get(1) } else { c.get(0) } {
-                        print!("{}", s.as_str());
-                    }
-                }
-            }
             Reset => line.1.clear(),
             _ => (),
         }
@@ -69,7 +60,6 @@ impl std::fmt::Display for Command {
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
-            Extract(r) => write!(f, "{}", r.0),
             Copy => write!(f, "h"),
             Paste => write!(f, "g"),
             Exchange => write!(f, "x"),
