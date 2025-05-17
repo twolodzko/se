@@ -68,7 +68,6 @@ Same as `sed`, it can be used for string search and replace in files.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
 * ``` `regex` ``` – extract the substring matching the `regex` and prints it.
   If `regex` has a matching group, it returns the content of the first matching group, otherwise the full match.
-  It can be thought as a shordhand for `s/regex/$1/1p`.
 * `h` or `c` - copy the content of the pattern space to the hold space.
 * `g` or `v` - copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
