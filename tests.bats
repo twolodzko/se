@@ -14,6 +14,7 @@ setup() {
 
 teardown() {
     rm -f /tmp/script.sed
+    rm -f /tmp/{a,b,c}.txt
 }
 
 @test "Fails with no arguments" {
@@ -183,5 +184,18 @@ only_for_gsed() {
 @test "Insert text like gsed" {
    only_for_gsed
    run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ ">>>" n p . p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Multiple input files" {
+   echo 1 > /tmp/a.txt
+   echo 2 > /tmp/b.txt
+   echo 3 > /tmp/c.txt
+
+   run diff <(./se 'p' /tmp/a.txt /tmp/b.txt /tmp/c.txt) <(printf "1\n2\n3\n")
+   [ "$status" -eq 0 ]
+
+   echo 'p' > /tmp/script.sed
+   run diff <(./se -f /tmp/script.sed /tmp/a.txt /tmp/b.txt /tmp/c.txt) <(printf "1\n2\n3\n")
    [ "$status" -eq 0 ]
 }
