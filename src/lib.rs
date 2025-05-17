@@ -15,7 +15,7 @@ pub use {
 pub struct Line(pub usize, pub String);
 
 #[derive(Debug, Clone)]
-pub struct Regex(regex::Regex);
+pub(crate) struct Regex(regex::Regex);
 
 impl Regex {
     pub(crate) fn new(s: &str) -> Result<Regex, Error> {

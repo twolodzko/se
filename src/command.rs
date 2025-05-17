@@ -13,6 +13,7 @@ pub enum Command {
     /// "string" or 'string'
     Insert(String),
     /// s/src/dst/[limit]
+    #[allow(private_interfaces)]
     Substitute(Regex, String, usize),
     /// h
     Copy,
