@@ -49,15 +49,15 @@ mod tests {
     }]); "any")]
     #[test_case("p", Editor::new(vec![Instruction{
         address: Always,
-        commands: vec![Print]
+        commands: vec![Println]
     }]); "print all")]
-    #[test_case("=np", Editor::new(vec![Instruction{
+    #[test_case(r"=\np", Editor::new(vec![Instruction{
         address: Always,
-        commands: vec![LineNumber, Newline, Print]
+        commands: vec![LineNumber, Insert("\n".to_string()), Println]
     }]); "print with newlines")]
-    #[test_case("   = n  p  ", Editor::new(vec![Instruction{
+    #[test_case(r"   = \n  p  ", Editor::new(vec![Instruction{
         address: Always,
-        commands: vec![LineNumber, Newline, Print]
+        commands: vec![LineNumber, Insert("\n".to_string()), Println]
     }]); "commands with spaces")]
     #[test_case("-", Editor::new(vec![Instruction{
         address: Between(Box::new(Always), Box::new(Never), false),

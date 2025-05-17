@@ -19,11 +19,18 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
                 cmds.push(Stop);
                 break;
             }
-            'p' => Print,
+            'p' => Println,
+            'P' => Print,
             'l' => Escape,
             's' => parse_substitute(reader)?,
             '=' => LineNumber,
-            'n' => Newline,
+            '\\' => match reader.next()? {
+                Some('n') => Insert('\n'.to_string()),
+                Some('t') => Insert('\t'.to_string()),
+                Some('s') => Insert(' '.to_string()),
+                Some(c) => Insert(c.to_string()),
+                None => return Err(Error::Unexpected('\\')),
+            },
             'd' => Delete,
             'z' => Reset,
             'h' | 'c' => Copy,

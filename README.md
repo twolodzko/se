@@ -60,17 +60,19 @@ Same as `sed`, it can be used for string search and replace in files.
 
 ## Commands
 
-* `p` – print the content of the pattern space as-is.
+* `p` – print the content of the pattern space as-is followed by a newline character.
+  Use `P` to print the content of pattern space without the newline.
 * `l` – print the content of the pattern space after escaping the characters with Rust's
   [std::char::escape_default].
-* `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
 * `=` – print the line number.
-* `n` – print the newline character.
+* `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
 * `h` or `c` - copy the content of the pattern space to the hold space.
 * `g` or `v` - copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
 * `z` – empties the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
+* `\n`, `\t`, `\s` – print the newline, tab, or space character.
+* `\char` print the character `char`, e.g. `\=` prints `=`.
 * `"string"` or `'string'` – print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
 * `q [code]` – exit with the `code` exit code (0 by default).
@@ -120,11 +122,11 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
 
-|      `sed`       |       `se`        |
+|      `sed`       |       `se`          |
 |------------------|---------------------|
-| `=`              | `=np`               |
-| `i text`         | `p "text" n`        |
-| `a text`         | `"text" n p`        |
+| `=`              | `=\np`              |
+| `i text`         | `p "text" \n`       |
+| `a text`         | `"text" \n p`       |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
 | `s/src/dst/`     | `s/src/dst/1`       |
 | `s/src/dst/g`    | `s/src/dst/`        |
@@ -133,6 +135,16 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/(src)/&/g`    | `s/(src)/$0/`       |
 | `1,5p`           | `1-5p`              |
 | `$p`             | (no alternative)    |
+
+## `se` vs other command line utilities
+
+|    other                       |   `se`                          |
+|--------------------------------|---------------------------------|
+| `cat README.md`                | `se 'p' README.md`              |
+| `cat -n README.md`             | `se '= \t p' README.md`       |
+| `grep 'sed' README.md`         | `se '/sed/ p' README.md`        |
+| `wc -l README.md`              | `se -c '' README.md`            |
+| `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
 
 ## Grammar
 
@@ -149,7 +161,7 @@ Address        = ( Negated ',' )+ Negated
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
-Command        = [=plnhcgvxzd] | Quit | String | Substitute
+Command        = [=plnhcgvxzd] | '\' Character | Quit | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?

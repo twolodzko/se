@@ -3,13 +3,13 @@ use crate::Line;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
     /// p
+    Println,
+    /// P
     Print,
     /// l
     Escape,
     /// =
     LineNumber,
-    /// n
-    Newline,
     /// "string" or 'string'
     Insert(String),
     /// s/src/dst/[limit]
@@ -59,10 +59,10 @@ impl Command {
     pub(crate) fn apply(&self, line: &mut Line) {
         use Command::*;
         match self {
-            Print => println!("{}", line.1),
+            Println => println!("{}", line.1),
+            Print => print!("{}", line.1),
             Escape => println!("{}", line.1.escape_default()),
             LineNumber => print!("{:.10}", line.0),
-            Newline => println!(),
             Insert(s) => print!("{}", s),
             Substitute(r) => line.1 = r.replace(&line.1),
             Reset => line.1.clear(),
@@ -75,10 +75,10 @@ impl std::fmt::Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Command::*;
         match self {
-            Print => write!(f, "p"),
+            Println => write!(f, "p"),
+            Print => write!(f, "P"),
             Escape => write!(f, "l"),
             LineNumber => write!(f, "="),
-            Newline => write!(f, "n"),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r) => write!(f, "{}", r),
             Copy => write!(f, "h"),
