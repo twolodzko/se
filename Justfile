@@ -13,7 +13,7 @@ build:
     cargo build --release
     cp ./target/release/se ./
 
-install:
+install: test
     cargo install --path .
 
 benchmark: build
