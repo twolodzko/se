@@ -14,6 +14,28 @@ pub use {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Line(pub usize, pub String);
 
+#[derive(Debug, Clone)]
+pub struct Regex(regex::Regex);
+
+impl Regex {
+    pub(crate) fn new(s: &str) -> Result<Regex, Error> {
+        let regex = regex::Regex::new(s).map_err(Error::Regex)?;
+        Ok(Regex(regex))
+    }
+}
+
+impl PartialEq for Regex {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_str() == other.0.as_str()
+    }
+}
+
+impl std::fmt::Display for Regex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 #[derive(Debug)]
 pub enum Error {
     Io(std::io::Error),

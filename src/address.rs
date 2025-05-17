@@ -1,6 +1,6 @@
 use crate::Line;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) enum Address {
     // always matches
     Always,
@@ -9,11 +9,9 @@ pub(crate) enum Address {
     // specific index
     Location(usize),
     // /regex/ matching the line
-    Regex(regex::Regex),
+    Regex(crate::Regex),
     // addr! negates the addr match
     Negate(Box<Address>),
-    // // addr1 - addr2 (at least one is an index)
-    // Range(Address, Address),
     // // addr1 - addr2
     Between(Box<Address>, Box<Address>, bool),
     // addr1, addr2, ...
@@ -27,7 +25,7 @@ impl Address {
             Always => true,
             Never => false,
             Location(idx) => *idx == line.0,
-            Regex(ref regex) => regex.is_match(&line.1),
+            Regex(ref regex) => regex.0.is_match(&line.1),
             Negate(addr) => !addr.matches(line),
             Between(lhs, rhs, inside) => {
                 if *inside {
@@ -107,24 +105,6 @@ impl std::fmt::Display for Address {
     }
 }
 
-impl PartialEq for Address {
-    fn eq(&self, other: &Self) -> bool {
-        use Address::*;
-        match (self, other) {
-            (Always, Always) => true,
-            (Never, Never) => true,
-            (Location(lhs), Location(rhs)) => lhs == rhs,
-            (Regex(lhs), Regex(rhs)) => lhs.as_str() == rhs.as_str(),
-            (Negate(lhs), Negate(rhs)) => lhs == rhs,
-            (Between(lhs_lo, lhs_hi, _), Between(rhs_lo, rhs_hi, _)) => {
-                lhs_lo == rhs_lo && lhs_hi == rhs_hi
-            }
-            (Set(lhs), Set(rhs)) => std::iter::zip(lhs, rhs).all(|(a, b)| a == b),
-            _ => false,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -140,13 +120,13 @@ mod tests {
     #[test_case(Location(1), Line(1, "".to_string()), true; "index 1 matches line 1")]
     #[test_case(Location(1), Line(279, "".to_string()), false; "index 1 does not match line 279")]
     #[test_case(
-        Regex(regex::Regex::new("abc").unwrap()),
+        Regex(crate::Regex::new("abc").unwrap()),
         Line(1, "abc".to_string()),
         true;
         "regex abc matches line abc"
     )]
     #[test_case(
-        Regex(regex::Regex::new("abc").unwrap()),
+        Regex(crate::Regex::new("abc").unwrap()),
         Line(1, "hello, world!".to_string()),
         false;
         "regex abc does not match line hello"
@@ -212,14 +192,14 @@ mod tests {
         "range of indexes 1-1"
     )]
     #[test_case(
-        Regex(regex::Regex::new("aa").unwrap()),
+        Regex(crate::Regex::new("aa").unwrap()),
         vec![false, false, true, false, true, true, false, false, false, false];
         "regex aa"
     )]
     #[test_case(
         Between(
-            Box::new(Regex(regex::Regex::new("start").unwrap())),
-            Box::new(Regex(regex::Regex::new("end").unwrap())),
+            Box::new(Regex(crate::Regex::new("start").unwrap())),
+            Box::new(Regex(crate::Regex::new("end").unwrap())),
             false,
         ),
         vec![false, true, true, true, false, true, true, false, false, false];
@@ -228,7 +208,7 @@ mod tests {
     #[test_case(
         Between(
             Box::new(Location(5)),
-            Box::new(Regex(regex::Regex::new("123").unwrap())),
+            Box::new(Regex(crate::Regex::new("123").unwrap())),
             false,
         ),
         vec![false, false, false, false, true, true, true, true, true, false];

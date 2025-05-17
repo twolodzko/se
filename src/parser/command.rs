@@ -3,11 +3,8 @@ use super::{
     utils::{parse_regex, read_integer, skip_line, skip_whitespace},
 };
 use crate::{
-    command::{
-        self,
-        Command::{self, *},
-    },
-    Error,
+    command::Command::{self, *},
+    Error, Regex,
 };
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
@@ -23,9 +20,9 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'P' => Print,
             'l' => Escape,
             's' => parse_substitute(reader)?,
-            '{' => {
-                let regex = read_until(reader, '}')?;
-                Extract(command::Extract::new(&regex)?)
+            '`' => {
+                let regex = read_until(reader, '`')?;
+                Extract(Regex::new(&regex)?)
             }
             '=' => LineNumber,
             '\\' => match reader.next()? {
@@ -85,11 +82,7 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
         }
     }
 
-    Ok(Substitute(command::Replacer {
-        regex: src,
-        template: dst,
-        limit,
-    }))
+    Ok(Substitute(src, dst, limit))
 }
 
 fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {

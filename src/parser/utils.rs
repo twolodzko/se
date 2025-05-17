@@ -1,5 +1,5 @@
 use super::{reader::Reader, regex_reader};
-use crate::Error;
+use crate::{Error, Regex};
 
 pub(crate) fn skip_whitespace<R: Reader>(reader: &mut R) {
     while reader
@@ -26,7 +26,7 @@ pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String, Error> {
     Ok(num)
 }
 
-pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<regex::Regex, Error> {
+pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Regex, Error> {
     let regex = regex_reader::read_regex(reader)?;
-    regex::Regex::new(&regex).map_err(Error::Regex)
+    Regex::new(&regex)
 }
