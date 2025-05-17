@@ -23,6 +23,10 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'P' => Print,
             'l' => Escape,
             's' => parse_substitute(reader)?,
+            '{' => {
+                let regex = read_until(reader, '}')?;
+                Extract(command::Extract::new(&regex)?)
+            }
             '=' => LineNumber,
             '\\' => match reader.next()? {
                 Some('n') => Insert('\n'.to_string()),
