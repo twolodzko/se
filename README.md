@@ -167,7 +167,6 @@ Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
 ```
 
-
 [`sed`]: https://www.gnu.org/software/sed/manual/sed.html
 [Rust's Regex]: https://docs.rs/regex/latest/regex/
 [verbose mode]: https://docs.rs/regex/latest/regex/?search=verbose#example-verbose-mode
