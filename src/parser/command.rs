@@ -20,10 +20,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'P' => Print,
             'l' => Escape,
             's' => parse_substitute(reader)?,
-            #[cfg(feature = "extract")]
             '`' => parse_extract(reader)?,
-            #[cfg(feature = "extract")]
-            '{' => parse_json_extract(reader)?,
             '=' => LineNumber,
             '\\' => match reader.next()? {
                 Some('n') => Insert('\n'.to_string()),
@@ -85,9 +82,9 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     Ok(Substitute(src, dst, limit))
 }
 
-#[cfg(feature = "extract")]
 fn parse_extract<R: Reader>(reader: &mut R) -> Result<Command, Error> {
-    let regex = Regex::new(&read_until(reader, '`')?)?;
+    let regex = read_until(reader, '`')?;
+    let regex = Regex::new(&regex)?;
 
     if regex.0.captures_len() > 2 {
         eprintln!(
@@ -113,37 +110,6 @@ fn parse_extract<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     }
 
     Ok(Extract(regex, index))
-}
-
-#[cfg(feature = "extract")]
-fn parse_json_extract<R: Reader>(reader: &mut R) -> Result<Command, Error> {
-    let regex = Regex::new(&read_until(reader, '}')?)?;
-    let names = regex
-        .0
-        .capture_names()
-        .filter_map(|name| Some(name?.to_string()))
-        .collect::<Vec<String>>();
-
-    if names.is_empty() {
-        return Err(Error::Custom(format!(
-            "Warning: regular expression '{}' contains no named capturing groups",
-            regex
-        )));
-    }
-
-    let mut index = 0;
-    if let Some(c) = reader.peek()? {
-        let s = read_integer(reader)?;
-        if c.is_ascii_digit() {
-            index = if s.is_empty() {
-                0
-            } else {
-                s.parse::<usize>().map_err(Error::ParseInt)?
-            };
-        }
-    }
-
-    Ok(JsonExtract(regex, names, index))
 }
 
 fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
