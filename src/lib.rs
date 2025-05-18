@@ -47,6 +47,7 @@ pub enum Error {
     InvalidAddr(String),
     ParsingError(String),
     FromUtf8Error(FromUtf8Error),
+    Custom(String),
 }
 
 impl std::fmt::Display for Error {
@@ -62,6 +63,7 @@ impl std::fmt::Display for Error {
             Unexpected(c) => write!(f, "unexpected '{}'", c),
             InvalidAddr(a) => write!(f, "invalid address: {}", a),
             ParsingError(s) => write!(f, "failed to parse: {}", s),
+            Custom(msg) => msg.fmt(f),
         }
     }
 }

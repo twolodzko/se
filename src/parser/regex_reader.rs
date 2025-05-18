@@ -202,6 +202,6 @@ mod tests {
         let reader = &mut StringReader::from(input.to_string());
         let result = read_regex(reader).unwrap();
         assert_eq!(result, expected);
-        regex::Regex::new(&result).expect("regex should parse");
+        crate::Regex::new(&result).expect("regex should parse");
     }
 }
