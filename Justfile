@@ -10,7 +10,7 @@ integration-test: build
     bats tests.bats
 
 build:
-    cargo build --release
+    cargo build --release --features extract
     cp ./target/release/se ./
 
 install: test
