@@ -1,4 +1,4 @@
-mod address;
+pub(crate) mod address;
 mod command;
 mod reader;
 mod regex_reader;
@@ -57,27 +57,27 @@ mod tests {
         address: Always,
         commands: vec![LineNumber, Insert("\n".to_string()), Println]
     }]); "commands with spaces")]
-    #[test_case(":", Editor::new(vec![Instruction{
+    #[test_case("-", Editor::new(vec![Instruction{
         address: Between(Box::new(Location(1)), Box::new(Never), false),
         commands: Vec::new()
     }]); "infinite range")]
-    #[test_case(":5", Editor::new(vec![Instruction{
+    #[test_case("-5", Editor::new(vec![Instruction{
         address: Between(Box::new(Location(1)), Box::new(Location(5)), false),
         commands: Vec::new(),
     }]); "right bound range")]
-    #[test_case("3:", Editor::new(vec![Instruction{
+    #[test_case("3-", Editor::new(vec![Instruction{
         address: Between(Box::new(Location(3)), Box::new(Never), false),
         commands: Vec::new(),
     }]); "left bound range")]
-    #[test_case("13:72", Editor::new(vec![Instruction{
+    #[test_case("13-72", Editor::new(vec![Instruction{
         address: Between(Box::new(Location(13)), Box::new(Location(72)), false),
         commands: Vec::new(),
     }]); "range")]
-    #[test_case(" 13  :   72 ", Editor::new(vec![Instruction{
+    #[test_case(" 13  -   72 ", Editor::new(vec![Instruction{
         address: Between(Box::new(Location(13)), Box::new(Location(72)), false),
         commands: Vec::new(),
     }]); "range with spaces")]
-    #[test_case("13:72!", Editor::new(vec![Instruction{
+    #[test_case("13-72!", Editor::new(vec![Instruction{
         address: Negate(Box::new(Between(Box::new(Location(13)), Box::new(Location(72)), false))),
         commands: Vec::new(),
     }]); "range negated")]
@@ -101,7 +101,7 @@ mod tests {
         address: Regex(crate::Regex::from_str(r"^\$$").unwrap()),
         commands: Vec::new(),
     }]); "whole line only dollar")]
-    #[test_case("/abc/:/def/", Editor::new(vec![Instruction{
+    #[test_case("/abc/-/def/", Editor::new(vec![Instruction{
         address: Between(
             Box::new(Regex(crate::Regex::from_str("abc").unwrap())),
             Box::new(Regex(crate::Regex::from_str("def").unwrap())),

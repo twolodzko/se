@@ -109,7 +109,7 @@ impl std::fmt::Display for Address {
 mod tests {
     use crate::{
         address::Address::{self, *},
-        Line,
+        Line, StringReader,
     };
     use std::str::FromStr;
     use test_case::test_case;
@@ -150,90 +150,66 @@ mod tests {
     }
 
     #[test_case(
-        Always,
+        "*",
         vec![true, true, true, true, true, true, true, true, true, true];
         "any"
     )]
     #[test_case(
-        Negate(Box::new(Always)),
+        "*!",
         vec![false, false, false, false, false, false, false, false, false, false];
         "any negated"
     )]
     #[test_case(
-        Location(7),
+        "7",
         vec![false, false, false, false, false, false, true, false, false, false];
         "index 7"
     )]
     #[test_case(
-        Location(89),
+        "89",
         vec![false, false, false, false, false, false, false, false, false, false];
         "index 89"
     )]
     #[test_case(
-        Set(vec![Location(2), Location(5), Location(9)]),
+        "2,5,9",
         vec![false, true, false, false, true, false, false, false, true, false];
         "set of indexes"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(2)),
-            Box::new(Location(7)),
-            false,
-        ),
+        "2-7",
         vec![false, true, true, true, true, true, true, false, false, false];
         "range of indexes 2:7"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(1)),
-            Box::new(Location(1)),
-            false,
-        ),
+        "1-1",
         vec![true, false, false, false, false, false, false, false, false, false];
         "range of indexes 1:1"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(1)),
-            Box::new(Location(5)),
-            false,
-        ),
+        "1-5",
         vec![true, true, true, true, true, false, false, false, false, false];
         "left-open range of indexes"
     )]
     #[test_case(
-        Regex(crate::Regex::from_str("aa").unwrap()),
+        "/aa/",
         vec![false, false, true, false, true, true, false, false, false, false];
         "regex aa"
     )]
     #[test_case(
-        Between(
-            Box::new(Regex(crate::Regex::from_str("start").unwrap())),
-            Box::new(Regex(crate::Regex::from_str("end").unwrap())),
-            false,
-        ),
+        "/start/-/end/",
         vec![false, true, true, true, false, true, true, false, false, false];
         "regex range matches twice"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(5)),
-            Box::new(Regex(crate::Regex::from_str("123").unwrap())),
-            false,
-        ),
+        "5-/123/",
         vec![false, false, false, false, true, true, true, true, true, false];
         "mixed range"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(6)),
-            Box::new(Never),
-            false,
-        ),
+        "6-$",
         vec![false, false, false, false, false, true, true, true, true, true];
         "half-open range"
     )]
-    fn multiline_example(addr: Address, expected: Vec<bool>) {
+    fn multiline_example(addr: &str, expected: Vec<bool>) {
         let example = r"
             start
             aaa
@@ -244,7 +220,8 @@ mod tests {
 
             123
         ";
-        let mut addr = addr;
+        let mut reader = StringReader::from(addr.to_string());
+        let mut addr = crate::parser::address::parse(&mut reader).unwrap();
         assert_eq!(
             example
                 .lines()
