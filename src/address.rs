@@ -12,7 +12,7 @@ pub(crate) enum Address {
     Regex(crate::Regex),
     // addr! negates the addr match
     Negate(Box<Address>),
-    // // addr1 - addr2
+    // // addr1 : addr2
     Between(Box<Address>, Box<Address>, bool),
     // addr1, addr2, ...
     Set(Vec<Address>),
