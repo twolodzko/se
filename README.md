@@ -145,7 +145,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `grep 'sed' README.md`         | `se '/sed/ p' README.md`        |
 | `wc -l README.md`              | `se -c '' README.md`            |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
-| `head -n 5 README.md`          | `se '-5 p' README.md`           |
+| `head -n 5 README.md`          | `se '1-5 p' README.md`           |
 
 ## Grammar
 
