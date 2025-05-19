@@ -114,11 +114,10 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error
 }
 
 fn maybe_negate<R: Reader>(addr: Address, reader: &mut R) -> Result<Address, Error> {
-    match reader.peek()? {
-        Some('!') => {
-            reader.next()?;
-            Ok(!addr)
-        }
-        _ => Ok(addr),
+    if let Some('!') = reader.peek()? {
+        reader.next()?;
+        Ok(!addr)
+    } else {
+        Ok(addr)
     }
 }
