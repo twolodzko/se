@@ -111,6 +111,7 @@ mod tests {
         address::Address::{self, *},
         Line,
     };
+    use std::str::FromStr;
     use test_case::test_case;
 
     #[test_case(Always, Line(1, "".to_string()), true; "any matches line 1")]
@@ -120,13 +121,13 @@ mod tests {
     #[test_case(Location(1), Line(1, "".to_string()), true; "index 1 matches line 1")]
     #[test_case(Location(1), Line(279, "".to_string()), false; "index 1 does not match line 279")]
     #[test_case(
-        Regex(crate::Regex::new("abc").unwrap()),
+        Regex(crate::Regex::from_str("abc").unwrap()),
         Line(1, "abc".to_string()),
         true;
         "regex abc matches line abc"
     )]
     #[test_case(
-        Regex(crate::Regex::new("abc").unwrap()),
+        Regex(crate::Regex::from_str("abc").unwrap()),
         Line(1, "hello, world!".to_string()),
         false;
         "regex abc does not match line hello"
@@ -192,14 +193,14 @@ mod tests {
         "range of indexes 1-1"
     )]
     #[test_case(
-        Regex(crate::Regex::new("aa").unwrap()),
+        Regex(crate::Regex::from_str("aa").unwrap()),
         vec![false, false, true, false, true, true, false, false, false, false];
         "regex aa"
     )]
     #[test_case(
         Between(
-            Box::new(Regex(crate::Regex::new("start").unwrap())),
-            Box::new(Regex(crate::Regex::new("end").unwrap())),
+            Box::new(Regex(crate::Regex::from_str("start").unwrap())),
+            Box::new(Regex(crate::Regex::from_str("end").unwrap())),
             false,
         ),
         vec![false, true, true, true, false, true, true, false, false, false];
@@ -208,7 +209,7 @@ mod tests {
     #[test_case(
         Between(
             Box::new(Location(5)),
-            Box::new(Regex(crate::Regex::new("123").unwrap())),
+            Box::new(Regex(crate::Regex::from_str("123").unwrap())),
             false,
         ),
         vec![false, false, false, false, true, true, true, true, true, false];

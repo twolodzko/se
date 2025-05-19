@@ -17,8 +17,10 @@ pub struct Line(pub usize, pub String);
 #[derive(Debug, Clone)]
 pub(crate) struct Regex(regex::Regex);
 
-impl Regex {
-    pub(crate) fn new(s: &str) -> Result<Regex, Error> {
+impl std::str::FromStr for Regex {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Regex, Self::Err> {
         let regex = regex::Regex::new(s).map_err(Error::Regex)?;
         Ok(Regex(regex))
     }
