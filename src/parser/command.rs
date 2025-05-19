@@ -102,7 +102,7 @@ fn parse_extract<R: Reader>(reader: &mut R) -> Result<Command, Error> {
             } else {
                 let num = s.parse::<usize>().map_err(Error::ParseInt)?;
                 if num == 0 {
-                    return Err(Error::Custom(format!("invalid index")));
+                    return Err(Error::Custom("invalid index".to_string()));
                 }
                 num - 1
             };
