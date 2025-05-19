@@ -24,7 +24,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             '\\' => match reader.next()? {
                 Some('n') => Insert('\n'.to_string()),
                 Some('t') => Insert('\t'.to_string()),
-                Some('s') => Insert(' '.to_string()),
                 Some(c) => Insert(c.to_string()),
                 None => return Err(Error::Unexpected('\\')),
             },
