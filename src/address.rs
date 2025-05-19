@@ -92,15 +92,14 @@ impl std::fmt::Display for Address {
             Regex(regex) => write!(f, "/{}/", regex),
             Negate(addr) => write!(f, "{}!", addr),
             Between(lhs, rhs, _) => write!(f, "{}-{}", lhs, rhs),
-            Set(addrs) => write!(
-                f,
-                "{}",
-                addrs
+            Set(addrs) => {
+                let list = addrs
                     .iter()
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
-            ),
+                    .join(", ");
+                write!(f, "{}", list)
+            }
         }
     }
 }
