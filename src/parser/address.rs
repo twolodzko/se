@@ -55,10 +55,10 @@ fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address, Error> {
 }
 
 fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
-    let lhs = parse_simple_addr(reader)?;
+    let addr = parse_simple_addr(reader)?;
     skip_whitespace(reader);
-    if let Some('-' | ':') = reader.peek()? {
-        let lhs = lhs.unwrap_or(Location(1));
+    if let Some('-') = reader.peek()? {
+        let lhs = addr.unwrap_or(Location(1));
         reader.next()?;
         skip_whitespace(reader);
         let rhs = parse_simple_addr(reader)?.unwrap_or(Never);
@@ -72,7 +72,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
         }
         return Ok(Between(Box::new(lhs), Box::new(rhs), false));
     }
-    Ok(lhs.unwrap_or(Always))
+    Ok(addr.unwrap_or(Always))
 }
 
 fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error> {

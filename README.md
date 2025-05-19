@@ -41,7 +41,7 @@ Same as `sed`, it can be used for string search and replace in files.
 ## Addresses
 
 * Number like `1` or `278` points to a specific line. Line numbers start at 1.
-* `1-5` (or `1:5`) an inclusive range of the lines between `1` and `5`.
+* `1-5` an inclusive range of the lines between `1` and `5`.
   `-5` or `*-5` is equivalent to `1-5`.
   `1-` or `1-$` means all the lines from `1` to the final line.
 * `*` or no address specified means that all the lines would match.
