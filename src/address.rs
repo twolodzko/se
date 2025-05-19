@@ -181,7 +181,7 @@ mod tests {
             false,
         ),
         vec![false, true, true, true, true, true, true, false, false, false];
-        "range of indexes 2-7"
+        "range of indexes 2:7"
     )]
     #[test_case(
         Between(
@@ -190,7 +190,16 @@ mod tests {
             false,
         ),
         vec![true, false, false, false, false, false, false, false, false, false];
-        "range of indexes 1-1"
+        "range of indexes 1:1"
+    )]
+    #[test_case(
+        Between(
+            Box::new(Location(1)),
+            Box::new(Location(5)),
+            false,
+        ),
+        vec![true, true, true, true, true, false, false, false, false, false];
+        "left-open range of indexes"
     )]
     #[test_case(
         Regex(crate::Regex::from_str("aa").unwrap()),

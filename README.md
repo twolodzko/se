@@ -41,12 +41,12 @@ Same as `sed`, it can be used for string search and replace in files.
 ## Addresses
 
 * Number like `1` or `278` points to a specific line. Line numbers start at 1.
-* `1-5` an inclusive range of the lines between `1` and `5`.
-  `-5` or `*-5` is equivalent to `1-5`.
-  `1-` or `1-$` means all the lines from `1` to the final line.
+* `1:5` an inclusive range of the lines between `1` and `5`.
+  `:5` or `*:5` is equivalent to `1:5`.
+  `1:` or `1:$` means all the lines from `1` to the final line.
 * `*` or no address specified means that all the lines would match.
   If no address is given, this is the default.
-* `$` never matches any line, so `5-$` (or `5-`) means a left-open interval.
+* `$` never matches any line, so `5:$` (or `5:`) means a left-open interval.
   Using `$` anywhere but range end is pointless, as it is a no-op.
 * `/regex/` matches the lines that match the regular expression specified between `/.../`.
   Regular expressions can be used as bounds of the ranges.
@@ -56,7 +56,7 @@ Same as `sed`, it can be used for string search and replace in files.
 * `addr1,addr2,...,addrN` matches any of the addresses.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
-  e.g. `(1,2,3)!` is equivalent to matching the `4-` range.
+  e.g. `(1,2,3)!` is equivalent to matching the `4:` range.
 
 ## Commands
 
@@ -116,7 +116,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * `sed` by default prints all the lines unless explicitly deleted.
   To achieve this behavior use `-a` (`--all`) flag to print all the lines.
 * In `sed` `$` means final line, here it means *never match*.
-  As a consequence `5-$` would match all the lines starting from the fifth in both cases,
+  As a consequence `5:$` would match all the lines starting from the fifth in both cases,
   but in `sed` the `$` would be the last line so the range would be finite,
   and here it would be infinite. Using `$` outside of range would never match.
 * `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
@@ -133,7 +133,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/src/dst/flag` | `s/(?flag)src/dst/` |
 | `s/(src)/\1/g`   | `s/(src)/$1/`       |
 | `s/(src)/&/g`    | `s/(src)/$0/`       |
-| `1,5p`           | `1-5p`              |
+| `1,5p`           | `1:5p`              |
 | `$p`             | (no alternative)    |
 
 ## `se` vs other command line utilities
@@ -141,10 +141,11 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |    other                       |   `se`                          |
 |--------------------------------|---------------------------------|
 | `cat README.md`                | `se 'p' README.md`              |
-| `cat -n README.md`             | `se '= \t p' README.md`       |
+| `cat -n README.md`             | `se '= \t p' README.md`         |
 | `grep 'sed' README.md`         | `se '/sed/ p' README.md`        |
 | `wc -l README.md`              | `se -c '' README.md`            |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
+| `head -n 5 README.md`          | `se ':5 p' README.md`           |
 
 ## Grammar
 
@@ -153,9 +154,9 @@ Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
 AddressAtom    = '*' | '$' | Location | Regex | WholeLine
-Range          = AddressAtom? '-' AddressAtom?
+Range          = AddressAtom? ':' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
-Negated         = ( Brackets | Range ) '!'?
+Negated        = ( Brackets | Range ) '!'?
 Address        = ( Negated ',' )+ Negated
 
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?

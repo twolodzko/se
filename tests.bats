@@ -56,7 +56,7 @@ teardown() {
 }
 
 @test "Use negation" {
-   run diff <(./se '(1-3)! p' README.md) <(tail -n +4 README.md)
+   run diff <(./se '(1:3)! p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -95,7 +95,12 @@ teardown() {
 }
 
 @test "Print selected lines like in sed" {
-   run diff <(sed -n '3,/address/ p' README.md) <(./se '3-/address/ p' README.md)
+   run diff <(sed -n '3,/address/ p' README.md) <(./se '3:/address/ p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Print head" {
+   run diff <(head -n 5 README.md) <(./se ':5p' README.md)
    [ "$status" -eq 0 ]
 }
 
