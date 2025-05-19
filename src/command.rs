@@ -15,7 +15,7 @@ pub enum Command {
     /// s/src/dst/[limit]
     #[allow(private_interfaces)]
     Substitute(Regex, String, usize),
-    /// `regex`
+    /// `regex`[n]
     #[allow(private_interfaces)]
     Extract(Regex, usize),
     /// h
