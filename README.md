@@ -66,8 +66,10 @@ Same as `sed`, it can be used for string search and replace in files.
   [std::char::escape_default].
 * `=` – print the line number.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
-* `h` or `c` - copy the content of the pattern space to the hold space.
-* `g` or `v` - copy the content of the hold space to the pattern space.
+* `kN-M` – keep the characters from the `N-M` range (inclusive). `-M` is an left-open interval (same as `1-M`),
+  `N-` is an right-open interval. `kM` is a shorter way of defining `k1-M`.
+* `h` or `c` – copy the content of the pattern space to the hold space.
+* `g` or `v` – copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
 * `z` – empties the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
@@ -146,6 +148,9 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `wc -l README.md`              | `se -c '' README.md`            |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
 | `head -n 5 README.md`          | `se '-5 p' README.md`           |
+| `cut -c '3-7' README.md`       | `se 'k3-7 p' README.md`\*       |
+
+\* – but `se` understands unicode.
 
 ## Grammar
 

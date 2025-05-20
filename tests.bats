@@ -104,6 +104,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Be like cut" {
+   run diff <(cut -c '2-7' src/main.rs) <(./se 'k2-7p' src/main.rs)
+   [ "$status" -eq 0 ]
+}
+
 @test "Replace all like in sed" {
    run diff <(sed -nE 's/in (`sed`)/__&__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__$0__/p' README.md)
    [ "$status" -eq 0 ]

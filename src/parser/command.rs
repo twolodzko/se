@@ -20,6 +20,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'P' => Print,
             'l' => Escape,
             's' => parse_substitute(reader)?,
+            'k' => parse_keep(reader)?,
             '=' => LineNumber,
             '\\' => match reader.next()? {
                 Some('n') => Insert('\n'.to_string()),
@@ -135,6 +136,41 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
         }
     }
     Err(Error::Missing(delim))
+}
+
+fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command, Error> {
+    let s = read_integer(reader)?;
+    let lhs = if s.is_empty() {
+        0
+    } else {
+        let num: usize = s.parse().map_err(Error::ParseInt)?;
+        if num == 0 {
+            return Err(Error::Custom("character indexes need to be >0".to_string()));
+        }
+        num - 1
+    };
+
+    if let Some('-') = reader.peek()? {
+        reader.next()?;
+    } else {
+        return Ok(Keep(0, Some(lhs + 1)));
+    };
+
+    let s = read_integer(reader)?;
+    let rhs = if s.is_empty() {
+        None
+    } else {
+        let num: usize = s.parse().map_err(Error::ParseInt)?;
+        if num == 0 || num < lhs {
+            return Err(Error::Custom(format!(
+                "invalid character index range: {}-{}",
+                lhs + 1,
+                num
+            )));
+        }
+        Some(num - lhs)
+    };
+    Ok(Keep(lhs, rhs))
 }
 
 fn unescape(s: String) -> Result<String, Error> {

@@ -89,3 +89,46 @@ impl std::fmt::Display for Editor {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{parse, StringReader};
+    use test_case::test_case;
+
+    #[test_case(
+        "k3-5",
+        "345";
+        "range"
+    )]
+    #[test_case(
+        "k-5",
+        "12345";
+        "left-open range"
+    )]
+    #[test_case(
+        "k5",
+        "12345";
+        "first n chars"
+    )]
+    #[test_case(
+        "k3-",
+        "3456789";
+        "right-open range"
+    )]
+    #[test_case(
+        "k1-1",
+        "1";
+        "single item range"
+    )]
+    #[test_case(
+        "k1",
+        "1";
+        "first item"
+    )]
+    fn keep(command: &str, expected: &str) {
+        let mut reader = StringReader::from(command.to_string());
+        let mut editor = parse(&mut reader).unwrap();
+        let (result, _) = editor.apply("123456789").unwrap();
+        assert_eq!(result, expected)
+    }
+}

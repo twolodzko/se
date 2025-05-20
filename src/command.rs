@@ -15,6 +15,8 @@ pub enum Command {
     /// s/src/dst/[limit]
     #[allow(private_interfaces)]
     Substitute(Regex, String, usize),
+    /// ks-e
+    Keep(usize, Option<usize>),
     /// h
     Copy,
     /// g
@@ -45,6 +47,13 @@ impl Command {
             Substitute(regex, template, limit) => {
                 line.1 = regex.0.replacen(&line.1, *limit, template).to_string()
             }
+            Keep(skip, take) => {
+                line.1 = if let Some(take) = take {
+                    line.1.chars().skip(*skip).take(*take).collect()
+                } else {
+                    line.1.chars().skip(*skip).collect()
+                };
+            }
             Reset => line.1.clear(),
             _ => (),
         }
@@ -61,6 +70,8 @@ impl std::fmt::Display for Command {
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
+            Keep(s, None) => write!(f, "k{}-", s + 1),
+            Keep(s, Some(t)) => write!(f, "k{}-{}", s + 1, s + t),
             Copy => write!(f, "h"),
             Paste => write!(f, "g"),
             Exchange => write!(f, "x"),
