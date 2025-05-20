@@ -85,15 +85,49 @@ fn parse_translate<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     if reader.next()? != Some('/') {
         return Err(Error::Missing('/'));
     }
-    let src = unescape(read_until(reader, '/')?)?;
-    let dst = unescape(read_until(reader, '/')?)?;
+    let src = read_translate_pattern(reader)?;
+    let dst = read_translate_pattern(reader)?;
     if src.len() != dst.len() {
         return Err(Error::Custom(format!(
-            "number of characters in /{}/ does not match /{}/",
-            src, dst
+            "number of characters in /{}/ differs from /{}/",
+            src, dst,
         )));
     }
     Ok(Translate(src, dst))
+}
+
+fn read_translate_pattern<R: Reader>(reader: &mut R) -> Result<String, Error> {
+    let pattern = unescape(read_until(reader, '/')?)?;
+    Ok(maybe_range(&pattern))
+}
+
+fn maybe_range(s: &str) -> String {
+    let chars: Vec<char> = s.chars().collect();
+    let mut acc: Vec<char> = Vec::new();
+    let mut i = 0;
+    while i + 2 < chars.len() {
+        if chars[i + 1] == '-' {
+            for c in range(chars[i], chars[i + 2]) {
+                acc.push(c);
+            }
+            i += 3;
+        } else {
+            acc.push(chars[i]);
+            i += 1;
+        }
+    }
+    for c in chars[i..].iter() {
+        acc.push(*c);
+    }
+    acc.iter().collect()
+}
+
+fn range(a: char, b: char) -> Box<dyn Iterator<Item = char>> {
+    if a <= b {
+        Box::new(a..=b)
+    } else {
+        Box::new((b..=a).rev())
+    }
 }
 
 fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
@@ -154,5 +188,79 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
 }
 
 fn unescape(s: String) -> Result<String, Error> {
-    unescape::unescape(&s).ok_or(Error::ParsingError(s))
+    unescape::unescape(&s).ok_or(Error::Custom(format!(
+        "unrecognized escape characters in '{}'",
+        s
+    )))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::maybe_range;
+    use test_case::test_case;
+
+    #[test_case(
+        "",
+        "";
+        "empty"
+    )]
+    #[test_case(
+        "a",
+        "a";
+        "one char"
+    )]
+    #[test_case(
+        "ab",
+        "ab";
+        "two chars"
+    )]
+    #[test_case(
+        "abc",
+        "abc";
+        "non-range"
+    )]
+    #[test_case(
+        "a-",
+        "a-";
+        "minus at back"
+    )]
+    #[test_case(
+        "-a",
+        "-a";
+        "minus at front"
+    )]
+    #[test_case(
+        "-a-",
+        "-a-";
+        "minus at front and back"
+    )]
+    #[test_case(
+        "ab",
+        "ab";
+        "short non-range"
+    )]
+    #[test_case(
+        "a-d",
+        "abcd";
+        "range"
+    )]
+    #[test_case(
+        "a-ce-g",
+        "abcefg";
+        "two ranges"
+    )]
+    #[test_case(
+        "a-cde-ghijk",
+        "abcdefghijk";
+        "ranges mixed with chars"
+    )]
+    #[test_case(
+        "abc-g",
+        "abcdefg";
+        "chars and range"
+    )]
+    fn expand_range(example: &str, expected: &str) {
+        let result = maybe_range(example);
+        assert_eq!(result, expected)
+    }
 }

@@ -67,7 +67,10 @@ Same as `sed`, it can be used for string search and replace in files.
 * `=` – print the line number.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
 * `y/src/dst/` – translate any characters from pattern space that match characters in `src`
-  with corresponding characters in `dst`.
+  with corresponding characters in `dst`. Same as command line application `tr`, it supports
+  ranges, e.g. `y/A-Z/a-z/` would translate ASCII characters to lowercase. Range is defined as
+  `start-end` where `start` and `end` are characters, so `-az` or `az-` are just three characters,
+  but `a-z` is a range. Ranges can be combined with other characters or ranges, e.g. `a-zA-Z ,.`.
 * `h` or `c` - copy the content of the pattern space to the hold space.
 * `g` or `v` - copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
