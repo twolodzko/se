@@ -15,6 +15,8 @@ pub enum Command {
     /// s/src/dst/[limit]
     #[allow(private_interfaces)]
     Substitute(Regex, String, usize),
+    /// y/src/dst/
+    Translate(String, String),
     /// h
     Copy,
     /// g
@@ -45,10 +47,22 @@ impl Command {
             Substitute(regex, template, limit) => {
                 line.1 = regex.0.replacen(&line.1, *limit, template).to_string()
             }
+            Translate(src, dst) => {
+                line.1 = line.1.chars().map(|c| translate(c, src, dst)).collect()
+            }
             Reset => line.1.clear(),
             _ => (),
         }
     }
+}
+
+fn translate(c: char, src: &str, dst: &str) -> char {
+    for (s, d) in std::iter::zip(src.chars(), dst.chars().cycle()) {
+        if c == s {
+            return d;
+        }
+    }
+    c
 }
 
 impl std::fmt::Display for Command {
@@ -61,6 +75,7 @@ impl std::fmt::Display for Command {
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
+            Translate(s, d) => write!(f, "y/{}/{}/", s, d),
             Copy => write!(f, "h"),
             Paste => write!(f, "g"),
             Exchange => write!(f, "x"),

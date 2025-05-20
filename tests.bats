@@ -94,6 +94,16 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Translate like sed" {
+   run diff <(sed 'y/abcd/#$%^/' README.md) <(./se -a 'y/abcd/#$%^/' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Translate like tr" {
+   run diff <(cat README.md | tr 'abcd' '#$%^') <(./se -a 'y/abcd/#$%^/' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Print selected lines like in sed" {
    run diff <(sed -n '3,/address/ p' README.md) <(./se '3-/address/ p' README.md)
    [ "$status" -eq 0 ]

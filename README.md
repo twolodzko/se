@@ -66,6 +66,8 @@ Same as `sed`, it can be used for string search and replace in files.
   [std::char::escape_default].
 * `=` – print the line number.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
+* `y/src/dst/` – translate any characters from pattern space that match characters in `src`
+  with corresponding characters in `dst`.
 * `h` or `c` - copy the content of the pattern space to the hold space.
 * `g` or `v` - copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.

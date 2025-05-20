@@ -20,6 +20,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'P' => Print,
             'l' => Escape,
             's' => parse_substitute(reader)?,
+            'y' => parse_translate(reader)?,
             '=' => LineNumber,
             '\\' => match reader.next()? {
                 Some('n') => Insert('\n'.to_string()),
@@ -78,6 +79,21 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     }
 
     Ok(Substitute(src, dst, limit))
+}
+
+fn parse_translate<R: Reader>(reader: &mut R) -> Result<Command, Error> {
+    if reader.next()? != Some('/') {
+        return Err(Error::Missing('/'));
+    }
+    let src = unescape(read_until(reader, '/')?)?;
+    let dst = unescape(read_until(reader, '/')?)?;
+    if src.len() != dst.len() {
+        return Err(Error::Custom(format!(
+            "number of characters in /{}/ does not match /{}/",
+            src, dst
+        )));
+    }
+    Ok(Translate(src, dst))
 }
 
 fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
