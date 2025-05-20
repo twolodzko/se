@@ -66,15 +66,18 @@ Same as `sed`, it can be used for string search and replace in files.
   [std::char::escape_default].
 * `=` – print the line number.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
-* ``` `regex`[n] ``` – extract the `n`th substring matching the `regex` and print it.
-  If `regex` has a matching group, it returns the content of the first matching group, otherwise the full match.
+* `y/src/dst/` – translate any characters from pattern space that match characters in `src`
+  with corresponding characters in `dst`. Same as command line application `tr`, it supports
+  ranges, e.g. `y/A-Z/a-z/` would translate ASCII characters to lowercase. Range is defined as
+  `start-end` where `start` and `end` are characters, so `-az` or `az-` are just three characters,
+  but `a-z` is a range. Ranges can be combined with other characters or ranges, e.g. `a-zA-Z ,.`.
 * `h` or `c` - copy the content of the pattern space to the hold space.
 * `g` or `v` - copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
 * `z` – empties the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
-* `\n`, `\t`, `\s` – print the newline, tab, or space character.
-* `\char` print the character `char`, e.g. `\=` prints `=`.
+* `\n`, `\t` – print the newline, or tab character.
+* `\char` print the character `char`, e.g. `\=` prints `=` and `\ ` prints whitespace.
 * `"string"` or `'string'` – print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
 * `q [code]` – exit with the `code` exit code (0 by default).
@@ -143,10 +146,11 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |    other                       |   `se`                          |
 |--------------------------------|---------------------------------|
 | `cat README.md`                | `se 'p' README.md`              |
-| `cat -n README.md`             | `se '= \t p' README.md`       |
+| `cat -n README.md`             | `se '= \t p' README.md`         |
 | `grep 'sed' README.md`         | `se '/sed/ p' README.md`        |
 | `wc -l README.md`              | `se -c '' README.md`            |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
+| `head -n 5 README.md`          | `se '-5 p' README.md`           |
 
 ## Grammar
 
@@ -157,7 +161,7 @@ WholeLine      = '^' [^$]* '$'
 AddressAtom    = '*' | '$' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
-Negated         = ( Brackets | Range ) '!'?
+Negated        = ( Brackets | Range ) '!'?
 Address        = ( Negated ',' )+ Negated
 
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?

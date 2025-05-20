@@ -15,9 +15,8 @@ pub enum Command {
     /// s/src/dst/[limit]
     #[allow(private_interfaces)]
     Substitute(Regex, String, usize),
-    /// `regex`[n]
-    #[allow(private_interfaces)]
-    Extract(Regex, usize),
+    /// y/src/dst/
+    Translate(String, String),
     /// h
     Copy,
     /// g
@@ -48,17 +47,22 @@ impl Command {
             Substitute(regex, template, limit) => {
                 line.1 = regex.0.replacen(&line.1, *limit, template).to_string()
             }
-            Extract(e, i) => {
-                if let Some(c) = e.0.captures_iter(&line.1).nth(*i) {
-                    if let Some(s) = if c.len() > 1 { c.get(1) } else { c.get(0) } {
-                        print!("{}", s.as_str());
-                    }
-                }
+            Translate(src, dst) => {
+                line.1 = line.1.chars().map(|c| translate(c, src, dst)).collect()
             }
             Reset => line.1.clear(),
             _ => (),
         }
     }
+}
+
+fn translate(c: char, src: &str, dst: &str) -> char {
+    for (s, d) in std::iter::zip(src.chars(), dst.chars().cycle()) {
+        if c == s {
+            return d;
+        }
+    }
+    c
 }
 
 impl std::fmt::Display for Command {
@@ -71,7 +75,7 @@ impl std::fmt::Display for Command {
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
-            Extract(r, i) => write!(f, "`{}`{}", r.0, i),
+            Translate(s, d) => write!(f, "y/{}/{}/", s, d),
             Copy => write!(f, "h"),
             Paste => write!(f, "g"),
             Exchange => write!(f, "x"),

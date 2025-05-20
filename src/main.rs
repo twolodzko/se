@@ -32,6 +32,7 @@ struct Args {
 #[group(multiple = true, required = true)]
 struct Script {
     /// Commands that are executed
+    #[arg(allow_hyphen_values = true)]
     command: Option<String>,
 
     /// Read the commands from the file

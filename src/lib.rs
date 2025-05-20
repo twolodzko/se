@@ -17,8 +17,10 @@ pub struct Line(pub usize, pub String);
 #[derive(Debug, Clone)]
 pub(crate) struct Regex(regex::Regex);
 
-impl Regex {
-    pub(crate) fn new(s: &str) -> Result<Regex, Error> {
+impl std::str::FromStr for Regex {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Regex, Self::Err> {
         let regex = regex::Regex::new(s).map_err(Error::Regex)?;
         Ok(Regex(regex))
     }
@@ -45,7 +47,6 @@ pub enum Error {
     Missing(char),
     Unexpected(char),
     InvalidAddr(String),
-    ParsingError(String),
     FromUtf8Error(FromUtf8Error),
     Custom(String),
 }
@@ -62,8 +63,7 @@ impl std::fmt::Display for Error {
             Missing(c) => write!(f, "missing '{}'", c),
             Unexpected(c) => write!(f, "unexpected '{}'", c),
             InvalidAddr(a) => write!(f, "invalid address: {}", a),
-            ParsingError(s) => write!(f, "failed to parse: {}", s),
-            Custom(msg) => msg.fmt(f),
+            Custom(s) => s.fmt(f),
         }
     }
 }

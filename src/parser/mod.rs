@@ -1,4 +1,4 @@
-mod address;
+pub(crate) mod address;
 mod command;
 mod reader;
 mod regex_reader;
@@ -34,6 +34,7 @@ mod tests {
     use crate::{
         address::Address::*, command::Command::*, editor::Instruction, Editor, StringReader,
     };
+    use std::str::FromStr;
     use test_case::test_case;
 
     #[test_case("", Editor::new(vec![Instruction{
@@ -57,11 +58,11 @@ mod tests {
         commands: vec![LineNumber, Insert("\n".to_string()), Println]
     }]); "commands with spaces")]
     #[test_case("-", Editor::new(vec![Instruction{
-        address: Between(Box::new(Always), Box::new(Never), false),
+        address: Between(Box::new(Location(1)), Box::new(Never), false),
         commands: Vec::new()
     }]); "infinite range")]
     #[test_case("-5", Editor::new(vec![Instruction{
-        address: Between(Box::new(Always), Box::new(Location(5)), false),
+        address: Between(Box::new(Location(1)), Box::new(Location(5)), false),
         commands: Vec::new(),
     }]); "right bound range")]
     #[test_case("3-", Editor::new(vec![Instruction{
@@ -81,29 +82,29 @@ mod tests {
         commands: Vec::new(),
     }]); "range negated")]
     #[test_case("/abc/", Editor::new(vec![Instruction{
-        address: Regex(crate::Regex::new("abc").unwrap()),
+        address: Regex(crate::Regex::from_str("abc").unwrap()),
         commands: Vec::new(),
     }]); "regex match")]
     #[test_case(r"/abc\//", Editor::new(vec![Instruction{
-        address: Regex(crate::Regex::new("abc/").unwrap()),
+        address: Regex(crate::Regex::from_str("abc/").unwrap()),
         commands: Vec::new(),
     }]); "regex match with escape")]
     #[test_case("^abc$", Editor::new(vec![Instruction{
-        address: Regex(crate::Regex::new("^abc$").unwrap()),
+        address: Regex(crate::Regex::from_str("^abc$").unwrap()),
         commands: Vec::new(),
     }]); "whole line regex match")]
     #[test_case(r"^\$abc$", Editor::new(vec![Instruction{
-        address: Regex(crate::Regex::new(r"^\$abc$").unwrap()),
+        address: Regex(crate::Regex::from_str(r"^\$abc$").unwrap()),
         commands: Vec::new(),
     }]); "whole line regex match with escape")]
     #[test_case(r"^\$$", Editor::new(vec![Instruction{
-        address: Regex(crate::Regex::new(r"^\$$").unwrap()),
+        address: Regex(crate::Regex::from_str(r"^\$$").unwrap()),
         commands: Vec::new(),
     }]); "whole line only dollar")]
     #[test_case("/abc/-/def/", Editor::new(vec![Instruction{
         address: Between(
-            Box::new(Regex(crate::Regex::new("abc").unwrap())),
-            Box::new(Regex(crate::Regex::new("def").unwrap())),
+            Box::new(Regex(crate::Regex::from_str("abc").unwrap())),
+            Box::new(Regex(crate::Regex::from_str("def").unwrap())),
             false
         ),
         commands: Vec::new(),
@@ -137,13 +138,13 @@ mod tests {
         commands: Vec::new(),
     }]); "brackets")]
     #[test_case(r"/abc\/123/", Editor::new(vec![Instruction{
-        address: Regex(crate::Regex::new("abc/123").unwrap()),
+        address: Regex(crate::Regex::from_str("abc/123").unwrap()),
         commands: Vec::new(),
     }]); "regex")]
     #[test_case(r"s/abc/def/", Editor::new(vec![Instruction{
         address: Always,
         commands: vec![Substitute(
-                crate::Regex::new("abc").unwrap(),
+                crate::Regex::from_str("abc").unwrap(),
                 "def".to_string(),
                 0,
             )],
@@ -151,7 +152,7 @@ mod tests {
     #[test_case(r"s/abc/def/5", Editor::new(vec![Instruction{
         address: Always,
         commands: vec![Substitute(
-                crate::Regex::new("abc").unwrap(),
+                crate::Regex::from_str("abc").unwrap(),
                 "def".to_string(),
                 5,
             )],
@@ -159,15 +160,15 @@ mod tests {
     #[test_case(r"s/abc/def/g", Editor::new(vec![Instruction{
         address: Always,
         commands: vec![Substitute(
-                crate::Regex::new("abc").unwrap(),
+                crate::Regex::from_str("abc").unwrap(),
                 "def".to_string(),
                 0,
             )],
     }]); "substitute with global count")]
     #[test_case(r"/abc/s/def/ghi/g", Editor::new(vec![Instruction{
-        address: Regex(crate::Regex::new("abc").unwrap()),
+        address: Regex(crate::Regex::from_str("abc").unwrap()),
         commands: vec![Substitute(
-                crate::Regex::new("def").unwrap(),
+                crate::Regex::from_str("def").unwrap(),
                 "ghi".to_string(),
                 0,
             )],
@@ -175,11 +176,19 @@ mod tests {
     #[test_case(r"s/(abc)/__$123__/", Editor::new(vec![Instruction{
         address: Always,
         commands: vec![Substitute(
-                crate::Regex::new("(abc)").unwrap(),
+                crate::Regex::from_str("(abc)").unwrap(),
                 "__${123}__".to_string(),
                 0,
             )],
     }]); "substitute with numbered group")]
+    #[test_case(r"y/abc/123/", Editor::new(vec![Instruction{
+        address: Always,
+        commands: vec![Translate(String::from("abc"), String::from("123"))],
+    }]); "translate")]
+    #[test_case(r"y/\/\n/\t\//", Editor::new(vec![Instruction{
+        address: Always,
+        commands: vec![Translate(String::from("/\n"), String::from("\t/"))],
+    }]); "translate with escaped")]
     #[test_case(r"1d;3d;7d", Editor::new(vec![
         Instruction{
             address: Location(1),

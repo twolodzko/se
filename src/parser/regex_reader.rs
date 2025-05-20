@@ -106,6 +106,8 @@ fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::read_regex;
     use crate::parser::reader::StringReader;
     use test_case::test_case;
@@ -202,6 +204,6 @@ mod tests {
         let reader = &mut StringReader::from(input.to_string());
         let result = read_regex(reader).unwrap();
         assert_eq!(result, expected);
-        crate::Regex::new(&result).expect("regex should parse");
+        crate::Regex::from_str(&result).expect("regex should parse");
     }
 }

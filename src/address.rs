@@ -12,7 +12,7 @@ pub(crate) enum Address {
     Regex(crate::Regex),
     // addr! negates the addr match
     Negate(Box<Address>),
-    // // addr1 - addr2
+    // // addr1 : addr2
     Between(Box<Address>, Box<Address>, bool),
     // addr1, addr2, ...
     Set(Vec<Address>),
@@ -92,15 +92,14 @@ impl std::fmt::Display for Address {
             Regex(regex) => write!(f, "/{}/", regex),
             Negate(addr) => write!(f, "{}!", addr),
             Between(lhs, rhs, _) => write!(f, "{}-{}", lhs, rhs),
-            Set(addrs) => write!(
-                f,
-                "{}",
-                addrs
+            Set(addrs) => {
+                let list = addrs
                     .iter()
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
-            ),
+                    .join(", ");
+                write!(f, "{}", list)
+            }
         }
     }
 }
@@ -109,8 +108,9 @@ impl std::fmt::Display for Address {
 mod tests {
     use crate::{
         address::Address::{self, *},
-        Line,
+        Line, StringReader,
     };
+    use std::str::FromStr;
     use test_case::test_case;
 
     #[test_case(Always, Line(1, "".to_string()), true; "any matches line 1")]
@@ -120,13 +120,13 @@ mod tests {
     #[test_case(Location(1), Line(1, "".to_string()), true; "index 1 matches line 1")]
     #[test_case(Location(1), Line(279, "".to_string()), false; "index 1 does not match line 279")]
     #[test_case(
-        Regex(crate::Regex::new("abc").unwrap()),
+        Regex(crate::Regex::from_str("abc").unwrap()),
         Line(1, "abc".to_string()),
         true;
         "regex abc matches line abc"
     )]
     #[test_case(
-        Regex(crate::Regex::new("abc").unwrap()),
+        Regex(crate::Regex::from_str("abc").unwrap()),
         Line(1, "hello, world!".to_string()),
         false;
         "regex abc does not match line hello"
@@ -149,81 +149,66 @@ mod tests {
     }
 
     #[test_case(
-        Always,
+        "*",
         vec![true, true, true, true, true, true, true, true, true, true];
         "any"
     )]
     #[test_case(
-        Negate(Box::new(Always)),
+        "*!",
         vec![false, false, false, false, false, false, false, false, false, false];
         "any negated"
     )]
     #[test_case(
-        Location(7),
+        "7",
         vec![false, false, false, false, false, false, true, false, false, false];
         "index 7"
     )]
     #[test_case(
-        Location(89),
+        "89",
         vec![false, false, false, false, false, false, false, false, false, false];
         "index 89"
     )]
     #[test_case(
-        Set(vec![Location(2), Location(5), Location(9)]),
+        "2,5,9",
         vec![false, true, false, false, true, false, false, false, true, false];
         "set of indexes"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(2)),
-            Box::new(Location(7)),
-            false,
-        ),
+        "2-7",
         vec![false, true, true, true, true, true, true, false, false, false];
-        "range of indexes 2-7"
+        "range of indexes 2:7"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(1)),
-            Box::new(Location(1)),
-            false,
-        ),
+        "1-1",
         vec![true, false, false, false, false, false, false, false, false, false];
-        "range of indexes 1-1"
+        "range of indexes 1:1"
     )]
     #[test_case(
-        Regex(crate::Regex::new("aa").unwrap()),
+        "1-5",
+        vec![true, true, true, true, true, false, false, false, false, false];
+        "left-open range of indexes"
+    )]
+    #[test_case(
+        "/aa/",
         vec![false, false, true, false, true, true, false, false, false, false];
         "regex aa"
     )]
     #[test_case(
-        Between(
-            Box::new(Regex(crate::Regex::new("start").unwrap())),
-            Box::new(Regex(crate::Regex::new("end").unwrap())),
-            false,
-        ),
+        "/start/-/end/",
         vec![false, true, true, true, false, true, true, false, false, false];
         "regex range matches twice"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(5)),
-            Box::new(Regex(crate::Regex::new("123").unwrap())),
-            false,
-        ),
+        "5-/123/",
         vec![false, false, false, false, true, true, true, true, true, false];
         "mixed range"
     )]
     #[test_case(
-        Between(
-            Box::new(Location(6)),
-            Box::new(Never),
-            false,
-        ),
+        "6-$",
         vec![false, false, false, false, false, true, true, true, true, true];
         "half-open range"
     )]
-    fn multiline_example(addr: Address, expected: Vec<bool>) {
+    fn multiline_example(addr: &str, expected: Vec<bool>) {
         let example = r"
             start
             aaa
@@ -234,7 +219,8 @@ mod tests {
 
             123
         ";
-        let mut addr = addr;
+        let mut reader = StringReader::from(addr.to_string());
+        let mut addr = crate::parser::address::parse(&mut reader).unwrap();
         assert_eq!(
             example
                 .lines()
