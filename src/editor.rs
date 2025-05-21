@@ -37,9 +37,8 @@ impl Editor {
         for instruction in self.instructions.iter_mut() {
             if instruction.address.matches(&pattern) {
                 for cmd in instruction.commands.iter() {
-                    if let status @ (Next | NoPrint | Quit(_)) =
-                        cmd.run(&mut pattern, &mut self.hold, &mut print)
-                    {
+                    let status = cmd.run(&mut pattern, &mut self.hold, &mut print);
+                    if status != Normal {
                         print!("{}", print);
                         return Some((pattern.1, status));
                     }
