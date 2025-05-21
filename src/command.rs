@@ -58,6 +58,7 @@ impl Command {
     pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String, print: &mut String) -> Status {
         use Command::*;
         match self {
+            // commands that print things
             Println => {
                 print.push_str(&pattern.1);
                 print.push('\n');
@@ -69,6 +70,7 @@ impl Command {
             }
             LineNumber => print.push_str(&pattern.0.to_string()),
             Insert(message) => print.push_str(message),
+            // commands that modify the buffers
             Substitute(regex, template, limit) => {
                 let replaced = regex.0.replacen(&pattern.1, *limit, template);
                 pattern.1 = replaced.to_string()
@@ -90,6 +92,7 @@ impl Command {
             Exchange => {
                 std::mem::swap(hold, &mut pattern.1);
             }
+            // commands that return special status codes
             Delete | Stop | Quit(_) => return Status::from(self),
         }
         Status::Normal
