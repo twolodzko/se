@@ -63,11 +63,15 @@ impl Command {
                 print.push('\n');
             }
             Print => print.push_str(&pattern.1),
-            Escape => print.push_str(&pattern.1.escape_default().to_string()),
+            Escape => {
+                let escaped = pattern.1.escape_default().to_string();
+                print.push_str(&escaped)
+            }
             LineNumber => print.push_str(&pattern.0.to_string()),
-            Insert(s) => print.push_str(s),
+            Insert(message) => print.push_str(message),
             Substitute(regex, template, limit) => {
-                pattern.1 = regex.0.replacen(&pattern.1, *limit, template).to_string()
+                let replaced = regex.0.replacen(&pattern.1, *limit, template);
+                pattern.1 = replaced.to_string()
             }
             Keep(skip, take) => {
                 pattern.1 = if let Some(take) = take {

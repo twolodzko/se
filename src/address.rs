@@ -44,9 +44,9 @@ impl Address {
                 }
             }
             Set(addrs) => {
-                let mut ok = false;
+                let mut matched = false;
                 for addr in addrs.iter_mut() {
-                    if ok {
+                    if matched {
                         // Between's always need to be evaluated
                         // so we don't miss the bounds
                         if let Negate(inner) = addr {
@@ -59,10 +59,10 @@ impl Address {
                         }
                     }
                     if addr.matches(line) {
-                        ok = true;
+                        matched = true;
                     }
                 }
-                ok
+                matched
             }
         }
     }
