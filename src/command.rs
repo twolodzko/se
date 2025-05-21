@@ -1,7 +1,7 @@
 use crate::{Line, Regex};
 
 #[derive(Debug, PartialEq)]
-pub enum Command {
+pub(crate) enum Command {
     /// p
     Println,
     /// P
@@ -13,7 +13,6 @@ pub enum Command {
     /// "string" or 'string'
     Insert(String),
     /// s/src/dst/[limit]
-    #[allow(private_interfaces)]
     Substitute(Regex, String, usize),
     /// ks-e
     Keep(usize, Option<usize>),
