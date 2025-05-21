@@ -11,10 +11,10 @@ pub use {
     parser::{FileReader, StringReader},
 };
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct Line(pub usize, pub String);
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct Regex(regex::Regex);
 
 impl std::str::FromStr for Regex {

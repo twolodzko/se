@@ -33,7 +33,7 @@ pub enum Command {
     Quit(i32),
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq)]
 pub enum Status {
     Normal,
     Next,
