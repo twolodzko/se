@@ -3,7 +3,6 @@ mod command;
 mod editor;
 mod parser;
 
-use std::string::FromUtf8Error;
 pub use {
     command::Status,
     editor::Editor,
@@ -48,7 +47,7 @@ pub enum Error {
     Unexpected(char),
     InvalidAddr(String),
     Custom(String),
-    FromUtf8Error(FromUtf8Error),
+    FromUtf8Error(std::string::FromUtf8Error),
 }
 
 impl std::fmt::Display for Error {
