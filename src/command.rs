@@ -1,6 +1,6 @@
 use crate::{Line, Regex};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub enum Command {
     /// p
     Println,
@@ -31,32 +31,64 @@ pub enum Command {
     Stop,
     /// q[code]
     Quit(i32),
-    /// no-op
-    Nothing,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum Status {
+    Normal,
+    Next,
+    NoPrint,
+    Quit(i32),
+}
+
+impl From<&Command> for Status {
+    fn from(value: &Command) -> Self {
+        match value {
+            Command::Delete => Status::NoPrint,
+            Command::Stop => Status::Next,
+            Command::Quit(code) => Status::Quit(*code),
+            _ => Status::Normal,
+        }
+    }
 }
 
 impl Command {
-    pub(crate) fn apply(&self, line: &mut Line) {
+    /// Run the command by modifying one of the three buffers: `pattern`, `hold`, or `print`
+    /// and returning a status code.
+    pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String, print: &mut String) -> Status {
         use Command::*;
         match self {
-            Println => println!("{}", line.1),
-            Print => print!("{}", line.1),
-            Escape => println!("{}", line.1.escape_default()),
-            LineNumber => print!("{:.10}", line.0),
-            Insert(s) => print!("{}", s),
+            Println => {
+                print.push_str(&pattern.1);
+                print.push('\n');
+            }
+            Print => print.push_str(&pattern.1),
+            Escape => print.push_str(&pattern.1.escape_default().to_string()),
+            LineNumber => print.push_str(&pattern.0.to_string()),
+            Insert(s) => print.push_str(s),
             Substitute(regex, template, limit) => {
-                line.1 = regex.0.replacen(&line.1, *limit, template).to_string()
+                pattern.1 = regex.0.replacen(&pattern.1, *limit, template).to_string()
             }
             Keep(skip, take) => {
-                line.1 = if let Some(take) = take {
-                    line.1.chars().skip(*skip).take(*take).collect()
+                pattern.1 = if let Some(take) = take {
+                    pattern.1.chars().skip(*skip).take(*take).collect()
                 } else {
-                    line.1.chars().skip(*skip).collect()
+                    pattern.1.chars().skip(*skip).collect()
                 };
             }
-            Reset => line.1.clear(),
-            _ => (),
+            Reset => pattern.1.clear(),
+            Copy => {
+                *hold = pattern.1.to_string();
+            }
+            Paste => {
+                pattern.1 = hold.to_string();
+            }
+            Exchange => {
+                std::mem::swap(hold, &mut pattern.1);
+            }
+            Delete | Stop | Quit(_) => return Status::from(self),
         }
+        Status::Normal
     }
 }
 
@@ -79,7 +111,6 @@ impl std::fmt::Display for Command {
             Delete => write!(f, "d"),
             Stop => write!(f, "."),
             Quit(c) => write!(f, "q{}", c),
-            Nothing => write!(f, ""),
         }
     }
 }

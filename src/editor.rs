@@ -1,4 +1,8 @@
-use crate::{address::Address, command::Command, Line};
+use crate::{
+    address::Address,
+    command::{Command, Status},
+    Line,
+};
 
 #[derive(Debug, PartialEq)]
 pub struct Editor {
@@ -22,36 +26,31 @@ impl Editor {
         }
     }
 
-    pub fn apply(&mut self, line: &str) -> Option<(String, Command)> {
-        use Command::*;
+    pub fn process(&mut self, line: &str) -> Option<(String, Status)> {
+        use Status::*;
 
         self.counter += 1;
         let mut matched = false;
-        let mut buffer = Line(self.counter, line.to_string());
+        let mut pattern = Line(self.counter, line.to_string());
+        let mut print = String::new();
 
         for instruction in self.instructions.iter_mut() {
-            if instruction.address.matches(&buffer) {
+            if instruction.address.matches(&pattern) {
                 for cmd in instruction.commands.iter() {
-                    match &cmd {
-                        Delete | Stop | Quit(_) => return Some((buffer.1, cmd.clone())),
-                        Copy => {
-                            self.hold = buffer.1.to_string();
-                        }
-                        Paste => {
-                            buffer.1 = self.hold.to_string();
-                        }
-                        Exchange => {
-                            std::mem::swap(&mut self.hold, &mut buffer.1);
-                        }
-                        _ => cmd.apply(&mut buffer),
+                    if let status @ (Next | NoPrint | Quit(_)) =
+                        cmd.run(&mut pattern, &mut self.hold, &mut print)
+                    {
+                        print!("{}", print);
+                        return Some((pattern.1, status));
                     }
                 }
                 matched = true;
             }
         }
+        print!("{}", print);
 
         if matched {
-            Some((buffer.1, Nothing))
+            Some((pattern.1, Normal))
         } else {
             None
         }
@@ -128,7 +127,7 @@ mod tests {
     fn keep(command: &str, expected: &str) {
         let mut reader = StringReader::from(command.to_string());
         let mut editor = parse(&mut reader).unwrap();
-        let (result, _) = editor.apply("123456789").unwrap();
+        let (result, _) = editor.process("123456789").unwrap();
         assert_eq!(result, expected)
     }
 }

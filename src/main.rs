@@ -1,8 +1,8 @@
 use clap::Parser;
 use se::{
-    parse,
-    Command::{self, *},
-    Editor, Error, FileReader, StringReader,
+    parse, Editor, Error, FileReader,
+    Status::{self, *},
+    StringReader,
 };
 use std::{
     fs::File,
@@ -64,20 +64,20 @@ fn main() {
     };
     let editor = &mut unwrap!(res);
 
-    let mut command = Nothing;
+    let mut status = Normal;
     let mut count = 0;
 
     if args.files.is_empty() {
         let reader = BufReader::new(std::io::stdin());
-        (command, count) = run(editor, reader, args.all);
+        (status, count) = run(editor, reader, args.all);
     } else {
         for path in args.files.iter() {
             let file = unwrap!(File::open(path).map_err(Error::Io));
             let reader = BufReader::new(file);
-            let (c, n) = run(editor, reader, args.all);
+            let (s, n) = run(editor, reader, args.all);
             count += n;
-            if let Quit(_) = c {
-                command = c;
+            if let Quit(_) = s {
+                status = s;
                 break;
             }
         }
@@ -86,35 +86,35 @@ fn main() {
     if args.count {
         println!("{}", count)
     }
-    if let Command::Quit(code) = command {
+    if let Quit(code) = status {
         std::process::exit(code)
     }
 }
 
-fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Command, usize) {
+fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Status, usize) {
     let mut count = 0;
-    let mut command = Nothing;
+    let mut status = Normal;
 
     for line in reader.lines() {
-        command = Nothing;
+        status = Normal;
         let mut buffer = unwrap!(line);
 
-        if let Some((b, c)) = editor.apply(&buffer) {
+        if let Some((b, s)) = editor.process(&buffer) {
             buffer = b;
-            command = c;
+            status = s;
             count += 1;
         }
 
-        if command == Delete {
+        if status == NoPrint {
             continue;
         }
         if print_all {
             println!("{}", buffer)
         }
-        if let Quit(_) = command {
+        if let Quit(_) = status {
             break;
         }
     }
 
-    (command, count)
+    (status, count)
 }
