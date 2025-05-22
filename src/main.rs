@@ -9,36 +9,6 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Parser)]
-struct Args {
-    /// Print all the lines (except the ones that were deleted)
-    #[arg(short, long)]
-    all: bool,
-
-    /// Print the number of matches
-    #[arg(short, long)]
-    count: bool,
-
-    #[command(flatten)]
-    script: Script,
-
-    /// Files that are processed
-    #[arg(name = "FILE")]
-    files: Vec<PathBuf>,
-}
-
-#[derive(Parser)]
-#[group(multiple = true, required = true)]
-struct Script {
-    /// Commands that are executed
-    #[arg(allow_hyphen_values = true)]
-    command: Option<String>,
-
-    /// Read the commands from the file
-    #[arg(short = 'f', long = "file")]
-    script: Option<PathBuf>,
-}
-
 macro_rules! unwrap {
     ( $f:expr ) => {
         $f.unwrap_or_else(|err| {
@@ -76,6 +46,36 @@ fn main() {
     if let Quit(code) = status {
         std::process::exit(code)
     }
+}
+
+#[derive(Parser)]
+struct Args {
+    /// Print all the lines (except the ones that were deleted)
+    #[arg(short, long)]
+    all: bool,
+
+    /// Print the number of matches
+    #[arg(short, long)]
+    count: bool,
+
+    #[command(flatten)]
+    script: Script,
+
+    /// Files that are processed
+    #[arg(name = "FILE")]
+    files: Vec<PathBuf>,
+}
+
+#[derive(Parser)]
+#[group(multiple = true, required = true)]
+struct Script {
+    /// Commands that are executed
+    #[arg(allow_hyphen_values = true)]
+    command: Option<String>,
+
+    /// Read the commands from the file
+    #[arg(short = 'f', long = "file")]
+    script: Option<PathBuf>,
 }
 
 fn parse_args() -> Args {
