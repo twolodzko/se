@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     address::Address,
     command::{Command, Status},
@@ -9,7 +11,10 @@ pub struct Editor {
     pub(crate) instructions: Vec<Instruction>,
     pub(crate) counter: usize,
     hold: String,
+    pub(crate) labels: Labels,
 }
+
+type Labels = HashMap<String, usize>;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Instruction {
@@ -18,11 +23,12 @@ pub(crate) struct Instruction {
 }
 
 impl Editor {
-    pub(crate) fn new(instructions: Vec<Instruction>) -> Self {
+    pub(crate) fn new(instructions: Vec<Instruction>, labels: Labels) -> Self {
         Self {
             instructions,
             counter: 0,
             hold: String::new(),
+            labels,
         }
     }
 
@@ -32,26 +38,34 @@ impl Editor {
         self.counter += 1;
         let mut matched = false;
         let mut pattern = Line(self.counter, line.to_string());
-        let mut print = String::new();
         let mut i = 0;
 
-        while i < self.instructions.len() {
+        'it: while i < self.instructions.len() {
             unsafe {
                 let instruction = self.instructions.get_unchecked_mut(i);
                 if instruction.address.matches(&pattern) {
+                    let mut print = String::new();
                     for cmd in instruction.commands.iter() {
                         let status = cmd.run(&mut pattern, &mut self.hold, &mut print);
-                        if status != Normal {
+                        if let GoTo(label) = status {
+                            match self.labels.get(&label) {
+                                Some(index) => {
+                                    i = *index;
+                                    continue 'it;
+                                }
+                                None => unimplemented!(),
+                            }
+                        } else if status != Normal {
                             print!("{}", print);
                             return Some((pattern.1, status));
                         }
                     }
                     matched = true;
+                    print!("{}", print);
                 }
             }
             i += 1;
         }
-        print!("{}", print);
 
         if matched {
             Some((pattern.1, Normal))

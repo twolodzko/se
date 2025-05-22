@@ -28,6 +28,8 @@ pub(crate) enum Command {
     Delete,
     /// .
     Stop,
+    /// b
+    GoTo(String),
     /// q[code]
     Quit(i32),
 }
@@ -37,6 +39,7 @@ pub enum Status {
     Normal,
     Next,
     NoPrint,
+    GoTo(String),
     Quit(i32),
 }
 
@@ -46,6 +49,7 @@ impl From<&Command> for Status {
             Command::Delete => Status::NoPrint,
             Command::Stop => Status::Next,
             Command::Quit(code) => Status::Quit(*code),
+            Command::GoTo(label) => Status::GoTo(label.to_string()),
             _ => Status::Normal,
         }
     }
@@ -92,7 +96,7 @@ impl Command {
                 std::mem::swap(hold, &mut pattern.1);
             }
             // commands that return special status codes
-            Delete | Stop | Quit(_) => return Status::from(self),
+            Delete | Stop | GoTo(_) | Quit(_) => return Status::from(self),
         }
         Status::Normal
     }
@@ -116,6 +120,7 @@ impl std::fmt::Display for Command {
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Stop => write!(f, "."),
+            GoTo(label) => write!(f, "b {}", label),
             Quit(c) => write!(f, "q{}", c),
         }
     }
