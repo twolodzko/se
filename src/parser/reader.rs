@@ -7,12 +7,12 @@ use std::{
     vec::IntoIter,
 };
 
-pub trait Reader {
+pub(crate) trait Reader {
     fn next(&mut self) -> Result<Option<char>, Error>;
     fn peek(&mut self) -> Result<Option<char>, Error>;
 }
 
-pub struct StringReader(Peekable<IntoIter<char>>);
+pub(crate) struct StringReader(Peekable<IntoIter<char>>);
 
 impl From<String> for StringReader {
     fn from(value: String) -> Self {
@@ -30,7 +30,7 @@ impl Reader for StringReader {
     }
 }
 
-pub struct FileReader {
+pub(crate) struct FileReader {
     file: Lines<BufReader<File>>,
     buffer: StringReader,
 }
