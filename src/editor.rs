@@ -33,18 +33,23 @@ impl Editor {
         let mut matched = false;
         let mut pattern = Line(self.counter, line.to_string());
         let mut print = String::new();
+        let mut i = 0;
 
-        for instruction in self.instructions.iter_mut() {
-            if instruction.address.matches(&pattern) {
-                for cmd in instruction.commands.iter() {
-                    let status = cmd.run(&mut pattern, &mut self.hold, &mut print);
-                    if status != Normal {
-                        print!("{}", print);
-                        return Some((pattern.1, status));
+        while i < self.instructions.len() {
+            unsafe {
+                let instruction = self.instructions.get_unchecked_mut(i);
+                if instruction.address.matches(&pattern) {
+                    for cmd in instruction.commands.iter() {
+                        let status = cmd.run(&mut pattern, &mut self.hold, &mut print);
+                        if status != Normal {
+                            print!("{}", print);
+                            return Some((pattern.1, status));
+                        }
                     }
+                    matched = true;
                 }
-                matched = true;
             }
+            i += 1;
         }
         print!("{}", print);
 
