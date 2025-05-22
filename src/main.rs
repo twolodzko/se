@@ -26,12 +26,12 @@ fn main() {
 
     if args.files.is_empty() {
         let reader = BufReader::new(std::io::stdin());
-        (status, count) = run(editor, reader, args.all);
+        (status, count) = unwrap!(run(editor, reader, args.all));
     } else {
         for path in args.files.iter() {
             let file = unwrap!(File::open(path).map_err(Error::Io));
             let reader = BufReader::new(file);
-            let (s, n) = run(editor, reader, args.all);
+            let (s, n) = unwrap!(run(editor, reader, args.all));
             count += n;
             if let Quit(_) = s {
                 status = s;
@@ -99,13 +99,17 @@ fn get_editor(args: &Args) -> Result<Editor, Error> {
     }
 }
 
-fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Status, usize) {
+fn run<R: BufRead>(
+    editor: &mut Editor,
+    reader: R,
+    print_all: bool,
+) -> Result<(Status, usize), std::io::Error> {
     let mut count = 0;
     let mut status = Normal;
 
     for line in reader.lines() {
+        let mut buffer = line?;
         status = Normal;
-        let mut buffer = unwrap!(line);
 
         if let Some((b, s)) = editor.process(&buffer) {
             buffer = b;
@@ -124,5 +128,5 @@ fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Status, 
         }
     }
 
-    (status, count)
+    Ok((status, count))
 }
