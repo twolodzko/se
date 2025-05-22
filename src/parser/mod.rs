@@ -27,7 +27,7 @@ impl TryFrom<String> for Editor {
     }
 }
 
-pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Editor, Error> {
+fn parse<R: Reader>(reader: &mut R) -> Result<Editor, Error> {
     let mut instructions = Vec::new();
     loop {
         instructions.push(parse_instruction(reader)?);

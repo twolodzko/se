@@ -90,7 +90,7 @@ impl std::fmt::Display for Editor {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{parse, StringReader};
+    use crate::Editor;
     use test_case::test_case;
 
     #[test_case(
@@ -124,8 +124,7 @@ mod tests {
         "first item"
     )]
     fn keep(command: &str, expected: &str) {
-        let mut reader = StringReader::from(command.to_string());
-        let mut editor = parse(&mut reader).unwrap();
+        let mut editor = Editor::try_from(command.to_string()).unwrap();
         let (result, _) = editor.process("123456789").unwrap();
         assert_eq!(result, expected)
     }
