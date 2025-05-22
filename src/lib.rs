@@ -3,12 +3,7 @@ mod command;
 mod editor;
 mod parser;
 
-pub use {
-    command::Status,
-    editor::Editor,
-    parser::parse,
-    parser::{FileReader, StringReader},
-};
+pub use {command::Status, editor::Editor};
 
 #[derive(Debug, PartialEq)]
 pub struct Line(pub usize, pub String);

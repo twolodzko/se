@@ -108,7 +108,8 @@ impl std::fmt::Display for Address {
 mod tests {
     use crate::{
         address::Address::{self, *},
-        Line, StringReader,
+        parser::StringReader,
+        Line,
     };
     use std::str::FromStr;
     use test_case::test_case;

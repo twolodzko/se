@@ -90,7 +90,7 @@ impl std::fmt::Display for Editor {
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse, StringReader};
+    use crate::parser::{parse, StringReader};
     use test_case::test_case;
 
     #[test_case(

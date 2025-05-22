@@ -7,9 +7,27 @@ mod utils;
 use crate::{editor::Instruction, Editor, Error};
 use reader::Reader;
 
-pub use reader::{FileReader, StringReader};
+pub(crate) use reader::{FileReader, StringReader};
 
-pub fn parse<R: Reader>(reader: &mut R) -> Result<Editor, Error> {
+impl TryFrom<std::path::PathBuf> for Editor {
+    type Error = Error;
+
+    fn try_from(value: std::path::PathBuf) -> Result<Self, Self::Error> {
+        let mut reader = FileReader::try_from(value)?;
+        parse(&mut reader)
+    }
+}
+
+impl TryFrom<String> for Editor {
+    type Error = Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let mut reader = StringReader::from(value);
+        parse(&mut reader)
+    }
+}
+
+pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Editor, Error> {
     let mut instructions = Vec::new();
     loop {
         instructions.push(parse_instruction(reader)?);
@@ -32,7 +50,7 @@ fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        address::Address::*, command::Command::*, editor::Instruction, Editor, StringReader,
+        address::Address::*, command::Command::*, editor::Instruction, parser::StringReader, Editor,
     };
     use std::str::FromStr;
     use test_case::test_case;
@@ -196,7 +214,7 @@ mod tests {
         },
     ]); "multiple instructions")]
     fn parse(input: &str, expected: Editor) {
-        let result = crate::parse(&mut StringReader::from(input.to_string())).unwrap();
+        let result = crate::parser::parse(&mut StringReader::from(input.to_string())).unwrap();
         assert_eq!(result, expected)
     }
 }

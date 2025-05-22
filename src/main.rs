@@ -1,8 +1,7 @@
 use clap::Parser;
 use se::{
-    parse, Editor, Error, FileReader,
+    Editor, Error,
     Status::{self, *},
-    StringReader,
 };
 use std::{
     fs::File,
@@ -51,16 +50,7 @@ macro_rules! unwrap {
 
 fn main() {
     let args = parse_args();
-
-    let res = if let Some(script) = args.script.script {
-        parse(&mut unwrap!(FileReader::try_from(script)))
-    } else if let Some(command) = args.script.command {
-        parse(&mut StringReader::from(command))
-    } else {
-        unreachable!()
-    };
-    let editor = &mut unwrap!(res);
-
+    let editor = &mut unwrap!(get_editor(&args));
     let mut status = Normal;
     let mut count = 0;
 
@@ -97,6 +87,16 @@ fn parse_args() -> Args {
         }
     }
     args
+}
+
+fn get_editor(args: &Args) -> Result<Editor, Error> {
+    if let Some(script) = &args.script.script {
+        Editor::try_from(script.clone())
+    } else if let Some(command) = &args.script.command {
+        Editor::try_from(command.to_string())
+    } else {
+        unreachable!()
+    }
 }
 
 fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Status, usize) {
