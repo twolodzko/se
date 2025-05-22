@@ -38,19 +38,21 @@ impl Editor {
         self.counter += 1;
         let mut matched = false;
         let mut pattern = Line(self.counter, line.to_string());
+        let mut print = String::new();
         let mut i = 0;
 
         'it: while i < self.instructions.len() {
             unsafe {
                 let instruction = self.instructions.get_unchecked_mut(i);
                 if instruction.address.matches(&pattern) {
-                    let mut print = String::new();
                     for cmd in instruction.commands.iter() {
                         let status = cmd.run(&mut pattern, &mut self.hold, &mut print);
                         if let GoTo(label) = status {
                             match self.labels.get(&label) {
                                 Some(index) => {
                                     i = *index;
+                                    print!("{}", print);
+                                    print.clear();
                                     continue 'it;
                                 }
                                 None => unimplemented!(),
@@ -61,11 +63,11 @@ impl Editor {
                         }
                     }
                     matched = true;
-                    print!("{}", print);
                 }
             }
             i += 1;
         }
+        print!("{}", print);
 
         if matched {
             Some((pattern.1, Normal))
