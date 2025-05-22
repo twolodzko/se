@@ -100,8 +100,8 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error
                 };
             }
             '*' => {
-                // the "any" match is default, no need to specify
                 reader.next()?;
+                return Ok(Some(Always));
             }
             '$' => {
                 reader.next()?;
