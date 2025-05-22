@@ -50,17 +50,14 @@ macro_rules! unwrap {
 }
 
 fn main() {
-    let mut args = Args::parse();
+    let args = parse_args();
 
     let res = if let Some(script) = args.script.script {
-        if let Some(arg) = args.script.command {
-            args.files.insert(0, arg.into());
-            args.script.command = None;
-        }
         parse(&mut unwrap!(FileReader::try_from(script)))
-    } else {
-        let command = args.script.command.unwrap();
+    } else if let Some(command) = args.script.command {
         parse(&mut StringReader::from(command))
+    } else {
+        unreachable!()
     };
     let editor = &mut unwrap!(res);
 
@@ -89,6 +86,17 @@ fn main() {
     if let Quit(code) = status {
         std::process::exit(code)
     }
+}
+
+fn parse_args() -> Args {
+    let mut args = Args::parse();
+    if args.script.script.is_some() {
+        if let Some(arg) = args.script.command {
+            args.files.insert(0, arg.into());
+            args.script.command = None;
+        }
+    }
+    args
 }
 
 fn run<R: BufRead>(editor: &mut Editor, reader: R, print_all: bool) -> (Status, usize) {
