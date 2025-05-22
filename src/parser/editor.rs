@@ -45,10 +45,7 @@ fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        address::Address::*, command::Command::*, editor::Instruction, parser::editor::parse,
-        parser::StringReader, Editor,
-    };
+    use crate::{address::Address::*, command::Command::*, editor::Instruction, Editor};
     use std::str::FromStr;
     use test_case::test_case;
 
@@ -210,8 +207,8 @@ mod tests {
             commands: vec![Delete],
         },
     ]); "multiple instructions")]
-    fn parse_editor(input: &str, expected: Editor) {
-        let result = parse(&mut StringReader::from(input.to_string())).unwrap();
+    fn parse(input: &str, expected: Editor) {
+        let result = Editor::try_from(input.to_string()).unwrap();
         assert_eq!(result, expected)
     }
 }
