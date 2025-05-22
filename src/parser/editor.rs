@@ -9,8 +9,8 @@ impl TryFrom<std::path::PathBuf> for Editor {
     type Error = Error;
 
     fn try_from(value: std::path::PathBuf) -> Result<Self, Self::Error> {
-        let mut reader = FileReader::try_from(value)?;
-        parse(&mut reader)
+        let reader = &mut FileReader::try_from(value)?;
+        parse(reader)
     }
 }
 
@@ -18,8 +18,8 @@ impl TryFrom<String> for Editor {
     type Error = Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let mut reader = StringReader::from(value);
-        parse(&mut reader)
+        let reader = &mut StringReader::from(value);
+        parse(reader)
     }
 }
 
