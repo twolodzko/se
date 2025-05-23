@@ -56,23 +56,20 @@ impl From<&Command> for Status {
 }
 
 impl Command {
-    /// Run the command by modifying one of the three buffers: `pattern`, `hold`, or `print`
+    /// Run the command by modifying one of the three buffers: `pattern` or `hold`
     /// and returning a status code.
-    pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String, print: &mut String) -> Status {
+    pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String) -> Status {
         use Command::*;
         match self {
             // commands that print things
-            Println => {
-                print.push_str(&pattern.1);
-                print.push('\n');
-            }
-            Print => print.push_str(&pattern.1),
+            Println => println!("{}", pattern.1),
+            Print => print!("{}", pattern.1),
             Escape => {
                 let escaped = pattern.1.escape_default().to_string();
-                print.push_str(&escaped)
+                println!("{}", escaped)
             }
-            LineNumber => print.push_str(&pattern.0.to_string()),
-            Insert(message) => print.push_str(message),
+            LineNumber => print!("{}", pattern.0),
+            Insert(message) => print!("{}", message),
             // commands that modify the buffers
             Substitute(regex, template, limit) => {
                 let replaced = regex.0.replacen(&pattern.1, *limit, template);
