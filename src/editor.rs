@@ -10,7 +10,7 @@ pub struct Program {
 
 impl Program {
     pub(crate) fn call(&mut self, pattern: &mut Line, hold: &mut String) -> Option<Status> {
-        self.main.call(pattern, hold, self.func)
+        self.main.call(pattern, hold, &mut self.func)
     }
 }
 

@@ -65,7 +65,7 @@ impl Command {
         pattern: &mut Line,
         hold: &mut String,
         print: &mut String,
-        func: HashMap<String, Function>,
+        func: &mut HashMap<String, Function>,
     ) -> Status {
         use Command::*;
         match self {
@@ -109,8 +109,9 @@ impl Command {
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
             Function(name) => {
-                let lambda = func.get_mut(name).unwrap();
-                return lambda.call(pattern, hold, func).unwrap_or(Status::Normal);
+                if let Some(lambda) = func.get_mut(name) {
+                    return lambda.call(pattern, hold, func).unwrap_or(Status::Normal);
+                }
             }
         }
         Status::Normal

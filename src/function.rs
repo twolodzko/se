@@ -22,7 +22,7 @@ impl Function {
         &mut self,
         pattern: &mut Line,
         hold: &mut String,
-        func: HashMap<String, Function>,
+        func: &mut HashMap<String, Function>,
     ) -> Option<Status> {
         let mut matched = false;
         let mut print = String::new();
