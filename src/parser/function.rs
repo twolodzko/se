@@ -43,6 +43,7 @@ fn parse<R: Reader>(reader: &mut R) -> Result<Function, Error> {
                 break;
             }
         }
+        skip_whitespace(reader);
     }
     Ok(Function(instructions))
 }
