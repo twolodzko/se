@@ -101,8 +101,8 @@ impl Command {
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
             Call(name) => {
-                if let Some(lambda) = FUNCTIONS.lock().unwrap().get_mut(name) {
-                    return lambda.call(pattern, hold).unwrap_or(Status::Normal);
+                if let Some(func) = FUNCTIONS.lock().unwrap().get_mut(name) {
+                    return func.call(pattern, hold).unwrap_or(Status::Normal);
                 }
             }
         }
