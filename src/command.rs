@@ -94,7 +94,7 @@ impl Command {
                 std::mem::swap(hold, &mut pattern.1);
             }
             Join => {
-                pattern.1.push_str(&hold);
+                pattern.1.push_str(hold);
             }
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
