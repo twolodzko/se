@@ -45,6 +45,21 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
                 };
                 Quit(code)
             }
+            '&' => {
+                let mut name = String::new();
+                while let Some(c) = reader.peek()? {
+                    if c.is_alphanumeric() {
+                        reader.next()?;
+                        name.push(c);
+                    } else {
+                        break;
+                    }
+                }
+                if name.is_empty() {
+                    return Err(Error::Custom("function name cannot be empty".to_string()));
+                }
+                Function(name)
+            }
             '\'' | '"' => {
                 let msg = unescape(read_until(reader, c)?)?;
                 Insert(msg)
@@ -57,6 +72,11 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             _ => return Err(Error::Unexpected(c)),
         };
         cmds.push(cmd);
+
+        skip_whitespace(reader);
+        if let Some('}') = reader.peek()? {
+            break;
+        }
     }
     Ok(cmds)
 }

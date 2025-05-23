@@ -7,7 +7,7 @@ mod parser;
 
 pub use {
     command::Status,
-    editor::run,
+    editor::{run, Program},
     function::Function,
     lines::{FilesReader, Line, StdinReader},
 };
@@ -70,7 +70,7 @@ impl std::fmt::Display for Error {
 mod tests {
     use std::str::FromStr;
 
-    use crate::{Function, Line};
+    use crate::{Line, Program};
     use test_case::test_case;
 
     #[test_case(
@@ -104,7 +104,7 @@ mod tests {
         "first item"
     )]
     fn keep(command: &str, expected: &str) {
-        let mut func = Function::from_str(command).unwrap();
+        let mut func = Program::from_str(command).unwrap();
         let pattern = &mut Line(0, "123456789".to_string());
         func.call(pattern, &mut String::new()).unwrap();
         assert_eq!(pattern.1, expected)

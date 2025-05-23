@@ -1,4 +1,6 @@
-use crate::{Line, Regex};
+use std::collections::HashMap;
+
+use crate::{Function, Line, Regex};
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
@@ -32,6 +34,8 @@ pub(crate) enum Command {
     Break,
     /// q[code]
     Quit(i32),
+    /// &func
+    Function(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -56,7 +60,13 @@ impl From<&Command> for Status {
 impl Command {
     /// Run the command by modifying one of the three buffers: `pattern`, `hold`, or `print`
     /// and returning a status code.
-    pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String, print: &mut String) -> Status {
+    pub(crate) fn run(
+        &self,
+        pattern: &mut Line,
+        hold: &mut String,
+        print: &mut String,
+        func: HashMap<String, Function>,
+    ) -> Status {
         use Command::*;
         match self {
             // commands that print things
@@ -94,10 +104,14 @@ impl Command {
                 std::mem::swap(hold, &mut pattern.1);
             }
             Join => {
-                pattern.1.push_str(&hold);
+                pattern.1.push_str(hold);
             }
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
+            Function(name) => {
+                let lambda = func.get_mut(name).unwrap();
+                return lambda.call(pattern, hold, func).unwrap_or(Status::Normal);
+            }
         }
         Status::Normal
     }
@@ -123,6 +137,7 @@ impl std::fmt::Display for Command {
             Delete => write!(f, "d"),
             Break => write!(f, "."),
             Quit(c) => write!(f, "q{}", c),
+            Function(n) => write!(f, "&{}", n),
         }
     }
 }

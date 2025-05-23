@@ -1,5 +1,5 @@
 use clap::Parser;
-use se::{FilesReader, Function, Line, Status, StdinReader};
+use se::{FilesReader, Line, Program, Status, StdinReader};
 use std::{path::PathBuf, str::FromStr};
 
 macro_rules! unwrap {
@@ -15,9 +15,9 @@ fn main() {
     let args = parse_args();
 
     let mut program = unwrap!(if let Some(path) = &args.script.path {
-        Function::try_from(path)
+        Program::try_from(path)
     } else if let Some(command) = &args.script.command {
-        Function::from_str(command)
+        Program::from_str(command)
     } else {
         unreachable!()
     });

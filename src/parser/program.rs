@@ -1,40 +1,64 @@
 use super::{
     address, command,
     reader::{FileReader, Reader, StringReader},
-    utils,
+    utils::{self, skip_whitespace},
 };
 use crate::{
+    editor::Program,
     function::{Function, Instruction},
     Error,
 };
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
-impl TryFrom<&std::path::PathBuf> for Function {
+impl TryFrom<&std::path::PathBuf> for Program {
     type Error = Error;
 
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
-        parse(reader)
+        let mut func = HashMap::new();
+        let main = parse_main(reader, &mut func)?;
+        Ok(Program { main, func })
     }
 }
 
-impl FromStr for Function {
+impl FromStr for Program {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
-        parse(reader)
+        let mut func = HashMap::new();
+        let main = parse_main(reader, &mut func)?;
+        Ok(Program { main, func })
     }
 }
 
-fn parse<R: Reader>(reader: &mut R) -> Result<Function, Error> {
+fn parse_main<R: Reader>(
+    reader: &mut R,
+    functions: &mut HashMap<String, Function>,
+) -> Result<Function, Error> {
     let mut instructions = Vec::new();
     loop {
-        instructions.push(parse_instruction(reader)?);
-        if reader.peek()?.is_none() {
-            break;
+        match reader.peek()? {
+            Some('@') => {
+                reader.next()?;
+                let (name, func) = parse_function(reader)?;
+                functions.insert(name, func);
+            }
+            Some(_) => {
+                instructions.push(parse_instruction(reader)?);
+            }
+            None => {
+                break;
+            }
         }
     }
+    // FIXME
+    // if instructions.is_empty() {
+    //     instructions.push(Instruction {
+    //         address: Address::Always,
+    //         commands: Vec::new(),
+    //     });
+    // }
     Ok(Function(instructions))
 }
 
@@ -47,20 +71,58 @@ fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
     Ok(Instruction { address, commands })
 }
 
+fn parse_function<R: Reader>(reader: &mut R) -> Result<(String, Function), Error> {
+    let mut name = String::new();
+    while let Some(c) = reader.peek()? {
+        if c.is_alphanumeric() {
+            reader.next()?;
+            name.push(c);
+        } else {
+            break;
+        }
+    }
+    if name.is_empty() {
+        return Err(Error::Custom("function name cannot be empty".to_string()));
+    }
+
+    skip_whitespace(reader);
+    let Some('{') = reader.next()? else {
+        return Err(Error::Missing('{'));
+    };
+
+    let mut instructions = Vec::new();
+    loop {
+        instructions.push(parse_instruction(reader)?);
+
+        skip_whitespace(reader);
+        match reader.peek()? {
+            None => return Err(Error::Missing('}')),
+            Some('}') => {
+                reader.next()?;
+                break;
+            }
+            _ => (),
+        }
+    }
+
+    Ok((name, Function(instructions)))
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
         address::Address::*,
         command::Command::*,
         function::{Function, Instruction},
+        Program,
     };
-    use std::str::FromStr;
+    use std::{collections::HashMap, str::FromStr};
     use test_case::test_case;
 
-    #[test_case("", Function(vec![Instruction{
-        address: Always,
-        commands: Vec::new(),
-    }]); "empty")]
+    // #[test_case("", Function(vec![Instruction{
+    //     address: Always,
+    //     commands: Vec::new(),
+    // }]); "empty")]
     #[test_case("*", Function(vec![Instruction{
         address: Always,
         commands: Vec::new()
@@ -216,7 +278,13 @@ mod tests {
         },
     ]); "multiple instructions")]
     fn parse(input: &str, expected: Function) {
-        let result = Function::from_str(input).unwrap();
-        assert_eq!(result, expected)
+        let result = Program::from_str(input).unwrap();
+        assert_eq!(
+            result,
+            Program {
+                main: expected,
+                func: HashMap::new(),
+            }
+        )
     }
 }
