@@ -155,7 +155,7 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     if let Some('-') = reader.peek()? {
         reader.next()?;
     } else {
-        return Ok(Keep(0, Some(lhs + 1)));
+        return Ok(Keep(lhs, Some(1)));
     };
 
     let s = read_integer(reader)?;
