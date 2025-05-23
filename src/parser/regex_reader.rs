@@ -199,7 +199,7 @@ mod tests {
         "backslashes and escaped slash in whole line"
     )]
     fn read(input: &str, expected: &str) {
-        let reader = &mut StringReader::from(input.to_string());
+        let reader = &mut StringReader::from(input);
         let result = read_regex(reader).unwrap();
         assert_eq!(result, expected);
         regex::Regex::new(&result).expect("regex should parse");

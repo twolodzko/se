@@ -14,8 +14,8 @@ pub(crate) trait Reader {
 
 pub(crate) struct StringReader(Peekable<IntoIter<char>>);
 
-impl From<String> for StringReader {
-    fn from(value: String) -> Self {
+impl From<&str> for StringReader {
+    fn from(value: &str) -> Self {
         StringReader(value.chars().collect::<Vec<char>>().into_iter().peekable())
     }
 }
@@ -35,12 +35,12 @@ pub(crate) struct FileReader {
     buffer: StringReader,
 }
 
-impl TryFrom<PathBuf> for FileReader {
+impl TryFrom<&PathBuf> for FileReader {
     type Error = Error;
 
-    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
+    fn try_from(value: &PathBuf) -> Result<Self, Self::Error> {
         let file = BufReader::new(File::open(value).map_err(Error::Io)?).lines();
-        let chars = StringReader::from(String::new());
+        let chars = StringReader::from("");
         Ok(FileReader {
             file,
             buffer: chars,
@@ -77,7 +77,7 @@ impl FileReader {
         if let Some(res) = self.file.next() {
             let mut line = res.map_err(Error::Io)?;
             line.push('\n');
-            self.buffer = StringReader::from(line);
+            self.buffer = StringReader::from(line.as_str());
             return Ok(true);
         }
         Ok(false)

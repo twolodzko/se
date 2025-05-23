@@ -13,7 +13,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
         let cmd = match c {
             ';' => break,
             '.' => {
-                cmds.push(Stop);
+                cmds.push(Break);
                 break;
             }
             'p' => Println,

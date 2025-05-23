@@ -1,13 +1,6 @@
 use clap::Parser;
-use se::{
-    Editor, Error,
-    Status::{self, *},
-};
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-    path::PathBuf,
-};
+use se::{FilesReader, Function, Line, Status, StdinReader};
+use std::{path::PathBuf, str::FromStr};
 
 macro_rules! unwrap {
     ( $f:expr ) => {
@@ -20,30 +13,27 @@ macro_rules! unwrap {
 
 fn main() {
     let args = parse_args();
-    let editor = &mut unwrap!(get_editor(&args));
-    let mut status = Normal;
-    let mut count = 0;
 
-    if args.files.is_empty() {
-        let reader = BufReader::new(std::io::stdin());
-        (status, count) = unwrap!(run(editor, reader, args.all));
+    let mut program = unwrap!(if let Some(path) = &args.script.path {
+        Function::try_from(path)
+    } else if let Some(command) = &args.script.command {
+        Function::from_str(command)
     } else {
-        for path in args.files.iter() {
-            let file = unwrap!(File::open(path).map_err(Error::Io));
-            let reader = BufReader::new(file);
-            let (s, n) = unwrap!(run(editor, reader, args.all));
-            count += n;
-            if let Quit(_) = s {
-                status = s;
-                break;
-            }
-        }
-    }
+        unreachable!()
+    });
+
+    let mut reader: Box<dyn Iterator<Item = std::io::Result<Line>>> = if args.files.is_empty() {
+        Box::new(StdinReader::default())
+    } else {
+        Box::new(FilesReader::from(args.files))
+    };
+
+    let (status, count) = unwrap!(se::run(&mut reader, &mut program, args.all));
 
     if args.count {
         println!("{}", count)
     }
-    if let Quit(code) = status {
+    if let Status::Quit(code) = status {
         std::process::exit(code)
     }
 }
@@ -75,58 +65,17 @@ struct Script {
 
     /// Read the commands from the file
     #[arg(short = 'f', long = "file")]
-    script: Option<PathBuf>,
+    path: Option<PathBuf>,
 }
 
 fn parse_args() -> Args {
     let mut args = Args::parse();
-    if args.script.script.is_some() {
+    if args.script.path.is_some() {
         if let Some(arg) = args.script.command {
+            // it's not a command, dumbo
             args.files.insert(0, arg.into());
             args.script.command = None;
         }
     }
     args
-}
-
-fn get_editor(args: &Args) -> Result<Editor, Error> {
-    if let Some(script) = &args.script.script {
-        Editor::try_from(script.clone())
-    } else if let Some(command) = &args.script.command {
-        Editor::try_from(command.to_string())
-    } else {
-        unreachable!()
-    }
-}
-
-fn run<R: BufRead>(
-    editor: &mut Editor,
-    reader: R,
-    print_all: bool,
-) -> Result<(Status, usize), std::io::Error> {
-    let mut count = 0;
-    let mut status = Normal;
-
-    for line in reader.lines() {
-        let mut buffer = line?;
-        status = Normal;
-
-        if let Some((b, s)) = editor.process(&buffer) {
-            buffer = b;
-            status = s;
-            count += 1;
-        }
-
-        if status == NoPrint {
-            continue;
-        }
-        if print_all {
-            println!("{}", buffer)
-        }
-        if let Quit(_) = status {
-            break;
-        }
-    }
-
-    Ok((status, count))
 }

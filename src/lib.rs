@@ -1,12 +1,16 @@
 mod address;
 mod command;
 mod editor;
+mod function;
+mod lines;
 mod parser;
 
-pub use {command::Status, editor::Editor};
-
-#[derive(Debug, PartialEq)]
-pub struct Line(pub usize, pub String);
+pub use {
+    command::Status,
+    editor::run,
+    function::Function,
+    lines::{FilesReader, Line, StdinReader},
+};
 
 #[derive(Debug)]
 pub(crate) struct Regex(regex::Regex);
@@ -59,5 +63,50 @@ impl std::fmt::Display for Error {
             InvalidAddr(a) => write!(f, "invalid address: {}", a),
             Custom(s) => s.fmt(f),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::{Function, Line};
+    use test_case::test_case;
+
+    #[test_case(
+        "k3-5",
+        "345";
+        "range"
+    )]
+    #[test_case(
+        "k-5",
+        "12345";
+        "left-open range"
+    )]
+    #[test_case(
+        "k5",
+        "12345";
+        "first n chars"
+    )]
+    #[test_case(
+        "k3-",
+        "3456789";
+        "right-open range"
+    )]
+    #[test_case(
+        "k1-1",
+        "1";
+        "single item range"
+    )]
+    #[test_case(
+        "k1",
+        "1";
+        "first item"
+    )]
+    fn keep(command: &str, expected: &str) {
+        let mut func = Function::from_str(command).unwrap();
+        let pattern = &mut Line(0, "123456789".to_string());
+        func.call(pattern, &mut String::new()).unwrap();
+        assert_eq!(pattern.1, expected)
     }
 }

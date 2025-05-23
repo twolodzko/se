@@ -1,131 +1,35 @@
-use crate::{
-    address::Address,
-    command::{Command, Status},
-    Line,
-};
+use crate::{command::Status, function::Function, Line};
 
-#[derive(Debug, PartialEq)]
-pub struct Editor {
-    pub(crate) instructions: Vec<Instruction>,
-    pub(crate) counter: usize,
-    hold: String,
-}
+pub fn run<R: Iterator<Item = std::io::Result<Line>>>(
+    reader: &mut R,
+    program: &mut Function,
+    print_all: bool,
+) -> std::io::Result<(Status, usize)> {
+    use Status::*;
 
-#[derive(Debug, PartialEq)]
-pub(crate) struct Instruction {
-    pub(crate) address: Address,
-    pub(crate) commands: Vec<Command>,
-}
+    let mut matches = 0;
+    let mut status = Normal;
+    let mut hold = String::new();
 
-impl Editor {
-    pub(crate) fn new(instructions: Vec<Instruction>) -> Self {
-        Self {
-            instructions,
-            counter: 0,
-            hold: String::new(),
+    for line in reader {
+        let pattern = &mut line?;
+        status = Normal;
+
+        if let Some(s) = program.call(pattern, &mut hold) {
+            status = s;
+            matches += 1;
+        }
+
+        if status == NoPrint {
+            continue;
+        }
+        if print_all {
+            println!("{}", pattern.1)
+        }
+        if let Quit(_) = status {
+            break;
         }
     }
 
-    pub fn process(&mut self, line: &str) -> Option<(String, Status)> {
-        use Status::*;
-
-        self.counter += 1;
-        let mut matched = false;
-        let mut pattern = Line(self.counter, line.to_string());
-        let mut print = String::new();
-
-        for instruction in self.instructions.iter_mut() {
-            if instruction.address.matches(&pattern) {
-                for cmd in instruction.commands.iter() {
-                    let status = cmd.run(&mut pattern, &mut self.hold, &mut print);
-                    if status != Normal {
-                        print!("{}", print);
-                        return Some((pattern.1, status));
-                    }
-                }
-                matched = true;
-            }
-        }
-        print!("{}", print);
-
-        if matched {
-            Some((pattern.1, Normal))
-        } else {
-            None
-        }
-    }
-}
-
-impl std::fmt::Display for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut commands = self
-            .commands
-            .iter()
-            .map(|c| c.to_string())
-            .collect::<Vec<String>>()
-            .join(" ");
-        if let Some(c) = commands.chars().last() {
-            if c != '.' {
-                commands.push(' ');
-                commands.push(';');
-            }
-        }
-        write!(f, "{} {}", self.address, commands,)
-    }
-}
-
-impl std::fmt::Display for Editor {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.instructions
-                .iter()
-                .map(|c| c.to_string())
-                .collect::<Vec<String>>()
-                .join("\n")
-        )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::Editor;
-    use test_case::test_case;
-
-    #[test_case(
-        "k3-5",
-        "345";
-        "range"
-    )]
-    #[test_case(
-        "k-5",
-        "12345";
-        "left-open range"
-    )]
-    #[test_case(
-        "k5",
-        "12345";
-        "first n chars"
-    )]
-    #[test_case(
-        "k3-",
-        "3456789";
-        "right-open range"
-    )]
-    #[test_case(
-        "k1-1",
-        "1";
-        "single item range"
-    )]
-    #[test_case(
-        "k1",
-        "1";
-        "first item"
-    )]
-    fn keep(command: &str, expected: &str) {
-        let mut editor = Editor::try_from(command.to_string()).unwrap();
-        let (result, _) = editor.process("123456789").unwrap();
-        assert_eq!(result, expected)
-    }
+    Ok((status, matches))
 }

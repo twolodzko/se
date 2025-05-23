@@ -220,7 +220,7 @@ mod tests {
 
             123
         ";
-        let mut reader = StringReader::from(addr.to_string());
+        let mut reader = StringReader::from(addr);
         let mut addr = crate::parser::address::parse(&mut reader).unwrap();
         assert_eq!(
             example
