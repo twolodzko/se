@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use crate::{Function, Line, Regex};
+use crate::{Line, Regex, FUNCTIONS};
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
@@ -60,13 +58,7 @@ impl From<&Command> for Status {
 impl Command {
     /// Run the command by modifying one of the three buffers: `pattern`, `hold`, or `print`
     /// and returning a status code.
-    pub(crate) fn run(
-        &self,
-        pattern: &mut Line,
-        hold: &mut String,
-        print: &mut String,
-        func: &mut HashMap<String, Function>,
-    ) -> Status {
+    pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String, print: &mut String) -> Status {
         use Command::*;
         match self {
             // commands that print things
@@ -109,8 +101,8 @@ impl Command {
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
             Function(name) => {
-                if let Some(lambda) = func.get_mut(name) {
-                    return lambda.call(pattern, hold, func).unwrap_or(Status::Normal);
+                if let Some(lambda) = FUNCTIONS.lock().unwrap().get_mut(name) {
+                    return lambda.call(pattern, hold).unwrap_or(Status::Normal);
                 }
             }
         }

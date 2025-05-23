@@ -4,45 +4,39 @@ use super::{
     utils::{self, skip_whitespace},
 };
 use crate::{
-    editor::Program,
     function::{Function, Instruction},
-    Error,
+    Error, FUNCTIONS,
 };
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
-impl TryFrom<&std::path::PathBuf> for Program {
+impl TryFrom<&std::path::PathBuf> for Function {
     type Error = Error;
 
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
-        let mut func = HashMap::new();
-        let main = parse_main(reader, &mut func)?;
-        Ok(Program { main, func })
+        let main = parse_main(reader)?;
+        Ok(main)
     }
 }
 
-impl FromStr for Program {
+impl FromStr for Function {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
-        let mut func = HashMap::new();
-        let main = parse_main(reader, &mut func)?;
-        Ok(Program { main, func })
+        let main = parse_main(reader)?;
+        Ok(main)
     }
 }
 
-fn parse_main<R: Reader>(
-    reader: &mut R,
-    functions: &mut HashMap<String, Function>,
-) -> Result<Function, Error> {
+fn parse_main<R: Reader>(reader: &mut R) -> Result<Function, Error> {
     let mut instructions = Vec::new();
     loop {
         match reader.peek()? {
             Some('@') => {
                 reader.next()?;
                 let (name, func) = parse_function(reader)?;
-                functions.insert(name, func);
+                FUNCTIONS.lock().unwrap().insert(name, func);
             }
             Some(_) => {
                 instructions.push(parse_instruction(reader)?);
@@ -114,9 +108,8 @@ mod tests {
         address::Address::*,
         command::Command::*,
         function::{Function, Instruction},
-        Program,
     };
-    use std::{collections::HashMap, str::FromStr};
+    use std::str::FromStr;
     use test_case::test_case;
 
     // #[test_case("", Function(vec![Instruction{
@@ -278,13 +271,7 @@ mod tests {
         },
     ]); "multiple instructions")]
     fn parse(input: &str, expected: Function) {
-        let result = Program::from_str(input).unwrap();
-        assert_eq!(
-            result,
-            Program {
-                main: expected,
-                func: HashMap::new(),
-            }
-        )
+        let result = Function::from_str(input).unwrap();
+        assert_eq!(result, expected)
     }
 }

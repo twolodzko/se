@@ -5,12 +5,19 @@ mod function;
 mod lines;
 mod parser;
 
+use std::{
+    collections::HashMap,
+    sync::{LazyLock, Mutex},
+};
 pub use {
     command::Status,
-    editor::{run, Program},
+    editor::run,
     function::Function,
     lines::{FilesReader, Line, StdinReader},
 };
+
+pub static FUNCTIONS: LazyLock<Mutex<HashMap<String, Function>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub(crate) struct Regex(regex::Regex);
@@ -68,9 +75,8 @@ impl std::fmt::Display for Error {
 
 #[cfg(test)]
 mod tests {
+    use crate::{Function, Line};
     use std::str::FromStr;
-
-    use crate::{Line, Program};
     use test_case::test_case;
 
     #[test_case(
@@ -104,7 +110,7 @@ mod tests {
         "first item"
     )]
     fn keep(command: &str, expected: &str) {
-        let mut func = Program::from_str(command).unwrap();
+        let mut func = Function::from_str(command).unwrap();
         let pattern = &mut Line(0, "123456789".to_string());
         func.call(pattern, &mut String::new()).unwrap();
         assert_eq!(pattern.1, expected)

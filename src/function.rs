@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     address::Address,
     command::{Command, Status},
@@ -18,19 +16,14 @@ pub(crate) struct Instruction {
 impl Function {
     /// Call the function with `pattern` buffer and `hold` buffer as arguments,
     /// modify them if relevant, return the status. On no match, return `None`.
-    pub(crate) fn call(
-        &mut self,
-        pattern: &mut Line,
-        hold: &mut String,
-        func: &mut HashMap<String, Function>,
-    ) -> Option<Status> {
+    pub(crate) fn call(&mut self, pattern: &mut Line, hold: &mut String) -> Option<Status> {
         let mut matched = false;
         let mut print = String::new();
 
         for instruction in self.0.iter_mut() {
             if instruction.address.matches(pattern) {
                 for cmd in instruction.commands.iter() {
-                    let status = cmd.run(pattern, hold, &mut print, func);
+                    let status = cmd.run(pattern, hold, &mut print);
                     if status != Status::Normal {
                         print!("{}", print);
                         return Some(status);

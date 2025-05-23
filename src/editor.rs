@@ -1,22 +1,8 @@
-use std::collections::HashMap;
-
 use crate::{command::Status, function::Function, Line};
-
-#[derive(Debug, PartialEq)]
-pub struct Program {
-    pub(crate) main: Function,
-    pub(crate) func: HashMap<String, Function>,
-}
-
-impl Program {
-    pub(crate) fn call(&mut self, pattern: &mut Line, hold: &mut String) -> Option<Status> {
-        self.main.call(pattern, hold, &mut self.func)
-    }
-}
 
 pub fn run<R: Iterator<Item = std::io::Result<Line>>>(
     reader: &mut R,
-    program: &mut Program,
+    program: &mut Function,
     print_all: bool,
 ) -> std::io::Result<(Status, usize)> {
     use Status::*;
