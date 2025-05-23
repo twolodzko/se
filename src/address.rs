@@ -13,9 +13,74 @@ pub(crate) enum Address {
     // addr! negates the addr match
     Negate(Box<Address>),
     // // addr1 - addr2
-    Between(Box<Address>, Box<Address>, bool),
+    Between(Boundary, Boundary),
     // addr1, addr2, ...
     Set(Vec<Address>),
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum Boundary {
+    Location(usize),
+    Once(Box<Address>, bool),
+}
+
+impl From<Address> for Boundary {
+    fn from(value: Address) -> Self {
+        match value {
+            Address::Location(idx) => Boundary::Location(idx),
+            other => Boundary::Once(Box::new(other), false),
+        }
+    }
+}
+
+impl std::fmt::Display for Boundary {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Boundary::*;
+        match self {
+            Location(idx) => idx.fmt(f),
+            Once(addr, _) => addr.fmt(f),
+        }
+    }
+}
+
+impl Boundary {
+    /// boundary <= line
+    fn left_of(&mut self, line: &Line) -> bool {
+        use Boundary::*;
+        match self {
+            Location(idx) => *idx <= line.0,
+            Once(_, true) => true,
+            Once(addr, ref mut seen) => {
+                if addr.matches(line) {
+                    *seen = true;
+                    return true;
+                }
+                false
+            }
+        }
+    }
+
+    /// line <= boundary
+    fn right_of(&mut self, line: &Line) -> bool {
+        use Boundary::*;
+        match self {
+            Location(idx) => line.0 <= *idx,
+            Once(_, true) => false,
+            Once(addr, ref mut seen) => {
+                if addr.matches(line) {
+                    *seen = true;
+                    return true;
+                }
+                true
+            }
+        }
+    }
+
+    fn reset(&mut self) {
+        if let Boundary::Once(_, ref mut seen) = self {
+            *seen = false;
+        }
+    }
 }
 
 impl Address {
@@ -27,21 +92,15 @@ impl Address {
             Location(idx) => *idx == line.0,
             Regex(ref regex) => regex.0.is_match(&line.1),
             Negate(addr) => !addr.matches(line),
-            Between(lhs, rhs, inside) => {
-                if *inside {
-                    if rhs.matches(line) {
-                        *inside = false;
-                    }
-                    true
-                } else {
-                    if lhs.matches(line) {
-                        if !rhs.matches(line) {
-                            *inside = true;
-                        }
+            Between(lhs, rhs) => {
+                if lhs.left_of(line) {
+                    if rhs.right_of(line) {
                         return true;
                     }
-                    false
+                    lhs.reset();
+                    rhs.reset();
                 }
+                false
             }
             Set(addrs) => {
                 let mut matched = false;
@@ -50,11 +109,11 @@ impl Address {
                         // Between's always need to be evaluated
                         // so we don't miss the bounds
                         if let Negate(inner) = addr {
-                            if !matches!(inner.as_ref(), Between(_, _, _)) {
+                            if !matches!(inner.as_ref(), Between(_, _)) {
                                 continue;
                             }
                         }
-                        if !matches!(addr, Between(_, _, _)) {
+                        if !matches!(addr, Between(_, _)) {
                             continue;
                         }
                     }
@@ -91,7 +150,7 @@ impl std::fmt::Display for Address {
             Location(idx) => write!(f, "{}", idx),
             Regex(regex) => write!(f, "/{}/", regex),
             Negate(addr) => write!(f, "{}!", addr),
-            Between(lhs, rhs, _) => write!(f, "{}-{}", lhs, rhs),
+            Between(lhs, rhs) => write!(f, "{}-{}", lhs, rhs),
             Set(addrs) => {
                 let list = addrs
                     .iter()
