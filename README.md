@@ -66,8 +66,8 @@ Same as `sed`, it can be used for string search and replace in files.
   [std::char::escape_default].
 * `=` – print the line number.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
-* `kN-M` – keep the characters from the `N-M` range (inclusive). `-M` is an left-open interval (same as `1-M`),
-  `N-` is an right-open interval. `kM` is a shorter way of defining `k1-M`.
+* `kN-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
+  `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
 * `h` or `c` – copy the content of the pattern space to the hold space.
 * `g` or `v` – copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.

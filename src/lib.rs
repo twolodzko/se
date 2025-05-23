@@ -91,8 +91,8 @@ mod tests {
     )]
     #[test_case(
         "k5",
-        "12345";
-        "first n chars"
+        "5";
+        "n-th chars"
     )]
     #[test_case(
         "k3-",
