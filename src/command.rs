@@ -56,7 +56,7 @@ impl From<&Command> for Status {
 }
 
 impl Command {
-    /// Run the command by modifying one of the three buffers: `pattern` or `hold`
+    /// Run the command by modifying one of the `pattern` or `hold` buffers
     /// and returning a status code.
     pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String) -> Status {
         use Command::*;
