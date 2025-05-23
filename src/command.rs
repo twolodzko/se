@@ -33,7 +33,7 @@ pub(crate) enum Command {
     /// q[code]
     Quit(i32),
     /// &func
-    Function(String),
+    Call(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -100,7 +100,7 @@ impl Command {
             }
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
-            Function(name) => {
+            Call(name) => {
                 if let Some(lambda) = FUNCTIONS.lock().unwrap().get_mut(name) {
                     return lambda.call(pattern, hold).unwrap_or(Status::Normal);
                 }
@@ -130,7 +130,7 @@ impl std::fmt::Display for Command {
             Delete => write!(f, "d"),
             Break => write!(f, "."),
             Quit(c) => write!(f, "q{}", c),
-            Function(n) => write!(f, "&{}", n),
+            Call(n) => write!(f, "&{}", n),
         }
     }
 }

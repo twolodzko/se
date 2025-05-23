@@ -45,21 +45,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
                 };
                 Quit(code)
             }
-            '&' => {
-                let mut name = String::new();
-                while let Some(c) = reader.peek()? {
-                    if c.is_alphanumeric() {
-                        reader.next()?;
-                        name.push(c);
-                    } else {
-                        break;
-                    }
-                }
-                if name.is_empty() {
-                    return Err(Error::Custom("function name cannot be empty".to_string()));
-                }
-                Function(name)
-            }
+            '&' => parse_call(reader)?,
             '\'' | '"' => {
                 let msg = unescape(read_until(reader, c)?)?;
                 Insert(msg)
@@ -139,25 +125,20 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
     Err(Error::Missing(delim))
 }
 
-fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
-    let mut acc = String::new();
-    while let Some(c) = reader.next()? {
-        match c {
-            c if c == delim => return Ok(acc),
-            '\\' => {
-                if let Some(e) = reader.next()? {
-                    if e != delim {
-                        acc.push(c);
-                    }
-                    acc.push(e);
-                } else {
-                    break;
-                }
-            }
-            _ => acc.push(c),
+fn parse_call<R: Reader>(reader: &mut R) -> Result<Command, Error> {
+    let mut name = String::new();
+    while let Some(c) = reader.peek()? {
+        if c.is_alphanumeric() {
+            reader.next()?;
+            name.push(c);
+        } else {
+            break;
         }
     }
-    Err(Error::Missing(delim))
+    if name.is_empty() {
+        return Err(Error::Custom("function name cannot be empty".to_string()));
+    }
+    Ok(Call(name))
 }
 
 fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command, Error> {
@@ -193,6 +174,27 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command, Error> {
         Some(num - lhs)
     };
     Ok(Keep(lhs, rhs))
+}
+
+fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
+    let mut acc = String::new();
+    while let Some(c) = reader.next()? {
+        match c {
+            c if c == delim => return Ok(acc),
+            '\\' => {
+                if let Some(e) = reader.next()? {
+                    if e != delim {
+                        acc.push(c);
+                    }
+                    acc.push(e);
+                } else {
+                    break;
+                }
+            }
+            _ => acc.push(c),
+        }
+    }
+    Err(Error::Missing(delim))
 }
 
 fn unescape(s: String) -> Result<String, Error> {
