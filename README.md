@@ -61,7 +61,7 @@ Same as `sed`, it can be used for string search and replace in files.
 ## Commands
 
 * `p` – print the content of the pattern space as-is followed by a newline character.
-  Use `P` to print the content of pattern space without the newline.
+* `P` – print the content of pattern space without the newline.
 * `l` – print the content of the pattern space after escaping the characters with Rust's
   [std::char::escape_default].
 * `=` – print the line number.
@@ -71,7 +71,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `h` or `c` – copy the content of the pattern space to the hold space.
 * `g` or `v` – copy the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
-* `z` – empties the content of pattern space. It is the same as `s/.*//`, but is more efficient.
+* `j` – push the content of the hold space at the back of the pattern space.
+* `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
 * `\n`, `\t` – print the newline, or tab character.
 * `\char` print the character `char`, e.g. `\=` prints `=` and `\ ` prints whitespace.

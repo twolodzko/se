@@ -23,9 +23,10 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'k' => parse_keep(reader)?,
             '=' => LineNumber,
             '\\' => match reader.next()? {
-                Some('n') => Insert('\n'.to_string()),
-                Some('t') => Insert('\t'.to_string()),
-                Some(c) => Insert(c.to_string()),
+                Some(c) => match unescape::unescape(&format!("\\{}", c)) {
+                    Some(s) => Insert(s),
+                    None => Insert(c.to_string()),
+                },
                 None => return Err(Error::Unexpected('\\')),
             },
             'd' => Delete,
@@ -33,6 +34,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'h' | 'c' => Copy,
             'g' | 'v' => Paste,
             'x' => Exchange,
+            'j' => Join,
             'q' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;

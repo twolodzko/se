@@ -22,6 +22,8 @@ pub(crate) enum Command {
     Paste,
     /// x
     Exchange,
+    /// j
+    Join,
     /// z
     Reset,
     /// d
@@ -91,6 +93,9 @@ impl Command {
             Exchange => {
                 std::mem::swap(hold, &mut pattern.1);
             }
+            Join => {
+                pattern.1.push_str(&hold);
+            }
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
         }
@@ -113,6 +118,7 @@ impl std::fmt::Display for Command {
             Copy => write!(f, "h"),
             Paste => write!(f, "g"),
             Exchange => write!(f, "x"),
+            Join => write!(f, "j"),
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Break => write!(f, "."),
