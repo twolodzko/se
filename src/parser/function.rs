@@ -14,8 +14,7 @@ impl TryFrom<&std::path::PathBuf> for Function {
 
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
-        let main = parse_main(reader)?;
-        Ok(main)
+        parse(reader)
     }
 }
 
@@ -24,12 +23,11 @@ impl FromStr for Function {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
-        let main = parse_main(reader)?;
-        Ok(main)
+        parse(reader)
     }
 }
 
-fn parse_main<R: Reader>(reader: &mut R) -> Result<Function, Error> {
+fn parse<R: Reader>(reader: &mut R) -> Result<Function, Error> {
     let mut instructions = Vec::new();
     loop {
         match reader.peek()? {
@@ -46,13 +44,6 @@ fn parse_main<R: Reader>(reader: &mut R) -> Result<Function, Error> {
             }
         }
     }
-    // FIXME
-    // if instructions.is_empty() {
-    //     instructions.push(Instruction {
-    //         address: Address::Always,
-    //         commands: Vec::new(),
-    //     });
-    // }
     Ok(Function(instructions))
 }
 
@@ -112,10 +103,7 @@ mod tests {
     use std::str::FromStr;
     use test_case::test_case;
 
-    // #[test_case("", Function(vec![Instruction{
-    //     address: Always,
-    //     commands: Vec::new(),
-    // }]); "empty")]
+    #[test_case("", Function(Vec::new()); "empty")]
     #[test_case("*", Function(vec![Instruction{
         address: Always,
         commands: Vec::new()
