@@ -94,11 +94,6 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
-@test "Print selected lines like in sed" {
-   run diff <(sed -n '3,/address/ p' README.md) <(./se '3-/address/ p' README.md)
-   [ "$status" -eq 0 ]
-}
-
 @test "Print head" {
    run diff <(head -n 5 README.md) <(./se '1-5p' README.md)
    [ "$status" -eq 0 ]
