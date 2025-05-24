@@ -29,18 +29,15 @@ impl FromStr for Function {
 
 fn parse<R: Reader>(reader: &mut R) -> Result<Function, Error> {
     let mut instructions = Vec::new();
-    loop {
-        match reader.peek()? {
-            Some('@') => {
+    while let Some(c) = reader.peek()? {
+        match c {
+            '@' => {
                 reader.next()?;
                 let (name, func) = parse_function(reader)?;
                 FUNCTIONS.lock().unwrap().insert(name, func);
             }
-            Some(_) => {
+            _ => {
                 instructions.push(parse_instruction(reader)?);
-            }
-            None => {
-                break;
             }
         }
         skip_whitespace(reader);
