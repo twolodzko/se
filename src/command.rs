@@ -1,4 +1,4 @@
-use crate::{Line, Regex, FUNCTIONS};
+use crate::{Line, Regex};
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
@@ -97,12 +97,7 @@ impl Command {
             }
             // commands that return special status codes
             Delete | Break | Quit(_) => return Status::from(self),
-            Call(name) => {
-                // FIXME: this won't work because of a lock
-                if let Some(func) = FUNCTIONS.lock().unwrap().get(name) {
-                    return func.call(pattern, hold).unwrap_or(Status::Normal);
-                }
-            }
+            Call(_) => unreachable!(),
         }
         Status::Normal
     }

@@ -5,19 +5,12 @@ mod function;
 mod lines;
 mod parser;
 
-use std::{
-    collections::HashMap,
-    sync::{LazyLock, Mutex},
-};
 pub use {
     command::Status,
     editor::run,
     function::Function,
     lines::{FilesReader, Line, StdinReader},
 };
-
-pub static FUNCTIONS: LazyLock<Mutex<HashMap<String, Function>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub(crate) struct Regex(regex::Regex);

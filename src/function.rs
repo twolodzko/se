@@ -1,3 +1,5 @@
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
 use crate::{
     address::Address,
     command::{Command, Status},
@@ -5,7 +7,9 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-pub struct Function(pub(crate) Vec<Instruction>);
+pub struct Function(pub(crate) Vec<Instruction>, pub(crate) Library);
+
+pub(crate) type Library = Rc<RefCell<HashMap<String, Function>>>;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Instruction {
@@ -21,9 +25,19 @@ impl Function {
         for instruction in self.0.iter() {
             if instruction.address.matches(pattern) {
                 for cmd in instruction.commands.iter() {
-                    let status = cmd.run(pattern, hold);
-                    if status != Status::Normal {
-                        return Some(status);
+                    if let Command::Call(name) = cmd {
+                        if let Some(func) = self.1.borrow().get(name) {
+                            if let Some(status) = func.call(pattern, hold) {
+                                if status != Status::Normal {
+                                    return Some(status);
+                                }
+                            }
+                        }
+                    } else {
+                        let status = cmd.run(pattern, hold);
+                        if status != Status::Normal {
+                            return Some(status);
+                        }
                     }
                 }
                 matched = true;
