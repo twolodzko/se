@@ -5,7 +5,7 @@ use super::{
 };
 use crate::{
     function::{Function, Instruction},
-    Error, FUNCTIONS,
+    Error,
 };
 use std::str::FromStr;
 
@@ -29,20 +29,8 @@ impl FromStr for Function {
 
 fn parse<R: Reader>(reader: &mut R) -> Result<Function, Error> {
     let mut instructions = Vec::new();
-    loop {
-        match reader.peek()? {
-            Some('@') => {
-                reader.next()?;
-                let (name, func) = parse_function(reader)?;
-                FUNCTIONS.lock().unwrap().insert(name, func);
-            }
-            Some(_) => {
-                instructions.push(parse_instruction(reader)?);
-            }
-            None => {
-                break;
-            }
-        }
+    while reader.peek()?.is_some() {
+        instructions.push(parse_instruction(reader)?);
         skip_whitespace(reader);
     }
     Ok(Function(instructions))
@@ -57,43 +45,6 @@ fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
     Ok(Instruction { address, commands })
 }
 
-fn parse_function<R: Reader>(reader: &mut R) -> Result<(String, Function), Error> {
-    let mut name = String::new();
-    while let Some(c) = reader.peek()? {
-        if c.is_alphanumeric() {
-            reader.next()?;
-            name.push(c);
-        } else {
-            break;
-        }
-    }
-    if name.is_empty() {
-        return Err(Error::Custom("function name cannot be empty".to_string()));
-    }
-
-    skip_whitespace(reader);
-    let Some('{') = reader.next()? else {
-        return Err(Error::Missing('{'));
-    };
-
-    let mut instructions = Vec::new();
-    loop {
-        instructions.push(parse_instruction(reader)?);
-
-        skip_whitespace(reader);
-        match reader.peek()? {
-            None => return Err(Error::Missing('}')),
-            Some('}') => {
-                reader.next()?;
-                break;
-            }
-            _ => (),
-        }
-    }
-
-    Ok((name, Function(instructions)))
-}
-
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -101,7 +52,7 @@ mod tests {
         command::Command::*,
         function::{Function, Instruction},
     };
-    use std::str::FromStr;
+    use std::{cell::RefCell, str::FromStr};
     use test_case::test_case;
 
     #[test_case("", Function(Vec::new()); "empty")]
@@ -122,27 +73,27 @@ mod tests {
         commands: vec![LineNumber, Insert("\n".to_string()), Println]
     }]); "commands with spaces")]
     #[test_case("-", Function(vec![Instruction{
-        address: Between(Boundary::Location(1), Boundary::from(Never)),
+        address: Between(RefCell::new(Boundary::Location(1)), RefCell::new(Boundary::from(Never))),
         commands: Vec::new()
     }]); "infinite range")]
     #[test_case("-5", Function(vec![Instruction{
-        address: Between(Boundary::Location(1), Boundary::Location(5)),
+        address: Between(RefCell::new(Boundary::Location(1)), RefCell::new(Boundary::Location(5))),
         commands: Vec::new(),
     }]); "right bound range")]
     #[test_case("3-", Function(vec![Instruction{
-        address: Between(Boundary::Location(3), Boundary::from(Never)),
+        address: Between(RefCell::new(Boundary::Location(3)), RefCell::new(Boundary::from(Never))),
         commands: Vec::new(),
     }]); "left bound range")]
     #[test_case("13-72", Function(vec![Instruction{
-        address: Between(Boundary::Location(13), Boundary::Location(72)),
+        address: Between(RefCell::new(Boundary::Location(13)), RefCell::new(Boundary::Location(72))),
         commands: Vec::new(),
     }]); "range")]
     #[test_case(" 13  -   72 ", Function(vec![Instruction{
-        address: Between(Boundary::Location(13), Boundary::Location(72)),
+        address: Between(RefCell::new(Boundary::Location(13)), RefCell::new(Boundary::Location(72))),
         commands: Vec::new(),
     }]); "range with spaces")]
     #[test_case("13-72!", Function(vec![Instruction{
-        address: Negate(Box::new(Between(Boundary::Location(13), Boundary::Location(72)))),
+        address: Negate(Box::new(Between(RefCell::new(Boundary::Location(13)), RefCell::new(Boundary::Location(72))))),
         commands: Vec::new(),
     }]); "range negated")]
     #[test_case("/abc/", Function(vec![Instruction{
@@ -167,8 +118,8 @@ mod tests {
     }]); "whole line only dollar")]
     #[test_case("/abc/-/def/", Function(vec![Instruction{
         address: Between(
-            Boundary::from(Regex(crate::Regex::from_str("abc").unwrap())),
-            Boundary::from(Regex(crate::Regex::from_str("def").unwrap())),
+            RefCell::new(Boundary::from(Regex(crate::Regex::from_str("abc").unwrap()))),
+            RefCell::new(Boundary::from(Regex(crate::Regex::from_str("def").unwrap()))),
         ),
         commands: Vec::new(),
     }]); "regex range")]

@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use super::{
     reader::Reader,
     utils::{parse_regex, read_integer, skip_line, skip_whitespace},
@@ -73,7 +75,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
                 )));
             }
         }
-        return Ok(Between(lhs, rhs));
+        return Ok(Between(RefCell::new(lhs), RefCell::new(rhs)));
     }
     Ok(addr.unwrap_or(Always))
 }

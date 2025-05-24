@@ -2,7 +2,7 @@ use crate::{command::Status, function::Function, Line};
 
 pub fn run<R: Iterator<Item = std::io::Result<Line>>>(
     reader: &mut R,
-    program: &mut Function,
+    program: &Function,
     print_all: bool,
 ) -> std::io::Result<(Status, usize)> {
     use Status::*;

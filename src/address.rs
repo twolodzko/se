@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use crate::Line;
 
 #[derive(Debug, PartialEq)]
@@ -13,7 +15,7 @@ pub(crate) enum Address {
     // addr! negates the addr match
     Negate(Box<Address>),
     // // addr1 - addr2
-    Between(Boundary, Boundary),
+    Between(RefCell<Boundary>, RefCell<Boundary>),
     // addr1, addr2, ...
     Set(Vec<Address>),
 }
@@ -84,7 +86,7 @@ impl Boundary {
 }
 
 impl Address {
-    pub(crate) fn matches(&mut self, line: &Line) -> bool {
+    pub(crate) fn matches(&self, line: &Line) -> bool {
         use Address::*;
         match self {
             Always => true,
@@ -93,18 +95,18 @@ impl Address {
             Regex(ref regex) => regex.0.is_match(&line.1),
             Negate(addr) => !addr.matches(line),
             Between(lhs, rhs) => {
-                if lhs.left_of(line) {
-                    if rhs.right_of(line) {
+                if lhs.borrow_mut().left_of(line) {
+                    if rhs.borrow_mut().right_of(line) {
                         return true;
                     }
-                    lhs.reset();
-                    rhs.reset();
+                    lhs.borrow_mut().reset();
+                    rhs.borrow_mut().reset();
                 }
                 false
             }
             Set(addrs) => {
                 let mut matched = false;
-                for addr in addrs.iter_mut() {
+                for addr in addrs.iter() {
                     if matched {
                         // Between's always need to be evaluated
                         // so we don't miss the bounds
@@ -150,7 +152,7 @@ impl std::fmt::Display for Address {
             Location(idx) => write!(f, "{}", idx),
             Regex(regex) => write!(f, "/{}/", regex),
             Negate(addr) => write!(f, "{}!", addr),
-            Between(lhs, rhs) => write!(f, "{}-{}", lhs, rhs),
+            Between(lhs, rhs) => write!(f, "{}-{}", lhs.borrow(), rhs.borrow()),
             Set(addrs) => {
                 let list = addrs
                     .iter()
@@ -204,7 +206,6 @@ mod tests {
         "set 1,2,3 does not match line 279"
     )]
     fn matches(addr: Address, line: Line, expected: bool) {
-        let mut addr = addr;
         assert_eq!(addr.matches(&line), expected)
     }
 

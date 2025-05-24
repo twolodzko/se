@@ -14,7 +14,7 @@ macro_rules! unwrap {
 fn main() {
     let args = parse_args();
 
-    let mut program = unwrap!(if let Some(path) = &args.script.path {
+    let program = unwrap!(if let Some(path) = &args.script.path {
         Function::try_from(path)
     } else if let Some(command) = &args.script.command {
         Function::from_str(command)
@@ -28,7 +28,7 @@ fn main() {
         Box::new(FilesReader::from(args.files))
     };
 
-    let (status, count) = unwrap!(se::run(&mut reader, &mut program, args.all));
+    let (status, count) = unwrap!(se::run(&mut reader, &program, args.all));
 
     if args.count {
         println!("{}", count)
