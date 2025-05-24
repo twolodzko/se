@@ -45,7 +45,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
                 };
                 Quit(code)
             }
-            '&' => parse_call(reader)?,
             '\'' | '"' => {
                 let msg = unescape(read_until(reader, c)?)?;
                 Insert(msg)
@@ -123,22 +122,6 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
         }
     }
     Err(Error::Missing(delim))
-}
-
-fn parse_call<R: Reader>(reader: &mut R) -> Result<Command, Error> {
-    let mut name = String::new();
-    while let Some(c) = reader.peek()? {
-        if c.is_alphanumeric() {
-            reader.next()?;
-            name.push(c);
-        } else {
-            break;
-        }
-    }
-    if name.is_empty() {
-        return Err(Error::Custom("function name cannot be empty".to_string()));
-    }
-    Ok(Call(name))
 }
 
 fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command, Error> {
