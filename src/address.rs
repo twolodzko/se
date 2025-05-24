@@ -19,29 +19,6 @@ pub(crate) enum Address {
     Set(Vec<Address>),
 }
 
-#[derive(Debug)]
-pub(crate) struct Bool(atomic::AtomicBool);
-
-impl Bool {
-    pub(crate) fn new(value: bool) -> Bool {
-        Bool(atomic::AtomicBool::new(value))
-    }
-
-    pub(crate) fn is_true(&self) -> bool {
-        self.0.load(atomic::Ordering::Relaxed)
-    }
-
-    pub(crate) fn set(&self, value: bool) {
-        self.0.store(value, atomic::Ordering::Relaxed)
-    }
-}
-
-impl PartialEq for Bool {
-    fn eq(&self, other: &Self) -> bool {
-        self.is_true() == other.is_true()
-    }
-}
-
 impl Address {
     pub(crate) fn matches(&self, line: &Line) -> bool {
         use Address::*;
@@ -112,6 +89,29 @@ impl std::fmt::Display for Address {
                 write!(f, "{}", list)
             }
         }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct Bool(atomic::AtomicBool);
+
+impl Bool {
+    pub(crate) fn new(value: bool) -> Bool {
+        Bool(atomic::AtomicBool::new(value))
+    }
+
+    pub(crate) fn is_true(&self) -> bool {
+        self.0.load(atomic::Ordering::Relaxed)
+    }
+
+    pub(crate) fn set(&self, value: bool) {
+        self.0.store(value, atomic::Ordering::Relaxed)
+    }
+}
+
+impl PartialEq for Bool {
+    fn eq(&self, other: &Self) -> bool {
+        self.is_true() == other.is_true()
     }
 }
 
