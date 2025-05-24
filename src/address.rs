@@ -1,6 +1,5 @@
-use std::cell::RefCell;
-
 use crate::Line;
+use std::sync::atomic;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Address {
@@ -15,73 +14,31 @@ pub(crate) enum Address {
     // addr! negates the addr match
     Negate(Box<Address>),
     // // addr1 - addr2
-    Between(RefCell<Boundary>, RefCell<Boundary>),
+    Between(Box<Address>, Box<Address>, Bool),
     // addr1, addr2, ...
     Set(Vec<Address>),
 }
 
-#[derive(Debug, PartialEq)]
-pub(crate) enum Boundary {
-    Location(usize),
-    Once(Box<Address>, bool),
-}
+#[derive(Debug)]
+pub(crate) struct Bool(atomic::AtomicBool);
 
-impl From<Address> for Boundary {
-    fn from(value: Address) -> Self {
-        match value {
-            Address::Location(idx) => Boundary::Location(idx),
-            other => Boundary::Once(Box::new(other), false),
-        }
+impl Bool {
+    pub(crate) fn new(value: bool) -> Bool {
+        Bool(atomic::AtomicBool::new(value))
+    }
+
+    pub(crate) fn is_true(&self) -> bool {
+        self.0.load(atomic::Ordering::Relaxed)
+    }
+
+    pub(crate) fn set(&self, value: bool) {
+        self.0.store(value, atomic::Ordering::Relaxed)
     }
 }
 
-impl std::fmt::Display for Boundary {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Boundary::*;
-        match self {
-            Location(idx) => idx.fmt(f),
-            Once(addr, _) => addr.fmt(f),
-        }
-    }
-}
-
-impl Boundary {
-    /// boundary <= line
-    fn left_of(&mut self, line: &Line) -> bool {
-        use Boundary::*;
-        match self {
-            Location(idx) => *idx <= line.0,
-            Once(_, true) => true,
-            Once(addr, ref mut seen) => {
-                if addr.matches(line) {
-                    *seen = true;
-                    return true;
-                }
-                false
-            }
-        }
-    }
-
-    /// line <= boundary
-    fn right_of(&mut self, line: &Line) -> bool {
-        use Boundary::*;
-        match self {
-            Location(idx) => line.0 <= *idx,
-            Once(_, true) => false,
-            Once(addr, ref mut seen) => {
-                if addr.matches(line) {
-                    *seen = true;
-                    return true;
-                }
-                true
-            }
-        }
-    }
-
-    fn reset(&mut self) {
-        if let Boundary::Once(_, ref mut seen) = self {
-            *seen = false;
-        }
+impl PartialEq for Bool {
+    fn eq(&self, other: &Self) -> bool {
+        self.is_true() == other.is_true()
     }
 }
 
@@ -94,36 +51,29 @@ impl Address {
             Location(idx) => *idx == line.0,
             Regex(ref regex) => regex.0.is_match(&line.1),
             Negate(addr) => !addr.matches(line),
-            Between(lhs, rhs) => {
-                if lhs.borrow_mut().left_of(line) {
-                    if rhs.borrow_mut().right_of(line) {
+            Between(a, b, inside) => {
+                if inside.is_true() {
+                    if b.matches(line) {
+                        inside.set(false);
+                    }
+                    true
+                } else {
+                    if a.matches(line) {
+                        if !b.matches(line) {
+                            inside.set(true);
+                        }
                         return true;
                     }
-                    lhs.borrow_mut().reset();
-                    rhs.borrow_mut().reset();
+                    false
                 }
-                false
             }
             Set(addrs) => {
-                let mut matched = false;
                 for addr in addrs.iter() {
-                    if matched {
-                        // Between's always need to be evaluated
-                        // so we don't miss the bounds
-                        if let Negate(inner) = addr {
-                            if !matches!(inner.as_ref(), Between(_, _)) {
-                                continue;
-                            }
-                        }
-                        if !matches!(addr, Between(_, _)) {
-                            continue;
-                        }
-                    }
                     if addr.matches(line) {
-                        matched = true;
+                        return true;
                     }
                 }
-                matched
+                false
             }
         }
     }
@@ -152,7 +102,7 @@ impl std::fmt::Display for Address {
             Location(idx) => write!(f, "{}", idx),
             Regex(regex) => write!(f, "/{}/", regex),
             Negate(addr) => write!(f, "{}!", addr),
-            Between(lhs, rhs) => write!(f, "{}-{}", lhs.borrow(), rhs.borrow()),
+            Between(a, b, _) => write!(f, "{}-{}", a, b),
             Set(addrs) => {
                 let list = addrs
                     .iter()
