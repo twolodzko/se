@@ -99,7 +99,7 @@ impl Command {
             Delete | Break | Quit(_) => return Status::from(self),
             Call(name) => {
                 // FIXME: this won't work because of a lock
-                if let Some(func) = FUNCTIONS.lock().unwrap().get_mut(name) {
+                if let Some(func) = FUNCTIONS.lock().unwrap().get(name) {
                     return func.call(pattern, hold).unwrap_or(Status::Normal);
                 }
             }
