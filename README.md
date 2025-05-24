@@ -156,6 +156,8 @@ lines containing the word "sed" would be printed twice, because of matching addr
 ## Grammar
 
 ```text
+Function       = '@' '{' Script '}'
+
 Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
@@ -168,7 +170,8 @@ Address        = ( Negated ',' )+ Negated
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
-Command        = [=plnhcgvxjzd] | '\' Character | Quit | String | Substitute
+Call           = '&' String
+Command        = [=plnhcgvxjzd] | '\' Character | Quit | String | Substitute | Call
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
