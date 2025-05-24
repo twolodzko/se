@@ -5,7 +5,7 @@ use super::{
 use crate::{
     address::{
         Address::{self, *},
-        Boundary,
+        Bool,
     },
     Error,
 };
@@ -61,11 +61,11 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     let addr = parse_simple_addr(reader)?;
     skip_whitespace(reader);
     if let Some('-') = reader.peek()? {
-        let lhs = addr.unwrap_or(Location(1)).into();
+        let lhs = addr.unwrap_or(Location(1));
         reader.next()?;
         skip_whitespace(reader);
-        let rhs = parse_simple_addr(reader)?.unwrap_or(Never).into();
-        if let (Boundary::Location(lo), Boundary::Location(hi)) = (&lhs, &rhs) {
+        let rhs = parse_simple_addr(reader)?.unwrap_or(Never);
+        if let (Location(lo), Location(hi)) = (&lhs, &rhs) {
             if lo > hi {
                 return Err(Error::InvalidAddr(format!(
                     "{} > {} in {}-{}",
@@ -73,7 +73,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
                 )));
             }
         }
-        return Ok(Between(lhs, rhs));
+        return Ok(Between(Box::new(lhs), Box::new(rhs), Bool::new(false)));
     }
     Ok(addr.unwrap_or(Always))
 }

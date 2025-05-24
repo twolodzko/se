@@ -48,7 +48,7 @@ fn parse_instruction<R: Reader>(reader: &mut R) -> Result<Instruction, Error> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        address::{Address::*, Boundary},
+        address::{Address::*, Bool},
         command::Command::*,
         function::{Function, Instruction},
     };
@@ -73,27 +73,27 @@ mod tests {
         commands: vec![LineNumber, Insert("\n".to_string()), Println]
     }]); "commands with spaces")]
     #[test_case("-", Function(vec![Instruction{
-        address: Between(Boundary::Location(1), Boundary::from(Never)),
+        address: Between(Box::new(Location(1)), Box::new(Never), Bool::new(false)),
         commands: Vec::new()
     }]); "infinite range")]
     #[test_case("-5", Function(vec![Instruction{
-        address: Between(Boundary::Location(1), Boundary::Location(5)),
+        address: Between(Box::new(Location(1)), Box::new(Location(5)), Bool::new(false)),
         commands: Vec::new(),
     }]); "right bound range")]
     #[test_case("3-", Function(vec![Instruction{
-        address: Between(Boundary::Location(3), Boundary::from(Never)),
+        address: Between(Box::new(Location(3)), Box::new(Never), Bool::new(false)),
         commands: Vec::new(),
     }]); "left bound range")]
     #[test_case("13-72", Function(vec![Instruction{
-        address: Between(Boundary::Location(13), Boundary::Location(72)),
+        address: Between(Box::new(Location(13)), Box::new(Location(72)), Bool::new(false)),
         commands: Vec::new(),
     }]); "range")]
     #[test_case(" 13  -   72 ", Function(vec![Instruction{
-        address: Between(Boundary::Location(13), Boundary::Location(72)),
+        address: Between(Box::new(Location(13)), Box::new(Location(72)), Bool::new(false)),
         commands: Vec::new(),
     }]); "range with spaces")]
     #[test_case("13-72!", Function(vec![Instruction{
-        address: Negate(Box::new(Between(Boundary::Location(13), Boundary::Location(72)))),
+        address: Negate(Box::new(Between(Box::new(Location(13)), Box::new(Location(72)), Bool::new(false)))),
         commands: Vec::new(),
     }]); "range negated")]
     #[test_case("/abc/", Function(vec![Instruction{
@@ -118,8 +118,9 @@ mod tests {
     }]); "whole line only dollar")]
     #[test_case("/abc/-/def/", Function(vec![Instruction{
         address: Between(
-            Boundary::from(Regex(crate::Regex::from_str("abc").unwrap())),
-            Boundary::from(Regex(crate::Regex::from_str("def").unwrap())),
+            Box::new(Regex(crate::Regex::from_str("abc").unwrap())),
+            Box::new(Regex(crate::Regex::from_str("def").unwrap())),
+            Bool::new(false)
         ),
         commands: Vec::new(),
     }]); "regex range")]
