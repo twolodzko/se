@@ -16,9 +16,9 @@ pub(crate) struct Instruction {
 impl Function {
     /// Call the function with `pattern` buffer and `hold` buffer as arguments,
     /// modify them if relevant, return the status. On no match, return `None`.
-    pub(crate) fn call(&mut self, pattern: &mut Line, hold: &mut String) -> Option<Status> {
+    pub(crate) fn call(&self, pattern: &mut Line, hold: &mut String) -> Option<Status> {
         let mut matched = false;
-        for instruction in self.0.iter_mut() {
+        for instruction in self.0.iter() {
             if instruction.address.matches(pattern) {
                 for cmd in instruction.commands.iter() {
                     let status = cmd.run(pattern, hold);

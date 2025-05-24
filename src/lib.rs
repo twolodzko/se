@@ -110,7 +110,7 @@ mod tests {
         "first item"
     )]
     fn keep(command: &str, expected: &str) {
-        let mut func = Function::from_str(command).unwrap();
+        let func = Function::from_str(command).unwrap();
         let pattern = &mut Line(0, "123456789".to_string());
         func.call(pattern, &mut String::new()).unwrap();
         assert_eq!(pattern.1, expected)
