@@ -28,7 +28,7 @@ impl Function {
                     if let Command::Call(name) = cmd {
                         if let Some(func) = self.1.borrow().get(name) {
                             if let Some(status) = func.call(pattern, hold) {
-                                if status != Status::Normal {
+                                if status != Status::Normal && status != Status::Next {
                                     return Some(status);
                                 }
                             }
