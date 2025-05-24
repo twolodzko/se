@@ -168,7 +168,7 @@ Address        = ( Negated ',' )+ Negated
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
-Command        = [=plnhcgvxzd] | '\' Character | Quit | String | Substitute
+Command        = [=plnhcgvxjzd] | '\' Character | Quit | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
