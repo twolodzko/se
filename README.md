@@ -11,7 +11,7 @@ se [OPTIONS] <SCRIPT> [FILE]...
 where `<SCRIPT>` contains instructions (separated by `;` or `.`, see [below](#multiple-instructions)) of the form
 
 ```text
-[address][command]
+[:label][address][command]
 ```
 
 The `command` is executed for each line from the input the `[FILE]`'s that matches the `address`.
@@ -83,6 +83,7 @@ Same as `sed`, it can be used for string search and replace in files.
 * `\char` print the character `char`, e.g. `\=` prints `=` and `\ ` prints whitespace.
 * `"string"` or `'string'` – print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
+* `b label` – go to branch label `label`.
 * `q [code]` – exit with the `code` exit code (0 by default).
 
 ## Multiple instructions
