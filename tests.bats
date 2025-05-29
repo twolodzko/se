@@ -109,6 +109,12 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Print tail" {
+   run diff <(tail -n 5 README.md) \
+            <(./se '1 r4x . x s/[^\n]*\n(.*)/$1/1 jx . $ xp' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Be like cut" {
    run diff <(cut -c '2-7' src/main.rs) <(./se 'k2-7p' src/main.rs)
    [ "$status" -eq 0 ]
