@@ -39,6 +39,16 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'x' => Exchange,
             'j' => Joinln,
             'J' => Join,
+            'r' => {
+                skip_whitespace(reader);
+                let s = read_integer(reader)?;
+                let num = if s.is_empty() {
+                    1
+                } else {
+                    s.parse().map_err(Error::ParseInt)?
+                };
+                Readln(num)
+            }
             'q' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;

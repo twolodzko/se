@@ -75,6 +75,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `j` – push the content of the hold space at the back of the pattern space
         using a newline character as separator.
 * `J` – same as above, but without the separator.
+* `r [num]` – read `num` lines (1 by default) and append them to pattern space
+        using newline as a separator.
 * `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
 * `\n`, `\t` – print the newline, or tab character.
@@ -147,7 +149,8 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `cat README.md`                | `se 'p' README.md`              |
 | `cat -n README.md`             | `se '= \t p' README.md`         |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
-| `head -n 5 README.md`          | `se '-5 p' README.md`           |
+| `head -n 5 README.md`          | `se '-5 p . q' README.md`       |
+| `head -n 5 README.md`          | `se 'r4 p q' README.md`         |
 | `cut -c '3-7' README.md`       | `se 'k3-7 p' README.md`\*       |
 | `grep 'sed' README.md`         | `se '/sed/ p' README.md`        |
 | `grep -c 'sed' README.md`      | `se -c '/sed/' README.md`       |
@@ -172,7 +175,7 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=pPlnhgxjJzd] | '\' Character | Quit | Keep | String | Substitute
+Command        = [=pPlnhgxjJrzd] | '\' Character | Quit | Keep | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?

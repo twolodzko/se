@@ -90,3 +90,14 @@ impl Iterator for FilesReader {
         }
     }
 }
+
+#[cfg(test)]
+pub(crate) struct MockReader {}
+
+#[cfg(test)]
+impl Iterator for MockReader {
+    type Item = std::io::Result<Line>;
+    fn next(&mut self) -> Option<Self::Item> {
+        None
+    }
+}

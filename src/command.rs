@@ -26,6 +26,8 @@ pub(crate) enum Command {
     Joinln,
     /// J
     Join,
+    /// r [num]
+    Readln(usize),
     /// z
     Reset,
     /// d
@@ -58,7 +60,12 @@ impl From<&Command> for Status {
 impl Command {
     /// Run the command by modifying one of the `pattern` or `hold` buffers
     /// and returning a status code.
-    pub(crate) fn run(&self, pattern: &mut Line, hold: &mut String) -> Status {
+    pub(crate) fn run<R: Iterator<Item = std::io::Result<Line>>>(
+        &self,
+        pattern: &mut Line,
+        hold: &mut String,
+        reader: &mut R,
+    ) -> std::io::Result<Status> {
         use Command::*;
         match self {
             // commands that print things
@@ -99,14 +106,24 @@ impl Command {
             Join => {
                 pattern.1.push_str(hold);
             }
+            Readln(n) => {
+                for _ in 0..*n {
+                    if let Some(line) = reader.next() {
+                        pattern.1.push('\n');
+                        pattern.1.push_str(&line?.1);
+                    } else {
+                        break;
+                    }
+                }
+            }
             // commands that return special status codes
             Delete => {
                 pattern.1.clear();
-                return Status::NoPrint;
+                return Ok(Status::NoPrint);
             }
-            Break | Quit(_) => return Status::from(self),
+            Break | Quit(_) => return Ok(Status::from(self)),
         }
-        Status::Normal
+        Ok(Status::Normal)
     }
 }
 
@@ -127,10 +144,67 @@ impl std::fmt::Display for Command {
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),
+            Readln(n) => write!(f, "r {}", n),
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Break => write!(f, "."),
             Quit(c) => write!(f, "q {}", c),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Command;
+    use crate::{lines::MockReader, Line};
+
+    #[test]
+    fn readln() {
+        let example = vec![1, 2, 3, 4, 5];
+        let mut reader = example.iter().map(|n| Ok(Line(*n, n.to_string())));
+
+        let mut pattern = Line(0, "start".to_string());
+        assert_eq!(pattern.1, "start");
+
+        Command::Readln(1)
+            .run(&mut pattern, &mut String::new(), &mut reader)
+            .unwrap();
+        assert_eq!(pattern.1, "start\n1");
+
+        Command::Readln(4)
+            .run(&mut pattern, &mut String::new(), &mut reader)
+            .unwrap();
+        assert_eq!(pattern.1, "start\n1\n2\n3\n4\n5");
+    }
+
+    #[test]
+    fn join() {
+        let mut pattern = Line(0, "one".to_string());
+        let mut hold = "two".to_string();
+        Command::Join
+            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .unwrap();
+        assert_eq!(pattern.1, "onetwo");
+    }
+
+    #[test]
+    fn joinln() {
+        let mut pattern = Line(0, "one".to_string());
+        let mut hold = "two".to_string();
+        Command::Joinln
+            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .unwrap();
+        assert_eq!(pattern.1, "one\ntwo");
+    }
+
+    #[test]
+    fn exchange() {
+        let mut pattern = Line(0, "one".to_string());
+        let mut hold = "two".to_string();
+        Command::Exchange
+            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .unwrap();
+        assert_eq!(pattern.1, "two");
+        assert_eq!(hold, "one");
     }
 }

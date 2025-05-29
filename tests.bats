@@ -99,8 +99,13 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
-@test "Print head" {
-   run diff <(head -n 5 README.md) <(./se '1-5p' README.md)
+@test "Print head using line matching" {
+   run diff <(head -n 5 README.md) <(./se '1-5p.q' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Print head using repeated read" {
+   run diff <(head -n 5 README.md) <(./se 'r4 p q' README.md)
    [ "$status" -eq 0 ]
 }
 
