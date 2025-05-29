@@ -175,6 +175,12 @@ EOF
    [ "$status" -eq 0 ]
 }
 
+@test "Use hold and pattern buffers" {
+   run diff <(sed -n '7h ; 8{x;G;h} ; 9{x;G;p}' README.md) \
+            <(./se '7c; 8xjc; 9xjp' README.md)
+   [ "$status" -eq 0 ]
+}
+
 bash_line_marker() {
    while IFS="" read -r line || [ -n "$line" ]
    do

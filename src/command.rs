@@ -7,7 +7,7 @@ pub(crate) enum Command {
     /// P
     Print,
     /// l
-    Escape,
+    Escapeln,
     /// =
     LineNumber,
     /// "string" or 'string'
@@ -23,6 +23,8 @@ pub(crate) enum Command {
     /// x
     Exchange,
     /// j
+    Joinln,
+    /// J
     Join,
     /// z
     Reset,
@@ -62,7 +64,7 @@ impl Command {
             // commands that print things
             Println => println!("{}", pattern.1),
             Print => print!("{}", pattern.1),
-            Escape => {
+            Escapeln => {
                 let escaped = pattern.1.escape_default().to_string();
                 println!("{}", escaped)
             }
@@ -90,6 +92,10 @@ impl Command {
             Exchange => {
                 std::mem::swap(hold, &mut pattern.1);
             }
+            Joinln => {
+                pattern.1.push('\n');
+                pattern.1.push_str(hold);
+            }
             Join => {
                 pattern.1.push_str(hold);
             }
@@ -110,7 +116,7 @@ impl std::fmt::Display for Command {
         match self {
             Println => write!(f, "p"),
             Print => write!(f, "P"),
-            Escape => write!(f, "l"),
+            Escapeln => write!(f, "l"),
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
@@ -119,7 +125,8 @@ impl std::fmt::Display for Command {
             Copy => write!(f, "h"),
             Paste => write!(f, "g"),
             Exchange => write!(f, "x"),
-            Join => write!(f, "j"),
+            Joinln => write!(f, "j"),
+            Join => write!(f, "J"),
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Break => write!(f, "."),

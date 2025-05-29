@@ -18,7 +18,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             }
             'p' => Println,
             'P' => Print,
-            'l' => Escape,
+            'l' => Escapeln,
             's' => parse_substitute(reader)?,
             'k' => {
                 skip_whitespace(reader);
@@ -37,7 +37,8 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'h' | 'c' => Copy,
             'g' | 'v' => Paste,
             'x' => Exchange,
-            'j' => Join,
+            'j' => Joinln,
+            'J' => Join,
             'q' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;
