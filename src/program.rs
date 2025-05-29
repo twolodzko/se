@@ -1,7 +1,7 @@
 use crate::{address, command, Line, Status};
 
 #[derive(Debug, PartialEq)]
-pub struct Function(pub(crate) Vec<Action>, pub(crate) Vec<command::Command>);
+pub struct Program(pub(crate) Vec<Action>, pub(crate) Vec<command::Command>);
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Action {
@@ -9,33 +9,8 @@ pub(crate) enum Action {
     Command(command::Command),
 }
 
-impl Function {
-    pub(crate) fn call(&self, pattern: &mut Line, hold: &mut String) -> Option<Status> {
-        let mut status = None;
-        let mut pos = 0;
-        while pos < self.0.len() {
-            match &self.0[pos] {
-                Action::Condition(cond, jump) => {
-                    if cond.matches(pattern) {
-                        status = Some(Status::Normal);
-                    } else {
-                        pos += jump;
-                    }
-                }
-                Action::Command(cmd) => {
-                    let s = cmd.run(pattern, hold);
-                    if s != Status::Normal {
-                        status = Some(s);
-                        break;
-                    }
-                }
-            }
-            pos += 1;
-        }
-        status
-    }
-
-    pub fn process<R: Iterator<Item = std::io::Result<Line>>>(
+impl Program {
+    pub fn run<R: Iterator<Item = std::io::Result<Line>>>(
         &self,
         reader: &mut R,
         print_all: bool,
@@ -51,7 +26,7 @@ impl Function {
             pattern = line?;
             status = Normal;
 
-            if let Some(s) = self.call(&mut pattern, &mut hold) {
+            if let Some(s) = self.process(&mut pattern, &mut hold) {
                 status = s;
                 matches += 1;
             }
@@ -77,10 +52,35 @@ impl Function {
 
         Ok((status, matches))
     }
+
+    pub(crate) fn process(&self, pattern: &mut Line, hold: &mut String) -> Option<Status> {
+        let mut status = None;
+        let mut pos = 0;
+        while pos < self.0.len() {
+            match &self.0[pos] {
+                Action::Condition(cond, jump) => {
+                    if cond.matches(pattern) {
+                        status = Some(Status::Normal);
+                    } else {
+                        pos += jump;
+                    }
+                }
+                Action::Command(cmd) => {
+                    let s = cmd.run(pattern, hold);
+                    if s != Status::Normal {
+                        status = Some(s);
+                        break;
+                    }
+                }
+            }
+            pos += 1;
+        }
+        status
+    }
 }
 
-impl From<Vec<Action>> for Function {
+impl From<Vec<Action>> for Program {
     fn from(value: Vec<Action>) -> Self {
-        Function(value, Vec::new())
+        Program(value, Vec::new())
     }
 }

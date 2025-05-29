@@ -1,13 +1,13 @@
 mod address;
 mod command;
-mod function;
 mod lines;
 mod parser;
+mod program;
 
 pub use {
     command::Status,
-    function::Function,
     lines::{FilesReader, Line, StdinReader},
+    program::Program,
 };
 
 #[derive(Debug)]
@@ -66,7 +66,7 @@ impl std::fmt::Display for Error {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Function, Line};
+    use crate::{Line, Program};
     use std::str::FromStr;
     use test_case::test_case;
 
@@ -101,9 +101,9 @@ mod tests {
         "first item"
     )]
     fn keep(command: &str, expected: &str) {
-        let func = Function::from_str(command).unwrap();
+        let func = Program::from_str(command).unwrap();
         let pattern = &mut Line(0, "123456789".to_string());
-        func.call(pattern, &mut String::new()).unwrap();
+        func.process(pattern, &mut String::new()).unwrap();
         assert_eq!(pattern.1, expected)
     }
 }

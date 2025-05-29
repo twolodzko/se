@@ -57,7 +57,7 @@ impl Between {
         }
     }
 
-    fn matches(&self, line: &Line) -> bool {
+    pub(crate) fn matches(&self, line: &Line) -> bool {
         if self.inside.load(atomic::Ordering::Relaxed) {
             if self.rhs.matches(line) {
                 self.inside.store(false, atomic::Ordering::Relaxed)

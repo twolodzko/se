@@ -1,6 +1,6 @@
 pub(crate) mod address;
 mod command;
-mod function;
+mod program;
 mod reader;
 mod regex_reader;
 mod utils;
