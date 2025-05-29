@@ -17,9 +17,9 @@ pub(crate) enum Command {
     /// ks-e
     Keep(usize, Option<usize>),
     /// h
-    Copy,
+    Hold,
     /// g
-    Paste,
+    Get,
     /// x
     Exchange,
     /// j
@@ -83,10 +83,10 @@ impl Command {
                 };
             }
             Reset => pattern.1.clear(),
-            Copy => {
+            Hold => {
                 *hold = pattern.1.to_string();
             }
-            Paste => {
+            Get => {
                 pattern.1 = hold.to_string();
             }
             Exchange => {
@@ -122,8 +122,8 @@ impl std::fmt::Display for Command {
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
             Keep(s, None) => write!(f, "k {}-", s + 1),
             Keep(s, Some(t)) => write!(f, "k {}-{}", s + 1, s + t),
-            Copy => write!(f, "h"),
-            Paste => write!(f, "g"),
+            Hold => write!(f, "h"),
+            Get => write!(f, "g"),
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),

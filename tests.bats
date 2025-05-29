@@ -177,7 +177,7 @@ EOF
 
 @test "Use hold and pattern buffers" {
    run diff <(sed -n '7h ; 8{x;G;h} ; 9{x;G;p}' README.md) \
-            <(./se '7c; 8xjc; 9xjp' README.md)
+            <(./se '7h; 8xjh; 9xjp' README.md)
    [ "$status" -eq 0 ]
 }
 

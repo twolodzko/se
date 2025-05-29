@@ -69,8 +69,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
-* `h` or `c` – copy the content of the pattern space to the hold space.
-* `g` or `v` – copy the content of the hold space to the pattern space.
+* `h` – hold the content of the pattern space to the hold space.
+* `g` – get the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
 * `j` – push the content of the hold space at the back of the pattern space
         using a newline character as separator.
@@ -172,7 +172,7 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=pPlnhcgvxjJzd] | '\' Character | Quit | Keep | String | Substitute
+Command        = [=pPlnhgxjJzd] | '\' Character | Quit | Keep | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
