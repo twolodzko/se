@@ -45,6 +45,7 @@ pub enum Error {
     InvalidAddr(String),
     Custom(String),
     FromUtf8Error(std::string::FromUtf8Error),
+    LabelInFinal,
 }
 
 impl std::fmt::Display for Error {
@@ -60,6 +61,7 @@ impl std::fmt::Display for Error {
             Unexpected(c) => write!(f, "unexpected '{}'", c),
             InvalidAddr(a) => write!(f, "invalid address: {}", a),
             Custom(s) => s.fmt(f),
+            LabelInFinal => write!(f, "labels are not allowed in the final block"),
         }
     }
 }

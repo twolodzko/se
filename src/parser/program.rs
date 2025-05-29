@@ -38,7 +38,11 @@ fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>), Error
         parse_instruction(reader, &mut actions, &mut finally)?;
         skip_whitespace(reader);
     }
+    initialize_labels(&mut actions)?;
+    Ok((actions, finally))
+}
 
+fn initialize_labels(actions: &mut [Action]) -> Result<(), Error> {
     let mut labels: HashMap<String, usize> = HashMap::new();
     for (i, a) in actions.iter().enumerate() {
         if let Action::Command(Command::Label(l)) = a {
@@ -54,8 +58,7 @@ fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>), Error
             }
         }
     }
-
-    Ok((actions, finally))
+    Ok(())
 }
 
 fn parse_instruction<R: Reader>(
@@ -73,15 +76,11 @@ fn parse_instruction<R: Reader>(
 
     if address == Address::Final {
         if label.is_some() {
-            return Err(Error::Custom(
-                "final block should not be labeled".to_string(),
-            ));
+            return Err(Error::LabelInFinal);
         }
         for cmd in commands.into_iter() {
             if matches!(cmd, Command::GoTo(_, _)) {
-                return Err(Error::Custom(
-                    "branching should not happen in the final block".to_string(),
-                ));
+                return Err(Error::LabelInFinal);
             }
             finally.push(cmd);
         }

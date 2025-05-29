@@ -143,7 +143,7 @@ impl std::fmt::Display for Command {
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{}'", s),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
-            Keep(s, None) => write!(f, "k{}-", s + 1),
+            Keep(s, None) => write!(f, "k {}-", s + 1),
             Keep(s, Some(t)) => write!(f, "k {}-{}", s + 1, s + t),
             Hold => write!(f, "h"),
             Get => write!(f, "g"),
@@ -158,5 +158,61 @@ impl std::fmt::Display for Command {
             Label(l) => write!(f, ":{}", l),
             GoTo(l, _) => write!(f, "b {}", l),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Command;
+    use crate::{lines::MockReader, Line};
+
+    #[test]
+    fn readln() {
+        let example = vec![1, 2, 3, 4, 5];
+        let mut reader = example.iter().map(|n| Ok(Line(*n, n.to_string())));
+
+        let mut pattern = Line(0, "start".to_string());
+        assert_eq!(pattern.1, "start");
+
+        Command::Readln(1)
+            .run(&mut pattern, &mut String::new(), &mut reader)
+            .unwrap();
+        assert_eq!(pattern.1, "start\n1");
+
+        Command::Readln(4)
+            .run(&mut pattern, &mut String::new(), &mut reader)
+            .unwrap();
+        assert_eq!(pattern.1, "start\n1\n2\n3\n4\n5");
+    }
+
+    #[test]
+    fn join() {
+        let mut pattern = Line(0, "one".to_string());
+        let mut hold = "two".to_string();
+        Command::Join
+            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .unwrap();
+        assert_eq!(pattern.1, "onetwo");
+    }
+
+    #[test]
+    fn joinln() {
+        let mut pattern = Line(0, "one".to_string());
+        let mut hold = "two".to_string();
+        Command::Joinln
+            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .unwrap();
+        assert_eq!(pattern.1, "one\ntwo");
+    }
+
+    #[test]
+    fn exchange() {
+        let mut pattern = Line(0, "one".to_string());
+        let mut hold = "two".to_string();
+        Command::Exchange
+            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .unwrap();
+        assert_eq!(pattern.1, "two");
+        assert_eq!(hold, "one");
     }
 }
