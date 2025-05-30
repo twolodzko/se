@@ -1,6 +1,7 @@
+use crate::Error;
 use std::{
     fs::File,
-    io::{BufRead, BufReader, Lines, Result},
+    io::{BufRead, BufReader, Lines},
     path::PathBuf,
 };
 
@@ -22,7 +23,7 @@ impl Default for StdinReader {
 }
 
 impl Iterator for StdinReader {
-    type Item = Result<Line>;
+    type Item = crate::Result<Line>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.buffer.next()? {
@@ -31,7 +32,7 @@ impl Iterator for StdinReader {
                 let line = Line(self.counter, line.to_string());
                 Some(Ok(line))
             }
-            Err(err) => Some(Err(err)),
+            Err(err) => Some(Err(Error::Io(err))),
         }
     }
 }
@@ -43,11 +44,11 @@ pub struct FilesReader {
 }
 
 impl FilesReader {
-    fn next_file(&mut self) -> Option<Result<()>> {
+    fn next_file(&mut self) -> Option<crate::Result<()>> {
         let path = self.paths.pop()?;
         let file = match File::open(path) {
             Ok(file) => file,
-            Err(err) => return Some(Err(err)),
+            Err(err) => return Some(Err(Error::Io(err))),
         };
         let reader = BufReader::new(file).lines();
         self.file = Some(reader);
@@ -66,7 +67,7 @@ impl From<Vec<PathBuf>> for FilesReader {
 }
 
 impl Iterator for FilesReader {
-    type Item = Result<Line>;
+    type Item = crate::Result<Line>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -77,7 +78,7 @@ impl Iterator for FilesReader {
                         let line = Line(self.counter, line.to_string());
                         return Some(Ok(line));
                     }
-                    Some(Err(err)) => return Some(Err(err)),
+                    Some(Err(err)) => return Some(Err(Error::Io(err))),
                     None => {
                         if let Err(err) = self.next_file()? {
                             return Some(Err(err));
@@ -96,7 +97,7 @@ pub(crate) struct MockReader {}
 
 #[cfg(test)]
 impl Iterator for MockReader {
-    type Item = std::io::Result<Line>;
+    type Item = crate::Result<Line>;
     fn next(&mut self) -> Option<Self::Item> {
         None
     }

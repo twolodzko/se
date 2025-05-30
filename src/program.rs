@@ -10,11 +10,11 @@ pub(crate) enum Action {
 }
 
 impl Program {
-    pub fn run<R: Iterator<Item = std::io::Result<Line>>>(
+    pub fn run<R: Iterator<Item = crate::Result<Line>>>(
         &self,
         reader: &mut R,
         print_all: bool,
-    ) -> std::io::Result<(Status, usize)> {
+    ) -> crate::Result<(Status, usize)> {
         use Status::*;
 
         let mut matches = 0;
@@ -53,12 +53,12 @@ impl Program {
         Ok((status, matches))
     }
 
-    fn process<R: Iterator<Item = std::io::Result<Line>>>(
+    fn process<R: Iterator<Item = crate::Result<Line>>>(
         &self,
         pattern: &mut Line,
         hold: &mut String,
         reader: &mut R,
-    ) -> std::io::Result<Option<Status>> {
+    ) -> crate::Result<Option<Status>> {
         let mut status = None;
         let mut pos = 0;
         while pos < self.0.len() {

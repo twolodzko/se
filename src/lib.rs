@@ -16,7 +16,7 @@ pub(crate) struct Regex(regex::Regex);
 impl std::str::FromStr for Regex {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Regex, Self::Err> {
+    fn from_str(s: &str) -> std::result::Result<Regex, Self::Err> {
         let regex = regex::Regex::new(s).map_err(Error::Regex)?;
         Ok(Regex(regex))
     }
@@ -34,6 +34,8 @@ impl std::fmt::Display for Regex {
     }
 }
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug)]
 pub enum Error {
     Io(std::io::Error),
@@ -45,6 +47,7 @@ pub enum Error {
     InvalidAddr(String),
     Custom(String),
     FromUtf8Error(std::string::FromUtf8Error),
+    Utf8Error(std::str::Utf8Error),
 }
 
 impl std::fmt::Display for Error {
@@ -56,6 +59,7 @@ impl std::fmt::Display for Error {
             Regex(msg) => msg.fmt(f),
             ParseInt(msg) => msg.fmt(f),
             FromUtf8Error(msg) => msg.fmt(f),
+            Utf8Error(msg) => msg.fmt(f),
             Missing(c) => write!(f, "missing '{}'", c),
             Unexpected(c) => write!(f, "unexpected '{}'", c),
             InvalidAddr(a) => write!(f, "invalid address: {}", a),

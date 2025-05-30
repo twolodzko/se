@@ -22,7 +22,7 @@ fn main() {
         unreachable!()
     });
 
-    let mut reader: Box<dyn Iterator<Item = std::io::Result<Line>>> = if args.files.is_empty() {
+    let mut reader: Box<dyn Iterator<Item = se::Result<Line>>> = if args.files.is_empty() {
         Box::new(StdinReader::default())
     } else {
         Box::new(FilesReader::from(args.files))
