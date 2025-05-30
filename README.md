@@ -114,11 +114,10 @@ lines containing the word "sed" would be printed twice, because of matching addr
   expressions in [verbose mode], which can include comments.
 * Using `$N` for substitutions instead of `\N`.
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
-  but instead reading commands directly e.g. `=p` (actually `=np`, see above) is equivalent to `{ = ; p }` in `sed`.
+  but instead reading commands directly e.g. `=p` (actually `="\n"p`, see above) is equivalent to `{ = ; p }` in `sed`.
 * Only a subset of `sed` commands is supported and they can behave differently.
 * Instead of `a string`, use `p"string"` to print the string after
   printing the line, same applies to `sed`s `i`.
-* No multiline matches.
 * No support for branching.
 * `sed` by default prints all the lines unless explicitly deleted.
   To achieve this behavior use `-a` (`--all`) flag to print all the lines.
@@ -129,9 +128,9 @@ lines containing the word "sed" would be printed twice, because of matching addr
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
-| `=`              | `=\np`              |
-| `i text`         | `p "text" \n`       |
-| `a text`         | `"text" \n p`       |
+| `=`              | `="\n"p`            |
+| `i text`         | `p "text\n"`        |
+| `a text`         | `"text\n" p`        |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
 | `s/src/dst/`     | `s/src/dst/1`       |
 | `s/src/dst/g`    | `s/src/dst/`        |
@@ -146,7 +145,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |    other                       |   `se`                          |
 |--------------------------------|---------------------------------|
 | `cat README.md`                | `se 'p' README.md`              |
-| `cat -n README.md`             | `se '= \t p' README.md`         |
+| `cat -n README.md`             | `se '= "\t" p' README.md`       |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
 | `head -n 5 README.md`          | `se '-5 p . q' README.md`       |
 | `head -n 5 README.md`          | `se 'r4 p q' README.md`         |
