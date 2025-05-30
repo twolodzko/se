@@ -122,13 +122,13 @@ mod tests {
         Action::Condition(Always, 1),
         Action::Command(Println),
     ]); "print all")]
-    #[test_case(r"=\np", Program::from(vec![
+    #[test_case(r"='\n'p", Program::from(vec![
         Action::Condition(Always, 3),
         Action::Command(LineNumber),
         Action::Command(Insert("\n".to_string())),
         Action::Command(Println),
     ]); "print with newlines")]
-    #[test_case(r"   = \n  p  ", Program::from(vec![
+    #[test_case(r"   = '\n'  p  ", Program::from(vec![
         Action::Condition(Always, 3),
         Action::Command(LineNumber),
         Action::Command(Insert("\n".to_string())),

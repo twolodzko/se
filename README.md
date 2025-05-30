@@ -79,8 +79,6 @@ Same as `sed`, it can be used for string search and replace in files.
         using newline as a separator.
 * `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
-* `\n`, `\t` – print the newline, or tab character.
-* `\char` print the character `char`, e.g. `\=` prints `=` and `\ ` prints whitespace.
 * `"string"` or `'string'` – print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
 * `b label` – go to branch label `label`.

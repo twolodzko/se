@@ -36,7 +36,7 @@ teardown() {
 }
 
 @test "Print vs Println" {
-	run diff <(./se 'p' README.md) <(./se 'P\n' README.md)
+	run diff <(./se 'p' README.md) <(./se 'P"\n"' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -70,12 +70,12 @@ teardown() {
 }
 
 @test "Consistent with sed line counting" {
-   run diff <(sed '=' README.md) <(./se '=\np' README.md)
+   run diff <(sed '=' README.md) <(./se '="\n"p' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Special characters in template" {
-   run diff <(./se '=\np' README.md) <(./se '="\n"p' README.md)
+   run diff <(./se '="\n"p' README.md) <(./se '="\n"p' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -131,7 +131,7 @@ teardown() {
 }
 
 @test "Count lines like sed" {
-   run diff <(sed -n '$=' README.md) <(./se '$=\n' README.md)
+   run diff <(sed -n '$=' README.md) <(./se '$="\n"' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -224,13 +224,13 @@ only_for_gsed() {
 
 @test "Append text like gsed" {
    only_for_gsed
-   run diff <(sed '/sed/a >>>' README.md) <(./se '/sed/ p ">>>" \n . p' README.md)
+   run diff <(sed '/sed/a >>>' README.md) <(./se '/sed/ p ">>>\n" . p' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Insert text like gsed" {
    only_for_gsed
-   run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ ">>>" \n p . p' README.md)
+   run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ ">>>\n" p . p' README.md)
    [ "$status" -eq 0 ]
 }
 

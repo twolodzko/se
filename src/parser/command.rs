@@ -25,13 +25,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
                 parse_keep(reader)?
             }
             '=' => LineNumber,
-            '\\' => match reader.next()? {
-                Some(c) => match unescape::unescape(&format!("\\{}", c)) {
-                    Some(s) => Insert(s),
-                    None => Insert(c.to_string()),
-                },
-                None => return Err(Error::Unexpected('\\')),
-            },
             'd' => Delete,
             'z' => Reset,
             'h' => Hold,
