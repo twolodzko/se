@@ -38,7 +38,7 @@ pub(crate) enum Command {
     Label(String),
     /// b label
     GoTo(String, usize),
-    /// q[code]
+    /// q [code]
     Quit(i32),
 }
 
@@ -154,7 +154,7 @@ impl std::fmt::Display for Command {
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Break => write!(f, "."),
-            Quit(c) => write!(f, "q{}", c),
+            Quit(c) => write!(f, "q {}", c),
             Label(l) => write!(f, ":{}", l),
             GoTo(l, _) => write!(f, "b {}", l),
         }
