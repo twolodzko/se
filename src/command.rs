@@ -14,7 +14,7 @@ pub(crate) enum Command {
     Insert(String),
     /// s/src/dst/[limit]
     Substitute(Regex, String, usize),
-    /// ks-e
+    /// k s-e
     Keep(usize, Option<usize>),
     /// h
     Hold,
@@ -34,7 +34,7 @@ pub(crate) enum Command {
     Delete,
     /// .
     Break,
-    /// q[code]
+    /// q [code]
     Quit(i32),
 }
 
