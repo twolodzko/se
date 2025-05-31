@@ -90,7 +90,7 @@ teardown() {
 }
 
 @test "Substitute and print vs sed" {
-   run diff <(sed -n 's/a/#/gp' README.md) <(./se '/a/ s/a/#/p' README.md)
+   run diff <(sed -n 's/a/#/gp' README.md) <(./se '?s/a/#/p' README.md)
    [ "$status" -eq 0 ]
 }
 

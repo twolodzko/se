@@ -136,7 +136,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
-| `=`              | `="\n"p`            |
+| `=`              | `=np`               |
 | `i text`         | `p "text\n"`        |
 | `a text`         | `"text\n" p`        |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
@@ -153,8 +153,9 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |    other                       |   `se`                          |
 |--------------------------------|---------------------------------|
 | `cat README.md`                | `se 'p' README.md`              |
-| `cat -n README.md`             | `se '=tp' README.md`       |
+| `cat -n README.md`             | `se '=tp' README.md`            |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
+| `sed -n 's/a/#/p' README.md`   | `se '? s/a/#/1p' README.md`     |
 | `head -n 5 README.md`          | `se '-5 p . q' README.md`       |
 | `head -n 5 README.md`          | `se 'r4 p q' README.md`         |
 | `cut -c '3-7' README.md`       | `se 'k3-7 p' README.md`\*       |
