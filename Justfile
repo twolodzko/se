@@ -33,11 +33,11 @@ benchmark: build
 
     bench 2000 \
         'sed "/sed/ =" README.md' \
-        './target/release/se -a "/sed/ =\n" README.md'
+        './se -a "/sed/ =n" README.md'
 
     bench 2000 \
         'sed -n "/sed/ { s/default/kitty/g ; p ; }" README.md' \
-        './target/release/se "/sed/ s/default/kitty/g p" README.md'
+        './se "/sed/ s/default/kitty/g p" README.md'
 
     # big
 
@@ -47,15 +47,15 @@ benchmark: build
 
     bench 100 \
         'sed -n "/love/ s/love/####/gp" IMDB-Dataset.csv' \
-        './target/release/se "/love/ s/love/####/gp" IMDB-Dataset.csv'
+        './se "? s/love/####/gp" IMDB-Dataset.csv'
 
     bench 100 \
         'sed "/love/ s/love/####/gp" IMDB-Dataset.csv' \
-        './target/release/se -a "/love/ s/love/####/gp" IMDB-Dataset.csv'
+        './se -a "? s/love/####/gp" IMDB-Dataset.csv'
 
     bench 100 \
         'sed -n "s/love/####/gp" IMDB-Dataset.csv' \
-        './target/release/se "/love/ s/love/####/gp" IMDB-Dataset.csv'
+        './se "? s/love/####/gp" IMDB-Dataset.csv'
 
 lines:
     @ find . -name '*.rs' -exec wc -l {} \;
