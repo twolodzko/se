@@ -120,7 +120,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   expressions in [verbose mode], which can include comments.
 * Using `$N` for substitutions instead of `\N`.
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
-  but instead reading commands directly e.g. `=p` (actually `="\n"p`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
+  but instead reading commands directly e.g. `=p` (actually `=np`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
 * Only a subset of `sed` commands is supported and they can behave differently.
 * Instead of `a string`, use `p"string"` to print the string after
   printing the line, same applies to `sed`s `i`.
@@ -152,7 +152,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |    other                       |   `se`                          |
 |--------------------------------|---------------------------------|
 | `cat README.md`                | `se 'p' README.md`              |
-| `cat -n README.md`             | `se '= "\t" p' README.md`       |
+| `cat -n README.md`             | `se '=tp' README.md`       |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
 | `head -n 5 README.md`          | `se '-5 p . q' README.md`       |
 | `head -n 5 README.md`          | `se 'r4 p q' README.md`         |
