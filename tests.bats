@@ -36,7 +36,7 @@ teardown() {
 }
 
 @test "Print vs Println" {
-	run diff <(./se 'p' README.md) <(./se 'P"\n"' README.md)
+	run diff <(./se 'p' README.md) <(./se 'Pn' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -70,12 +70,12 @@ teardown() {
 }
 
 @test "Consistent with sed line counting" {
-   run diff <(sed '=' README.md) <(./se '="\n"p' README.md)
+   run diff <(sed '=' README.md) <(./se '=np' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Special characters in template" {
-   run diff <(./se '="\n"p' README.md) <(./se '="\n"p' README.md)
+   run diff <(./se '="\n"p' README.md) <(./se '=np' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -131,7 +131,7 @@ teardown() {
 }
 
 @test "Count lines like sed" {
-   run diff <(sed -n '$=' README.md) <(./se '$="\n"' README.md)
+   run diff <(sed -n '$=' README.md) <(./se '$=n' README.md)
    [ "$status" -eq 0 ]
 }
 
