@@ -8,7 +8,7 @@ use crate::{
     command::Command,
     program::{Action, Program},
 };
-use anyhow::Result;
+use anyhow::{bail, Result};
 use std::str::FromStr;
 
 impl TryFrom<&std::path::PathBuf> for Program {
@@ -48,7 +48,7 @@ fn parse_instruction<R: Reader>(
 ) -> Result<()> {
     // [address][commands]
     utils::skip_whitespace(reader);
-    let address = address::parse(reader)?;
+    let mut address = address::parse(reader)?;
     utils::skip_whitespace(reader);
     let commands = command::parse(reader)?;
 
@@ -57,12 +57,39 @@ fn parse_instruction<R: Reader>(
             finally.push(cmd);
         }
     } else {
+        address.replace_maybe(commands.first())?;
         actions.push(Action::Condition(address, commands.len()));
         for cmd in commands.into_iter() {
             actions.push(Action::Command(cmd));
         }
     }
     Ok(())
+}
+
+impl Address {
+    fn replace_maybe(&mut self, subst: Option<&Command>) -> Result<()> {
+        match self {
+            Address::Maybe => {
+                let Some(Command::Substitute(regex, _, _)) = subst else {
+                    bail!("? must be followed by a substitution")
+                };
+                *self = Address::Regex(regex.clone());
+            }
+            Address::Between(between) => {
+                between.lhs.replace_maybe(subst)?;
+                between.rhs.replace_maybe(subst)?;
+            }
+            Address::Set(addrs) => addrs
+                .iter_mut()
+                .map(|a| {
+                    a.replace_maybe(subst)?;
+                    Ok(())
+                })
+                .collect::<Result<()>>()?,
+            _ => (),
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]

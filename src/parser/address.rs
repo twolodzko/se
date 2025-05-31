@@ -110,6 +110,10 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 reader.next()?;
                 return Ok(Some(Final));
             }
+            '?' => {
+                reader.next()?;
+                return Ok(Some(Maybe));
+            }
             _ => (),
         }
     }
