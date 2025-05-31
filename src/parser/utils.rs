@@ -1,5 +1,6 @@
 use super::{reader::Reader, regex_reader};
-use crate::{Error, Regex};
+use crate::Regex;
+use anyhow::{bail, Result};
 use std::str::FromStr;
 
 pub(crate) fn skip_whitespace<R: Reader>(reader: &mut R) {
@@ -15,7 +16,7 @@ pub(crate) fn skip_line<R: Reader>(reader: &mut R) {
     while reader.next().is_ok_and(|o| o.is_some_and(|c| c != '\n')) {}
 }
 
-pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String, Error> {
+pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String> {
     let mut num = String::new();
     loop {
         match reader.peek()? {
@@ -27,7 +28,7 @@ pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String, Error> {
     Ok(num)
 }
 
-pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Option<Regex>, Error> {
+pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Option<Regex>> {
     let regex = regex_reader::read_regex(reader)?;
     if regex.is_empty() {
         return Ok(None);
@@ -35,7 +36,7 @@ pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Option<Regex>, Er
     Ok(Some(Regex::from_str(&regex)?))
 }
 
-pub(crate) fn read_label<R: Reader>(reader: &mut R) -> Result<String, Error> {
+pub(crate) fn read_label<R: Reader>(reader: &mut R) -> Result<String> {
     let mut label = String::new();
     while let Some(c) = reader.peek()? {
         if c.is_alphanumeric() {
@@ -46,7 +47,7 @@ pub(crate) fn read_label<R: Reader>(reader: &mut R) -> Result<String, Error> {
         }
     }
     if label.is_empty() {
-        return Err(Error::Custom("empty label".to_string()));
+        bail!("empty label");
     }
     Ok(label)
 }

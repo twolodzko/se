@@ -82,6 +82,9 @@ Same as `sed`, it can be used for string search and replace in files.
 * `"string"` or `'string'` – print the `string`. The `string` can contain special escape
   characters like `\n` or `\t`.
 * `b label` – go to branch label `label`.
+* `e` – execute the content of the pattern space as a shell command. Save the stdout output
+  of the command to pattern space. If the command returned with non-zero error code,
+  stop and return the error code.
 * `q [code]` – exit with the `code` exit code (0 by default).
 
 ## Multiple instructions

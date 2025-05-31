@@ -9,8 +9,9 @@ use crate::{
     },
     Error,
 };
+use anyhow::{bail, Result};
 
-pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address, Error> {
+pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
     let mut addrs = Vec::new();
     let mut has_any = false;
     loop {
@@ -40,14 +41,14 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     Ok(Set(addrs))
 }
 
-fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address, Error> {
+fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address> {
     if let Some('(') = reader.peek()? {
         reader.next()?;
         skip_whitespace(reader);
         let addr = parse(reader)?;
         skip_whitespace(reader);
         if reader.next()? != Some(')') {
-            return Err(Error::Missing(')'));
+            bail!(Error::Missing(')'))
         }
         Ok(maybe_negate(addr, reader)?)
     } else {
@@ -57,7 +58,7 @@ fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     }
 }
 
-fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
+fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
     let addr = parse_simple_addr(reader)?;
     skip_whitespace(reader);
     if let Some('-') = reader.peek()? {
@@ -67,7 +68,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
         let rhs = parse_simple_addr(reader)?.unwrap_or(Final);
         if let (Location(lo), Location(hi)) = (&lhs, &rhs) {
             if lo > hi {
-                return Err(Error::InvalidAddr(format!(
+                bail!(Error::InvalidAddr(format!(
                     "{} > {} in {}-{}",
                     lo, hi, lo, hi
                 )));
@@ -78,7 +79,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address, Error> {
     Ok(addr.unwrap_or(Always))
 }
 
-fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error> {
+fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
     if let Some(c) = reader.peek()? {
         match c {
             '#' => {
@@ -95,14 +96,14 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error
             }
             c if c.is_ascii_digit() => {
                 let s = read_integer(reader)?;
-                return match s.parse() {
+                match s.parse() {
                     Ok(num) => {
                         if num == 0 {
-                            return Err(Error::InvalidAddr(s));
+                            bail!(Error::InvalidAddr(s));
                         }
-                        Ok(Some(Location(num)))
+                        return Ok(Some(Location(num)));
                     }
-                    Err(err) => Err(Error::ParseInt(err)),
+                    Err(err) => bail!(err),
                 };
             }
             '$' => {
@@ -115,7 +116,7 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>, Error
     Ok(None)
 }
 
-fn maybe_negate<R: Reader>(addr: Address, reader: &mut R) -> Result<Address, Error> {
+fn maybe_negate<R: Reader>(addr: Address, reader: &mut R) -> Result<Address> {
     if let Some('!') = reader.peek()? {
         reader.next()?;
         Ok(!addr)

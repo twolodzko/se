@@ -1,4 +1,6 @@
 use crate::{Line, Regex};
+use anyhow::Result;
+use std::io::Write;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
@@ -40,6 +42,8 @@ pub(crate) enum Command {
     GoTo(String, usize),
     /// q [code]
     Quit(i32),
+    /// e
+    Eval,
 }
 
 #[derive(Debug, PartialEq)]
@@ -64,12 +68,12 @@ impl From<&Command> for Status {
 impl Command {
     /// Run the command by modifying one of the `pattern` or `hold` buffers
     /// and returning a status code.
-    pub(crate) fn run<R: Iterator<Item = std::io::Result<Line>>>(
+    pub(crate) fn run<R: Iterator<Item = Result<Line>>>(
         &self,
         pattern: &mut Line,
         hold: &mut String,
         reader: &mut R,
-    ) -> std::io::Result<Status> {
+    ) -> Result<Status> {
         use Command::*;
         match self {
             // commands that print things
@@ -128,9 +132,33 @@ impl Command {
             Break | Quit(_) => return Ok(Status::from(self)),
             Label(_) => (),
             GoTo(_, _) => unreachable!(),
+            Eval => {
+                let (stdout, code) = eval(&pattern.1)?;
+                pattern.1 = stdout;
+                if let Some(code) = code {
+                    return Ok(Status::Quit(code));
+                }
+            }
         }
         Ok(Status::Normal)
     }
+}
+
+fn eval(cmd: &str) -> Result<(String, Option<i32>)> {
+    let out = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(cmd)
+        .output()?;
+    if !out.stderr.is_empty() {
+        std::io::stderr().write_all(&out.stderr)?;
+    }
+    let stdout = std::str::from_utf8(&out.stdout)?.to_string();
+    let code = match out.status.code() {
+        Some(0) => None,
+        Some(code) => Some(code),
+        None => Some(0),
+    };
+    Ok((stdout, code))
 }
 
 impl std::fmt::Display for Command {
@@ -157,6 +185,7 @@ impl std::fmt::Display for Command {
             Quit(c) => write!(f, "q {}", c),
             Label(l) => write!(f, ":{}", l),
             GoTo(l, _) => write!(f, "b {}", l),
+            Eval => write!(f, "e"),
         }
     }
 }

@@ -6,8 +6,9 @@ use crate::{
     command::Command::{self, *},
     Error,
 };
+use anyhow::{anyhow, bail, Result};
 
-pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
+pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
     let mut cmds = Vec::new();
     while let Some(c) = reader.next()? {
         let cmd = match c {
@@ -32,24 +33,17 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
             'x' => Exchange,
             'j' => Joinln,
             'J' => Join,
+            'e' => Eval,
             'r' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;
-                let num = if s.is_empty() {
-                    1
-                } else {
-                    s.parse().map_err(Error::ParseInt)?
-                };
+                let num = if s.is_empty() { 1 } else { s.parse()? };
                 Readln(num)
             }
             'q' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;
-                let code = if s.is_empty() {
-                    0
-                } else {
-                    s.parse().map_err(Error::ParseInt)?
-                };
+                let code = if s.is_empty() { 0 } else { s.parse()? };
                 Quit(code)
             }
             'b' => {
@@ -66,7 +60,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
                 continue;
             }
             c if c.is_whitespace() => continue,
-            _ => return Err(Error::Unexpected(c)),
+            _ => bail!(Error::Unexpected(c)),
         };
         cmds.push(cmd);
 
@@ -78,14 +72,14 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>, Error> {
     Ok(cmds)
 }
 
-fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
+fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
     if reader.peek()? != Some('/') {
-        return Err(Error::Missing('/'));
+        bail!(Error::Missing('/'));
     }
 
     // Parse: s/src/dst/[limit]
     let Some(src) = parse_regex(reader)? else {
-        return Err(Error::Custom("empty regular expression".to_string()));
+        bail!("empty regular expression");
     };
     let dst = read_template(reader)?;
 
@@ -95,14 +89,14 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command, Error> {
             reader.next()?;
             // g is default, no need to update the limit
         } else if c.is_ascii_digit() {
-            limit = read_integer(reader)?.parse().map_err(Error::ParseInt)?;
+            limit = read_integer(reader)?.parse()?;
         }
     }
 
     Ok(Substitute(src, dst, limit))
 }
 
-fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
+fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
     let delim = '/';
     let mut acc = String::new();
     while let Some(c) = reader.peek()? {
@@ -135,17 +129,17 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String, Error> {
             }
         }
     }
-    Err(Error::Missing(delim))
+    bail!(Error::Missing(delim))
 }
 
-fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command, Error> {
+fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
     let s = read_integer(reader)?;
     let lhs = if s.is_empty() {
         0
     } else {
-        let num: usize = s.parse().map_err(Error::ParseInt)?;
+        let num: usize = s.parse()?;
         if num == 0 {
-            return Err(Error::Custom("character indexes need to be >0".to_string()));
+            bail!("character indexes need to be >0");
         }
         num - 1
     };
@@ -160,20 +154,16 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command, Error> {
     let rhs = if s.is_empty() {
         None
     } else {
-        let num: usize = s.parse().map_err(Error::ParseInt)?;
+        let num: usize = s.parse()?;
         if num == 0 || num < lhs {
-            return Err(Error::Custom(format!(
-                "invalid character index range: {}-{}",
-                lhs + 1,
-                num
-            )));
+            bail!("invalid character index range: {}-{}", lhs + 1, num);
         }
         Some(num - lhs)
     };
     Ok(Keep(lhs, rhs))
 }
 
-fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
+fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
     let mut acc = String::new();
     while let Some(c) = reader.next()? {
         match c {
@@ -191,12 +181,9 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String, Error> {
             _ => acc.push(c),
         }
     }
-    Err(Error::Missing(delim))
+    bail!(Error::Missing(delim))
 }
 
-fn unescape(s: String) -> Result<String, Error> {
-    unescape::unescape(&s).ok_or(Error::Custom(format!(
-        "unrecognized escape characters in '{}'",
-        s
-    )))
+fn unescape(s: String) -> Result<String> {
+    unescape::unescape(&s).ok_or(anyhow!("unrecognized escape characters in '{}'", s))
 }

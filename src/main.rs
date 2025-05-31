@@ -1,34 +1,26 @@
+use anyhow::Result;
 use clap::Parser;
 use se::{FilesReader, Line, Program, Status, StdinReader};
 use std::{path::PathBuf, str::FromStr};
 
-macro_rules! unwrap {
-    ( $f:expr ) => {
-        $f.unwrap_or_else(|err| {
-            eprintln!("Error: {}", err);
-            std::process::exit(1)
-        })
-    };
-}
-
-fn main() {
+fn main() -> Result<()> {
     let args = parse_args();
 
-    let program = unwrap!(if let Some(path) = &args.script.path {
-        Program::try_from(path)
+    let program = if let Some(path) = &args.script.path {
+        Program::try_from(path)?
     } else if let Some(command) = &args.script.command {
-        Program::from_str(command)
+        Program::from_str(command)?
     } else {
         unreachable!()
-    });
+    };
 
-    let mut reader: Box<dyn Iterator<Item = std::io::Result<Line>>> = if args.files.is_empty() {
+    let mut reader: Box<dyn Iterator<Item = Result<Line>>> = if args.files.is_empty() {
         Box::new(StdinReader::default())
     } else {
         Box::new(FilesReader::from(args.files))
     };
 
-    let (status, count) = unwrap!(program.run(&mut reader, args.all));
+    let (status, count) = program.run(&mut reader, args.all)?;
 
     if args.count {
         println!("{}", count)
@@ -36,6 +28,7 @@ fn main() {
     if let Status::Quit(code) = status {
         std::process::exit(code)
     }
+    Ok(())
 }
 
 #[derive(Parser)]

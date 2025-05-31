@@ -9,10 +9,11 @@ use crate::{
     program::{Action, Program},
     Error,
 };
+use anyhow::{bail, Result};
 use std::{collections::HashMap, str::FromStr};
 
 impl TryFrom<&std::path::PathBuf> for Program {
-    type Error = Error;
+    type Error = anyhow::Error;
 
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
@@ -22,7 +23,7 @@ impl TryFrom<&std::path::PathBuf> for Program {
 }
 
 impl FromStr for Program {
-    type Err = Error;
+    type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
@@ -31,7 +32,7 @@ impl FromStr for Program {
     }
 }
 
-fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>), Error> {
+fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>)> {
     let mut actions = Vec::new();
     let mut finally = Vec::new();
     while reader.peek()?.is_some() {
@@ -42,7 +43,7 @@ fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>), Error
     Ok((actions, finally))
 }
 
-fn initialize_labels(actions: &mut [Action]) -> Result<(), Error> {
+fn initialize_labels(actions: &mut [Action]) -> Result<()> {
     let mut labels: HashMap<String, usize> = HashMap::new();
     for (i, a) in actions.iter().enumerate() {
         if let Action::Command(Command::Label(l)) = a {
@@ -54,7 +55,7 @@ fn initialize_labels(actions: &mut [Action]) -> Result<(), Error> {
             if let Some(v) = labels.get(l) {
                 *i = *v;
             } else {
-                return Err(Error::Custom(format!("unknown label: '{}'", l)));
+                bail!("unknown label: '{}'", l);
             }
         }
     }
@@ -65,7 +66,7 @@ fn parse_instruction<R: Reader>(
     reader: &mut R,
     actions: &mut Vec<Action>,
     finally: &mut Vec<Command>,
-) -> Result<(), Error> {
+) -> Result<()> {
     // [:label][address][commands]
     skip_whitespace(reader);
     let label = parse_label(reader)?;
@@ -76,11 +77,11 @@ fn parse_instruction<R: Reader>(
 
     if address == Address::Final {
         if label.is_some() {
-            return Err(Error::LabelInFinal);
+            bail!(Error::LabelInFinal);
         }
         for cmd in commands.into_iter() {
             if matches!(cmd, Command::GoTo(_, _)) {
-                return Err(Error::LabelInFinal);
+                bail!(Error::LabelInFinal);
             }
             finally.push(cmd);
         }
@@ -96,7 +97,7 @@ fn parse_instruction<R: Reader>(
     Ok(())
 }
 
-fn parse_label<R: Reader>(reader: &mut R) -> Result<Option<String>, Error> {
+fn parse_label<R: Reader>(reader: &mut R) -> Result<Option<String>> {
     if let Some(':') = reader.peek()? {
         reader.next()?;
         skip_whitespace(reader);

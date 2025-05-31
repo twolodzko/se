@@ -1,4 +1,5 @@
 use crate::{address, command, Line, Status};
+use anyhow::Result;
 
 #[derive(Debug, PartialEq)]
 pub struct Program(pub(crate) Vec<Action>, pub(crate) Vec<command::Command>);
@@ -10,11 +11,11 @@ pub(crate) enum Action {
 }
 
 impl Program {
-    pub fn run<R: Iterator<Item = std::io::Result<Line>>>(
+    pub fn run<R: Iterator<Item = Result<Line>>>(
         &self,
         reader: &mut R,
         print_all: bool,
-    ) -> std::io::Result<(Status, usize)> {
+    ) -> Result<(Status, usize)> {
         use Status::*;
 
         let mut matches = 0;
@@ -53,12 +54,12 @@ impl Program {
         Ok((status, matches))
     }
 
-    fn process<R: Iterator<Item = std::io::Result<Line>>>(
+    fn process<R: Iterator<Item = Result<Line>>>(
         &self,
         pattern: &mut Line,
         hold: &mut String,
         reader: &mut R,
-    ) -> std::io::Result<Option<Status>> {
+    ) -> Result<Option<Status>> {
         let mut status = None;
         let mut pos = 0;
         while pos < self.0.len() {

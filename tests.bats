@@ -135,6 +135,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Stop early" {
+   run diff <(se '7=q' README.md) <(printf "7")
+   [ "$status" -eq 0 ]
+}
+
 @test "Count matching lines like grep" {
    run diff <(grep -c 'sed' README.md) <(./se -c '/sed/' README.md)
    [ "$status" -eq 0 ]

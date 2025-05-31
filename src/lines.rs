@@ -1,6 +1,7 @@
+use anyhow::Result;
 use std::{
     fs::File,
-    io::{BufRead, BufReader, Lines, Result},
+    io::{BufRead, BufReader, Lines},
     path::PathBuf,
 };
 
@@ -31,7 +32,7 @@ impl Iterator for StdinReader {
                 let line = Line(self.counter, line.to_string());
                 Some(Ok(line))
             }
-            Err(err) => Some(Err(err)),
+            Err(err) => Some(Err(err.into())),
         }
     }
 }
@@ -47,7 +48,7 @@ impl FilesReader {
         let path = self.paths.pop()?;
         let file = match File::open(path) {
             Ok(file) => file,
-            Err(err) => return Some(Err(err)),
+            Err(err) => return Some(Err(err.into())),
         };
         let reader = BufReader::new(file).lines();
         self.file = Some(reader);
@@ -77,7 +78,7 @@ impl Iterator for FilesReader {
                         let line = Line(self.counter, line.to_string());
                         return Some(Ok(line));
                     }
-                    Some(Err(err)) => return Some(Err(err)),
+                    Some(Err(err)) => return Some(Err(err.into())),
                     None => {
                         if let Err(err) = self.next_file()? {
                             return Some(Err(err));
@@ -96,7 +97,7 @@ pub(crate) struct MockReader {}
 
 #[cfg(test)]
 impl Iterator for MockReader {
-    type Item = std::io::Result<Line>;
+    type Item = Result<Line>;
     fn next(&mut self) -> Option<Self::Item> {
         None
     }
