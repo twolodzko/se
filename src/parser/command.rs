@@ -19,6 +19,8 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             }
             'p' => Println,
             'P' => Print,
+            'n' => Insert("\n".to_string()),
+            't' => Insert("\t".to_string()),
             'l' => Escapeln,
             's' => parse_substitute(reader)?,
             'k' => {
