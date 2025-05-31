@@ -173,14 +173,15 @@ Brackets       = AddressAtom | '(' Address ')'
 Negated        = ( Brackets | Range ) '!'?
 Address        = ( Negated ',' )+ Negated
 
+LabelName      = Alphanum | '_'
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-GoTo           = 'b' String
+GoTo           = 'b' LabelName
 Command        = [=pPlnhgxjJrzd] | '\' Character | Quit | GoTo | Keep | String | Substitute
 
-Label          = ':' String
+Label          = ':' LabelName
 Instruction    = Label? Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
 ```

@@ -39,7 +39,7 @@ pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Option<Regex>> {
 pub(crate) fn read_label<R: Reader>(reader: &mut R) -> Result<String> {
     let mut label = String::new();
     while let Some(c) = reader.peek()? {
-        if c.is_alphanumeric() {
+        if c.is_alphanumeric() || c == '_' {
             reader.next()?;
             label.push(c);
         } else {
