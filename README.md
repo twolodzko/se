@@ -135,7 +135,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
-| `=`              | `="\n"p`            |
+| `=`              | `=np`               |
 | `i text`         | `p "text\n"`        |
 | `a text`         | `"text\n" p`        |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
