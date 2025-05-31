@@ -1,5 +1,6 @@
 use super::{reader::Reader, regex_reader};
-use crate::{Error, Regex};
+use crate::Regex;
+use anyhow::Result;
 use std::str::FromStr;
 
 pub(crate) fn skip_whitespace<R: Reader>(reader: &mut R) {
@@ -15,7 +16,7 @@ pub(crate) fn skip_line<R: Reader>(reader: &mut R) {
     while reader.next().is_ok_and(|o| o.is_some_and(|c| c != '\n')) {}
 }
 
-pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String, Error> {
+pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String> {
     let mut num = String::new();
     loop {
         match reader.peek()? {
@@ -27,7 +28,7 @@ pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String, Error> {
     Ok(num)
 }
 
-pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Option<Regex>, Error> {
+pub(crate) fn parse_regex<R: Reader>(reader: &mut R) -> Result<Option<Regex>> {
     let regex = regex_reader::read_regex(reader)?;
     if regex.is_empty() {
         return Ok(None);

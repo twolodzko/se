@@ -1,4 +1,4 @@
-use crate::Error;
+use anyhow::Result;
 use std::{
     fs::File,
     io::{BufRead, BufReader, Lines},
@@ -23,7 +23,7 @@ impl Default for StdinReader {
 }
 
 impl Iterator for StdinReader {
-    type Item = crate::Result<Line>;
+    type Item = Result<Line>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.buffer.next()? {
@@ -32,7 +32,7 @@ impl Iterator for StdinReader {
                 let line = Line(self.counter, line.to_string());
                 Some(Ok(line))
             }
-            Err(err) => Some(Err(Error::Io(err))),
+            Err(err) => Some(Err(err.into())),
         }
     }
 }
@@ -44,11 +44,11 @@ pub struct FilesReader {
 }
 
 impl FilesReader {
-    fn next_file(&mut self) -> Option<crate::Result<()>> {
+    fn next_file(&mut self) -> Option<Result<()>> {
         let path = self.paths.pop()?;
         let file = match File::open(path) {
             Ok(file) => file,
-            Err(err) => return Some(Err(Error::Io(err))),
+            Err(err) => return Some(Err(err.into())),
         };
         let reader = BufReader::new(file).lines();
         self.file = Some(reader);
@@ -67,7 +67,7 @@ impl From<Vec<PathBuf>> for FilesReader {
 }
 
 impl Iterator for FilesReader {
-    type Item = crate::Result<Line>;
+    type Item = Result<Line>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -78,7 +78,7 @@ impl Iterator for FilesReader {
                         let line = Line(self.counter, line.to_string());
                         return Some(Ok(line));
                     }
-                    Some(Err(err)) => return Some(Err(Error::Io(err))),
+                    Some(Err(err)) => return Some(Err(err.into())),
                     None => {
                         if let Err(err) = self.next_file()? {
                             return Some(Err(err));
@@ -97,7 +97,7 @@ pub(crate) struct MockReader {}
 
 #[cfg(test)]
 impl Iterator for MockReader {
-    type Item = crate::Result<Line>;
+    type Item = Result<Line>;
     fn next(&mut self) -> Option<Self::Item> {
         None
     }

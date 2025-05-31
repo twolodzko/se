@@ -1,4 +1,5 @@
-use crate::{Error, Line, Regex};
+use crate::{Line, Regex};
+use anyhow::Result;
 use std::io::Write;
 
 #[derive(Debug, PartialEq)]
@@ -63,12 +64,12 @@ impl From<&Command> for Status {
 impl Command {
     /// Run the command by modifying one of the `pattern` or `hold` buffers
     /// and returning a status code.
-    pub(crate) fn run<R: Iterator<Item = crate::Result<Line>>>(
+    pub(crate) fn run<R: Iterator<Item = Result<Line>>>(
         &self,
         pattern: &mut Line,
         hold: &mut String,
         reader: &mut R,
-    ) -> crate::Result<Status> {
+    ) -> Result<Status> {
         use Command::*;
         match self {
             // commands that print things
@@ -137,20 +138,15 @@ impl Command {
     }
 }
 
-fn eval(cmd: &str) -> crate::Result<(String, Option<i32>)> {
+fn eval(cmd: &str) -> Result<(String, Option<i32>)> {
     let out = std::process::Command::new("sh")
         .arg("-c")
         .arg(cmd)
-        .output()
-        .map_err(Error::Io)?;
+        .output()?;
     if !out.stderr.is_empty() {
-        std::io::stderr()
-            .write_all(&out.stderr)
-            .map_err(Error::Io)?;
+        std::io::stderr().write_all(&out.stderr)?;
     }
-    let stdout = std::str::from_utf8(&out.stdout)
-        .map_err(Error::Utf8Error)?
-        .to_string();
+    let stdout = std::str::from_utf8(&out.stdout)?.to_string();
     let code = match out.status.code() {
         Some(0) => None,
         Some(code) => Some(code),

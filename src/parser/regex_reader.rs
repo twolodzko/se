@@ -1,7 +1,8 @@
 use super::reader::Reader;
 use crate::Error;
+use anyhow::{bail, Result};
 
-pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String, Error> {
+pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String> {
     let mut acc = String::new();
     match reader.next()? {
         Some('/') => {
@@ -12,7 +13,7 @@ pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String, Error> {
             acc.push('^');
             read_until(reader, '$', false, &mut acc)?;
         }
-        Some(c) => return Err(Error::Unexpected(c)),
+        Some(c) => bail!(Error::Unexpected(c)),
         _ => unreachable!(),
     }
     Ok(acc)
@@ -23,7 +24,7 @@ fn read_until<R: Reader>(
     delim: char,
     mut verbose: bool,
     acc: &mut String,
-) -> Result<(), Error> {
+) -> Result<()> {
     while let Some(c) = reader.next()? {
         match c {
             c if c == delim => {
@@ -38,7 +39,7 @@ fn read_until<R: Reader>(
                     acc.push(e);
                 } else {
                     acc.push(c);
-                    return Err(Error::InvalidAddr(acc.to_string()));
+                    bail!(Error::InvalidAddr(acc.to_string()));
                 }
             }
             '(' => {
@@ -52,14 +53,10 @@ fn read_until<R: Reader>(
             _ => acc.push(c),
         }
     }
-    Err(Error::Missing(delim))
+    bail!(Error::Missing(delim))
 }
 
-fn read_brackets<R: Reader>(
-    reader: &mut R,
-    verbose: bool,
-    acc: &mut String,
-) -> Result<bool, Error> {
+fn read_brackets<R: Reader>(reader: &mut R, verbose: bool, acc: &mut String) -> Result<bool> {
     let mut local_verbose = verbose;
     if let Some('?') = reader.peek()? {
         acc.push('?');
@@ -87,14 +84,14 @@ fn read_brackets<R: Reader>(
                 _ => (),
             }
         }
-        Err(Error::Missing(')'))
+        bail!(Error::Missing(')'))
     } else {
         read_until(reader, ')', verbose, acc)?;
         Ok(verbose)
     }
 }
 
-fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<(), Error> {
+fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<()> {
     while let Some(c) = reader.next()? {
         acc.push(c);
         if c == '\n' {

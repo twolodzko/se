@@ -7,12 +7,12 @@ use crate::{
     address::Address,
     command::Command,
     program::{Action, Program},
-    Error,
 };
+use anyhow::Result;
 use std::str::FromStr;
 
 impl TryFrom<&std::path::PathBuf> for Program {
-    type Error = Error;
+    type Error = anyhow::Error;
 
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
@@ -22,7 +22,7 @@ impl TryFrom<&std::path::PathBuf> for Program {
 }
 
 impl FromStr for Program {
-    type Err = Error;
+    type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
@@ -31,7 +31,7 @@ impl FromStr for Program {
     }
 }
 
-fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>), Error> {
+fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>)> {
     let mut actions = Vec::new();
     let mut finally = Vec::new();
     while reader.peek()?.is_some() {
@@ -45,7 +45,7 @@ fn parse_instruction<R: Reader>(
     reader: &mut R,
     actions: &mut Vec<Action>,
     finally: &mut Vec<Command>,
-) -> Result<(), Error> {
+) -> Result<()> {
     // [address][commands]
     utils::skip_whitespace(reader);
     let address = address::parse(reader)?;
