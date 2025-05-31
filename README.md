@@ -169,7 +169,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
-AddressAtom    = '$' | Location | Regex | WholeLine
+AddressAtom    = '$' | '?' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
 Negated        = ( Brackets | Range ) '!'?

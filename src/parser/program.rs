@@ -79,13 +79,7 @@ impl Address {
                 between.lhs.replace_maybe(subst)?;
                 between.rhs.replace_maybe(subst)?;
             }
-            Address::Set(addrs) => addrs
-                .iter_mut()
-                .map(|a| {
-                    a.replace_maybe(subst)?;
-                    Ok(())
-                })
-                .collect::<Result<()>>()?,
+            Address::Set(addrs) => addrs.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
             _ => (),
         }
         Ok(())
