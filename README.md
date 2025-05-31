@@ -58,6 +58,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
   e.g. `(1,2,3)!` is equivalent to matching the `4-` range.
+* `?` is a syntactic sugar for writing `/regex/ s/regex/.../`, it matches the lines
+  where the substitution could be applied.
 
 ## Commands
 
@@ -68,6 +70,7 @@ Same as `sed`, it can be used for string search and replace in files.
 * `=` – print the line number.
 * `n`, `t` – print newline or tab character.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
+  If there's nothing to substitute, it has no effect.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
 * `h` – hold the content of the pattern space to the hold space.
@@ -118,7 +121,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   expressions in [verbose mode], which can include comments.
 * Using `$N` for substitutions instead of `\N`.
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
-  but instead reading commands directly e.g. `=p` (actually `="\n"p`, see above) is equivalent to `{ = ; p }` in `sed`.
+  but instead reading commands directly e.g. `=p` (actually `=np`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
 * Only a subset of `sed` commands is supported and they can behave differently.
 * Instead of `a string`, use `p"string"` to print the string after
   printing the line, same applies to `sed`s `i`.
@@ -129,6 +132,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   it is an instruction set that runs unconditionally on the program stop.
 * `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
+  To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
@@ -149,7 +153,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |    other                       |   `se`                          |
 |--------------------------------|---------------------------------|
 | `cat README.md`                | `se 'p' README.md`              |
-| `cat -n README.md`             | `se '= "\t" p' README.md`       |
+| `cat -n README.md`             | `se '=tp' README.md`       |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
 | `head -n 5 README.md`          | `se '-5 p . q' README.md`       |
 | `head -n 5 README.md`          | `se 'r4 p q' README.md`         |
@@ -168,7 +172,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
-AddressAtom    = '$' | Location | Regex | WholeLine
+AddressAtom    = '$' | '?' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
 Negated        = ( Brackets | Range ) '!'?

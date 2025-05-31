@@ -10,7 +10,7 @@ pub use {
     program::Program,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Regex(regex::Regex);
 
 impl std::str::FromStr for Regex {

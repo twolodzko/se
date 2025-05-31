@@ -71,7 +71,7 @@ fn parse_instruction<R: Reader>(
     skip_whitespace(reader);
     let label = parse_label(reader)?;
     utils::skip_whitespace(reader);
-    let address = address::parse(reader)?;
+    let mut address = address::parse(reader)?;
     utils::skip_whitespace(reader);
     let commands = command::parse(reader)?;
 
@@ -89,6 +89,7 @@ fn parse_instruction<R: Reader>(
         if let Some(label) = label {
             actions.push(Action::Command(Command::Label(label)));
         }
+        address.replace_maybe(commands.first())?;
         actions.push(Action::Condition(address, commands.len()));
         for cmd in commands.into_iter() {
             actions.push(Action::Command(cmd));
@@ -104,6 +105,26 @@ fn parse_label<R: Reader>(reader: &mut R) -> Result<Option<String>> {
         Ok(Some(read_label(reader)?))
     } else {
         Ok(None)
+    }
+}
+
+impl Address {
+    fn replace_maybe(&mut self, subst: Option<&Command>) -> Result<()> {
+        match self {
+            Address::Maybe => {
+                let Some(Command::Substitute(regex, _, _)) = subst else {
+                    bail!("? must be followed by a substitution")
+                };
+                *self = Address::Regex(regex.clone());
+            }
+            Address::Between(between) => {
+                between.lhs.replace_maybe(subst)?;
+                between.rhs.replace_maybe(subst)?;
+            }
+            Address::Set(addrs) => addrs.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
+            _ => (),
+        }
+        Ok(())
     }
 }
 
@@ -246,6 +267,42 @@ mod tests {
         Action::Condition(Location(7), 1),
         Action::Command(Delete),
     ]); "multiple instructions")]
+    #[test_case(r"? s/abc/def/5", Program::from(vec![
+        Action::Condition(Regex(crate::Regex::from_str("abc").unwrap()), 1),
+        Action::Command(Substitute(
+                crate::Regex::from_str("abc").unwrap(),
+                "def".to_string(),
+                5,
+            )),
+    ]); "maybe")]
+    #[test_case(r"1-? s/abc/def/5", Program::from(vec![
+        Action::Condition(
+            Between(address::Between::new(
+                Location(1),
+                Regex(crate::Regex::from_str("abc").unwrap())
+            )),
+            1,
+        ),
+        Action::Command(Substitute(
+                crate::Regex::from_str("abc").unwrap(),
+                "def".to_string(),
+                5,
+            )),
+    ]); "maybe in range")]
+    #[test_case(r"1,? s/abc/def/5", Program::from(vec![
+        Action::Condition(
+            Set(vec![
+                Location(1),
+                Regex(crate::Regex::from_str("abc").unwrap())
+            ]),
+            1,
+        ),
+        Action::Command(Substitute(
+                crate::Regex::from_str("abc").unwrap(),
+                "def".to_string(),
+                5,
+            )),
+    ]); "maybe in set")]
     fn parse(input: &str, expected: Program) {
         let result = Program::from_str(input).unwrap();
         assert_eq!(result, expected)

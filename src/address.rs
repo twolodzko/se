@@ -17,6 +17,8 @@ pub(crate) enum Address {
     Between(Between),
     // addr1, addr2, ...
     Set(Vec<Address>),
+    // ?
+    Maybe,
 }
 
 impl Address {
@@ -37,14 +39,15 @@ impl Address {
                 }
                 false
             }
+            Maybe => unimplemented!(),
         }
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct Between {
-    lhs: Box<Address>,
-    rhs: Box<Address>,
+    pub(crate) lhs: Box<Address>,
+    pub(crate) rhs: Box<Address>,
     inside: atomic::AtomicBool,
 }
 
@@ -111,6 +114,7 @@ impl std::fmt::Display for Address {
                     .join(", ");
                 write!(f, "{}", list)
             }
+            Maybe => write!(f, "?"),
         }
     }
 }

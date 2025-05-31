@@ -197,6 +197,12 @@ EOF
    [ "$status" -eq 0 ]
 }
 
+@test "Condition on substitute like sed" {
+   run diff <(sed -nE 's/(sed)/__\1__/gp' README.md) \
+            <(./se '? s/(sed)/__$1__/p' README.md)
+   [ "$status" -eq 0 ]
+}
+
 bash_line_marker() {
    while IFS="" read -r line || [ -n "$line" ]
    do
