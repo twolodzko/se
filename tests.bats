@@ -140,6 +140,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Eval works" {
+   run diff <(pwd) <(./se 'ep' <(echo 'printf $(pwd)'))
+   [ "$status" -eq 0 ]
+}
+
 @test "Count matching lines like grep" {
    run diff <(grep -c 'sed' README.md) <(./se -c '/sed/' README.md)
    [ "$status" -eq 0 ]
