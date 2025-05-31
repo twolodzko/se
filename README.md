@@ -66,6 +66,7 @@ Same as `sed`, it can be used for string search and replace in files.
 * `l` – print the content of the pattern space after escaping the characters with Rust's
   [std::char::escape_default].
 * `=` – print the line number.
+* `n`, `t` – print newline or tab character.
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
@@ -175,7 +176,7 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=pPlnhgxjJrzd] | '\' Character | Quit | Keep | String | Substitute
+Command        = [=pPlnthgxjJrzd] | '\' Character | Quit | Keep | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
