@@ -23,8 +23,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
         }
 
         skip_whitespace(reader);
-        if let Some(',') = reader.peek()? {
-            reader.next()?;
+        if reader.next_is(',')? {
             skip_whitespace(reader);
         } else {
             break;
@@ -42,8 +41,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
 }
 
 fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address> {
-    if let Some('(') = reader.peek()? {
-        reader.next()?;
+    if reader.next_is('(')? {
         skip_whitespace(reader);
         let addr = parse(reader)?;
         skip_whitespace(reader);
@@ -61,9 +59,8 @@ fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address> {
 fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
     let addr = parse_simple_addr(reader)?;
     skip_whitespace(reader);
-    if let Some('-') = reader.peek()? {
+    if reader.next_is('-')? {
         let lhs = addr.unwrap_or(Location(1));
-        reader.next()?;
         skip_whitespace(reader);
         let rhs = parse_simple_addr(reader)?.unwrap_or(Final);
         if let (Location(lo), Location(hi)) = (&lhs, &rhs) {
@@ -107,11 +104,11 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 };
             }
             '$' => {
-                reader.next()?;
+                reader.skip();
                 return Ok(Some(Final));
             }
             '?' => {
-                reader.next()?;
+                reader.skip();
                 return Ok(Some(Maybe));
             }
             _ => (),
@@ -121,8 +118,7 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
 }
 
 fn maybe_negate<R: Reader>(addr: Address, reader: &mut R) -> Result<Address> {
-    if let Some('!') = reader.peek()? {
-        reader.next()?;
+    if reader.next_is('!')? {
         Ok(!addr)
     } else {
         Ok(addr)

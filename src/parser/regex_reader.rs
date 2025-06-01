@@ -58,9 +58,8 @@ fn read_until<R: Reader>(
 
 fn read_brackets<R: Reader>(reader: &mut R, verbose: bool, acc: &mut String) -> Result<bool> {
     let mut local_verbose = verbose;
-    if let Some('?') = reader.peek()? {
+    if reader.next_is('?')? {
         acc.push('?');
-        reader.next()?;
         while let Some(c) = reader.next()? {
             acc.push(c);
             match c {
@@ -74,8 +73,7 @@ fn read_brackets<R: Reader>(reader: &mut R, verbose: bool, acc: &mut String) -> 
                 // verbose flag
                 'x' => local_verbose = true,
                 '-' => {
-                    if let Some('x') = reader.peek()? {
-                        reader.next()?;
+                    if reader.next_is('x')? {
                         acc.push('x');
                         local_verbose = false;
                     }

@@ -8,7 +8,7 @@ pub(crate) fn skip_whitespace<R: Reader>(reader: &mut R) {
         .peek()
         .is_ok_and(|o| o.is_some_and(|c| c.is_whitespace()))
     {
-        let _ = reader.next();
+        reader.skip();
     }
 }
 
@@ -23,7 +23,7 @@ pub(crate) fn read_integer<R: Reader>(reader: &mut R) -> Result<String> {
             Some(c) if c.is_ascii_digit() => num.push(c),
             _ => break,
         }
-        reader.next()?;
+        reader.skip();
     }
     Ok(num)
 }

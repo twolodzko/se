@@ -10,6 +10,22 @@ use std::{
 pub(crate) trait Reader {
     fn next(&mut self) -> Result<Option<char>>;
     fn peek(&mut self) -> Result<Option<char>>;
+
+    fn skip(&mut self) {
+        self.next().unwrap();
+    }
+
+    /// If next character is `value` proceed and return `true`,
+    /// otherwiser return `false` and don't proceed.
+    fn next_is(&mut self, value: char) -> Result<bool> {
+        if let Some(c) = self.peek()? {
+            if c == value {
+                self.skip();
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
 }
 
 pub(crate) struct StringReader(Peekable<IntoIter<char>>);

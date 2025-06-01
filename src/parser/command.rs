@@ -83,7 +83,7 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
     let mut limit = 0;
     if let Some(c) = reader.peek()? {
         if c == 'g' {
-            reader.next()?;
+            reader.skip();
             // g is default, no need to update the limit
         } else if c.is_ascii_digit() {
             limit = read_integer(reader)?.parse()?;
@@ -99,7 +99,7 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
     while let Some(c) = reader.peek()? {
         match c {
             c if c == delim => {
-                reader.next()?;
+                reader.skip();
                 return unescape(acc);
             }
             c if c.is_ascii_digit() => {
@@ -110,7 +110,7 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
                 acc.push('}');
             }
             '\\' => {
-                reader.next()?;
+                reader.skip();
                 if let Some(e) = reader.next()? {
                     if e != delim {
                         acc.push(c);
@@ -121,7 +121,7 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
                 }
             }
             _ => {
-                reader.next()?;
+                reader.skip();
                 acc.push(c)
             }
         }
@@ -141,9 +141,7 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
         num - 1
     };
 
-    if let Some('-') = reader.peek()? {
-        reader.next()?;
-    } else {
+    if !reader.next_is('-')? {
         return Ok(Keep(lhs, Some(1)));
     };
 
