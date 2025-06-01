@@ -58,8 +58,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
   e.g. `(1,2,3)!` is equivalent to matching the `4-` range.
-* `_` is a syntactic sugar for writing `/regex/ s/regex/.../`, it matches the lines
-  where the substitution could be applied.
+* `_` matches the lines where the following substitution could be applied.
+  It is a syntactic sugar for writing `_ s/src/dst/` instead of `/src/ s/src/dst/`.
 
 ## Commands
 
