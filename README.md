@@ -58,7 +58,7 @@ Same as `sed`, it can be used for string search and replace in files.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
   e.g. `(1,2,3)!` is equivalent to matching the `4-` range.
-* `?` is a syntactic sugar for writing `/regex/ s/regex/.../`, it matches the lines
+* `_` is a syntactic sugar for writing `/regex/ s/regex/.../`, it matches the lines
   where the substitution could be applied.
 
 ## Commands
@@ -154,7 +154,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `cat README.md`                | `se 'p' README.md`              |
 | `cat -n README.md`             | `se '=tp' README.md`            |
 | `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
-| `sed -n 's/a/#/p' README.md`   | `se '? s/a/#/1p' README.md`     |
+| `sed -n 's/a/#/p' README.md`   | `se '_ s/a/#/1p' README.md`     |
 | `head -n 5 README.md`          | `se '-5 p . q' README.md`       |
 | `head -n 5 README.md`          | `se 'r4 p q' README.md`         |
 | `cut -c '3-7' README.md`       | `se 'k3-7 p' README.md`\*       |
@@ -171,7 +171,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
-AddressAtom    = '$' | '?' | Location | Regex | WholeLine
+AddressAtom    = '$' | '_' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
 Negated        = ( Brackets | Range ) '!'?

@@ -107,7 +107,7 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 reader.skip();
                 return Ok(Some(Final));
             }
-            '?' => {
+            '_' => {
                 reader.skip();
                 return Ok(Some(Maybe));
             }

@@ -114,7 +114,7 @@ impl std::fmt::Display for Address {
                     .join(", ");
                 write!(f, "{}", list)
             }
-            Maybe => write!(f, "?"),
+            Maybe => write!(f, "_"),
         }
     }
 }
