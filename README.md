@@ -149,19 +149,20 @@ lines containing the word "sed" would be printed twice, because of matching addr
 
 ## `se` vs other command line utilities
 
-|    other                       |   `se`                          |
-|--------------------------------|---------------------------------|
-| `cat README.md`                | `se 'p' README.md`              |
-| `cat -n README.md`             | `se '=tp' README.md`            |
-| `sed 's/sed/###/g' README.md`  | `se -a 's/sed/###/' README.md`  |
-| `sed -n 's/a/#/p' README.md`   | `se '_ s/a/#/1p' README.md`     |
-| `head -n 5 README.md`          | `se '-5 p . q' README.md`       |
-| `head -n 5 README.md`          | `se 'r4 p q' README.md`         |
-| `cut -c '3-7' README.md`       | `se 'k3-7 p' README.md`\*       |
-| `grep 'sed' README.md`         | `se '/sed/ p' README.md`        |
-| `grep -c 'sed' README.md`      | `se -c '/sed/' README.md`       |
-| `wc -l README.md`              | `se -c '' README.md`            |
-| `wc -l README.md`              | `se '$=' README.md`             |
+|    other                             |   `se`                           |
+|--------------------------------------|----------------------------------|
+| `cat README.md`                      | `se 'p' README.md`               |
+| `cat -n README.md`                   | `se '=tp' README.md`             |
+| `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_$1_/p' README.md`  |
+| `sed -n 's/a/#/p' README.md`         | `se '_ s/a/#/1p' README.md`      |
+| `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |
+| `head -n 5 README.md`                | `se '-5 p . q' README.md`        |
+| `head -n 5 README.md`                | `se 'r4 p q' README.md`          |
+| `cut -c '3-7' README.md`             | `se 'k3-7 p' README.md`\*        |
+| `grep 'sed' README.md`               | `se '/sed/ p' README.md`         |
+| `grep -c 'sed' README.md`            | `se -c '/sed/' README.md`        |
+| `wc -l README.md`                    | `se -c '' README.md`             |
+| `wc -l README.md`                    | `se '$=' README.md`              |
 
 \* – but `se` understands unicode.
 

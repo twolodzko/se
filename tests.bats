@@ -79,6 +79,12 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Substitute like sed" {
+   run diff <(sed -E 's/(sed)/__\1__/g' README.md) \
+            <(./se 's/(sed)/__$1__/p' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Simple substitute is like in sed" {
    run diff <(sed 's/a/#/g' README.md) <(./se -a 's/a/#/' README.md)
    [ "$status" -eq 0 ]
