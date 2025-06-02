@@ -8,7 +8,7 @@ use crate::{
     command::Command,
     program::{Action, Program},
 };
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use std::str::FromStr;
 
 impl TryFrom<&std::path::PathBuf> for Program {
@@ -16,7 +16,8 @@ impl TryFrom<&std::path::PathBuf> for Program {
 
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
-        let (actions, finally) = parse(reader)?;
+        let (actions, finally) = parse(reader)
+            .with_context(|| format!("failed to parse:\n\n{}", reader.current_position()))?;
         Ok(Program(actions, finally))
     }
 }
@@ -26,7 +27,8 @@ impl FromStr for Program {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
-        let (actions, finally) = parse(reader)?;
+        let (actions, finally) = parse(reader)
+            .with_context(|| format!("failed to parse:\n\n{}", reader.current_position()))?;
         Ok(Program(actions, finally))
     }
 }

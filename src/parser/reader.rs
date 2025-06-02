@@ -10,6 +10,7 @@ use std::{
 pub(crate) trait Reader {
     fn next(&mut self) -> Result<Option<char>>;
     fn peek(&mut self) -> Result<Option<char>>;
+    fn current_position(&self) -> String;
 
     fn skip(&mut self) {
         self.next().unwrap();
@@ -28,21 +29,40 @@ pub(crate) trait Reader {
     }
 }
 
-pub(crate) struct StringReader(Peekable<IntoIter<char>>);
+pub(crate) struct StringReader(Peekable<IntoIter<char>>, String, usize);
 
 impl From<&str> for StringReader {
     fn from(value: &str) -> Self {
-        StringReader(value.chars().collect::<Vec<char>>().into_iter().peekable())
+        StringReader(
+            value.chars().collect::<Vec<char>>().into_iter().peekable(),
+            value.to_string(),
+            0,
+        )
     }
 }
 
 impl Reader for StringReader {
     fn next(&mut self) -> Result<Option<char>> {
-        Ok(self.0.next())
+        if let c @ Some(_) = self.0.next() {
+            self.2 += 1;
+            return Ok(c);
+        }
+        Ok(None)
     }
 
     fn peek(&mut self) -> Result<Option<char>> {
-        Ok(self.0.peek().cloned())
+        if let c @ Some(_) = self.0.peek().cloned() {
+            return Ok(c);
+        }
+        Ok(None)
+    }
+
+    fn current_position(&self) -> String {
+        if self.2 == 0 {
+            format!("  {}\n^", self.1)
+        } else {
+            format!("  {}\n  {}^", self.1, " ".repeat(self.2 - 1))
+        }
     }
 }
 
@@ -85,6 +105,10 @@ impl Reader for FileReader {
                 return Ok(None);
             }
         }
+    }
+
+    fn current_position(&self) -> String {
+        self.buffer.current_position()
     }
 }
 
