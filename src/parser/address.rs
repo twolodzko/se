@@ -45,9 +45,7 @@ fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address> {
         skip_whitespace(reader);
         let addr = parse(reader)?;
         skip_whitespace(reader);
-        if reader.next()? != Some(')') {
-            bail!(Error::Missing(')'))
-        }
+        reader.expect(')')?;
         Ok(maybe_negate(addr, reader)?)
     } else {
         let addr = parse_range(reader)?;

@@ -1,4 +1,4 @@
-use crate::{Line, Regex};
+use crate::{run, Action, Line, Regex};
 use anyhow::Result;
 use std::io::Write;
 
@@ -30,6 +30,8 @@ pub(crate) enum Command {
     Join,
     /// r [num]
     Readln(usize),
+    /// R
+    ReadReplace,
     /// z
     Reset,
     /// d
@@ -40,6 +42,8 @@ pub(crate) enum Command {
     Quit(i32),
     /// e
     Eval,
+    /// :{ act }
+    Loop(Vec<Action>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -120,6 +124,13 @@ impl Command {
                     }
                 }
             }
+            ReadReplace => {
+                if let Some(line) = reader.next() {
+                    *pattern = line?;
+                } else {
+                    return Ok(Status::Break);
+                }
+            }
             // commands that return special status codes
             Delete => {
                 pattern.1.clear();
@@ -127,18 +138,27 @@ impl Command {
             }
             Break | Quit(_) => return Ok(Status::from(self)),
             Eval => {
-                let (stdout, code) = eval(&pattern.1)?;
+                let (stdout, code) = eval_sh(&pattern.1)?;
                 pattern.1 = stdout;
                 if let Some(code) = code {
                     return Ok(Status::Quit(code));
                 }
             }
+            Loop(ref body) => loop {
+                if let Some(status) = run(body, pattern, hold, reader)? {
+                    match status {
+                        Status::Normal => (),
+                        Status::Break => return Ok(Status::Normal),
+                        other => return Ok(other),
+                    }
+                }
+            },
         }
         Ok(Status::Normal)
     }
 }
 
-fn eval(cmd: &str) -> Result<(String, Option<i32>)> {
+fn eval_sh(cmd: &str) -> Result<(String, Option<i32>)> {
     let out = std::process::Command::new("sh")
         .arg("-c")
         .arg(cmd)
@@ -173,11 +193,20 @@ impl std::fmt::Display for Command {
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),
             Readln(n) => write!(f, "r {}", n),
+            ReadReplace => write!(f, "R"),
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Break => write!(f, "."),
             Quit(c) => write!(f, "q {}", c),
             Eval => write!(f, "e"),
+            Loop(body) => {
+                let s = body
+                    .iter()
+                    .map(|a| format!("  {}", a))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+                write!(f, ":{{\n{}\n}}", s)
+            }
         }
     }
 }

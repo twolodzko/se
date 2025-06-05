@@ -77,10 +77,12 @@ Same as `sed`, it can be used for string search and replace in files.
 * `g` – get the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
 * `j` – push the content of the hold space at the back of the pattern space
-        using a newline character as separator.
+  using a newline character as separator.
 * `J` – same as above, but without the separator.
 * `r [num]` – read `num` lines (1 by default) and append them to pattern space
-        using newline as a separator.
+  using newline as a separator.
+* `R` – read new line and replace pattern space content with it. If it cannot read the new line,
+  it send the break signal (same as `.`).
 * `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
 * `"string"` or `'string'` – print the `string`. The `string` can contain special escape
@@ -88,6 +90,7 @@ Same as `sed`, it can be used for string search and replace in files.
 * `e` – execute the content of the pattern space as a shell command. Save the stdout output
   of the command to pattern space. If the command returned with non-zero error code,
   stop and return the error code.
+* `b` – the break command, stop processing the current line.
 * `q [code]` – exit with the `code` exit code (0 by default).
 
 ## Multiple instructions
@@ -98,7 +101,7 @@ When script contains multiple instructions, they can be delimited with `;` or `.
   the pattern space would be processed using the following instruction.
 * `.` marks the final instruction. If the address of the instruction would positively match,
   the processing of the line would stop after running the command,
-  all the following instructions would be skipped.
+  all the following instructions would be skipped. It is a shortcut for `b ;`.
   In a way, `.` works like the command `d`, but it does not clear the pattern space.
 
 For example, the script
@@ -112,6 +115,30 @@ when applied to this README would print it's content prepending each line contai
 with ">> " and every other line (no address) with spaces. If `;` was used instead of `.`, the
 lines containing the word "sed" would be printed twice, because of matching addresses in the both instructions.
 
+## Loops
+
+`:{ ... }` defines an infinite loops. For example, Unix's `yes` command could be imitated with
+
+```text
+:{
+  "yes\n"
+}
+```
+
+To break out of the loop, one can use the special commands `d`, `q[code]`, or `.`. The break `.` command
+in loops breaks out of the loop, rather than out of the program. For example, the following program
+
+```text
+:{
+  /other/ .
+  R
+} =tpq
+```
+
+would loop until finding the line containing the word "other", then would
+print the line number `=`, tab `t`, the line `p`, and stop `q`.
+It is an imperative way of defining the `/other/ =tpq` code.
+
 ## Differences from `sed`
 
 * Using [Rust's Regex] regular expression syntax, including the syntax for flags
@@ -124,7 +151,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * Only a subset of `sed` commands is supported and they can behave differently.
 * Instead of `a string`, use `p"string"` to print the string after
   printing the line, same applies to `sed`s `i`.
-* No support for branching.
+* No support for branching. Instead, [loops](#loops) can be used as a partial replacement.
 * `sed` by default prints all the lines unless explicitly deleted.
   To achieve this behavior use `-a` (`--all`) flag to print all the lines.
 * In `sed` the block after `$` runs on the final line, in `se`
@@ -163,6 +190,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `grep -c 'sed' README.md`            | `se -c '/sed/' README.md`        |
 | `wc -l README.md`                    | `se -c '' README.md`             |
 | `wc -l README.md`                    | `se '$=' README.md`              |
+| `yes`                                | `echo "yes" \| se ':{ p }'`      |
 
 \* – but `se` understands unicode.
 
@@ -182,7 +210,8 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=pPlnthgxjJrzd] | '\' Character | Quit | Keep | String | Substitute
+Loop           = ':' '{' Script '}'
+Command        = [=bdghjJlnpPrtxz] | '\' Character | Quit | Keep | String | Substitute | Loop
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?

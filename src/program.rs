@@ -1,14 +1,8 @@
-use crate::{address, command, Line, Status};
+use crate::{command, run, Action, Line, Status};
 use anyhow::Result;
 
 #[derive(Debug, PartialEq)]
 pub struct Program(pub(crate) Vec<Action>, pub(crate) Vec<command::Command>);
-
-#[derive(Debug, PartialEq)]
-pub(crate) enum Action {
-    Condition(address::Address, usize),
-    Command(command::Command),
-}
 
 impl Program {
     pub fn run<R: Iterator<Item = Result<Line>>>(
@@ -27,7 +21,7 @@ impl Program {
             pattern = line?;
             status = Normal;
 
-            if let Some(s) = self.process(&mut pattern, &mut hold, reader)? {
+            if let Some(s) = run(&self.0, &mut pattern, &mut hold, reader)? {
                 status = s;
                 matches += 1;
             }
@@ -53,36 +47,6 @@ impl Program {
 
         Ok((status, matches))
     }
-
-    fn process<R: Iterator<Item = Result<Line>>>(
-        &self,
-        pattern: &mut Line,
-        hold: &mut String,
-        reader: &mut R,
-    ) -> Result<Option<Status>> {
-        let mut status = None;
-        let mut pos = 0;
-        while pos < self.0.len() {
-            match &self.0[pos] {
-                Action::Condition(cond, jump) => {
-                    if cond.matches(pattern) {
-                        status = Some(Status::Normal);
-                    } else {
-                        pos += jump;
-                    }
-                }
-                Action::Command(cmd) => {
-                    let s = cmd.run(pattern, hold, reader)?;
-                    if s != Status::Normal {
-                        status = Some(s);
-                        break;
-                    }
-                }
-            }
-            pos += 1;
-        }
-        Ok(status)
-    }
 }
 
 impl From<Vec<Action>> for Program {
@@ -93,7 +57,7 @@ impl From<Vec<Action>> for Program {
 
 #[cfg(test)]
 mod tests {
-    use crate::{lines::MockReader, Line, Program};
+    use crate::{lines::MockReader, run, Line, Program};
     use std::str::FromStr;
     use test_case::test_case;
 
@@ -130,8 +94,7 @@ mod tests {
     fn keep(command: &str, expected: &str) {
         let func = Program::from_str(command).unwrap();
         let pattern = &mut Line(0, "123456789".to_string());
-        func.process(pattern, &mut String::new(), &mut MockReader {})
-            .unwrap();
+        run(&func.0, pattern, &mut String::new(), &mut MockReader {}).unwrap();
         assert_eq!(pattern.1, expected)
     }
 }

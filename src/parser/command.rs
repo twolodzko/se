@@ -1,4 +1,5 @@
 use super::{
+    instruction::parse_instruction,
     reader::Reader,
     utils::{parse_regex, read_integer, skip_line, skip_whitespace},
 };
@@ -14,6 +15,12 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
         let cmd = match c {
             ';' => break,
             '.' => {
+                cmds.push(Break);
+                break;
+            }
+            'b' => {
+                skip_whitespace(reader);
+                reader.expect(';')?;
                 cmds.push(Break);
                 break;
             }
@@ -42,12 +49,14 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 let num = if s.is_empty() { 1 } else { s.parse()? };
                 Readln(num)
             }
+            'R' => ReadReplace,
             'q' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;
                 let code = if s.is_empty() { 0 } else { s.parse()? };
                 Quit(code)
             }
+            ':' => parse_loop(reader)?,
             '\'' | '"' => {
                 let msg = unescape(read_until(reader, c)?)?;
                 Insert(msg)
@@ -134,11 +143,11 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
     let lhs = if s.is_empty() {
         0
     } else {
-        let num: usize = s.parse()?;
-        if num == 0 {
+        let lhs: usize = s.parse()?;
+        if lhs == 0 {
             bail!("character indexes need to be >0");
         }
-        num - 1
+        lhs - 1
     };
 
     if !reader.next_is('-')? {
@@ -149,13 +158,34 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
     let rhs = if s.is_empty() {
         None
     } else {
-        let num: usize = s.parse()?;
-        if num == 0 || num < lhs {
-            bail!("invalid character index range: {}-{}", lhs + 1, num);
+        let rhs: usize = s.parse()?;
+        if rhs == 0 || rhs < lhs {
+            bail!("invalid character index range: {}-{}", lhs + 1, rhs);
         }
-        Some(num - lhs)
+        Some(rhs - lhs)
     };
     Ok(Keep(lhs, rhs))
+}
+
+fn parse_loop<R: Reader>(reader: &mut R) -> Result<Command> {
+    reader.expect('{')?;
+    let mut body = Vec::new();
+    let mut finally = Vec::new();
+    loop {
+        skip_whitespace(reader);
+        match reader.peek()? {
+            Some('}') => {
+                reader.skip();
+                break;
+            }
+            Some(_) => parse_instruction(reader, &mut body, &mut finally)?,
+            None => bail!(Error::Missing('}')),
+        }
+    }
+    if !finally.is_empty() {
+        bail!("loops cannot contain the final block ($)")
+    }
+    Ok(Loop(body))
 }
 
 fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
