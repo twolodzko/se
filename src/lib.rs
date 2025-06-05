@@ -85,7 +85,6 @@ fn run<R: Iterator<Item = Result<Line>>>(
 pub enum Error {
     Missing(char),
     Unexpected(char),
-    InvalidAddr(String),
 }
 
 impl std::fmt::Display for Error {
@@ -94,7 +93,6 @@ impl std::fmt::Display for Error {
         match self {
             Missing(c) => write!(f, "missing '{}'", c),
             Unexpected(c) => write!(f, "unexpected '{}'", c),
-            InvalidAddr(a) => write!(f, "invalid address: {}", a),
         }
     }
 }

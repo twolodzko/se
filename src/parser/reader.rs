@@ -66,11 +66,7 @@ impl Reader for StringReader {
     }
 
     fn current_position(&self) -> String {
-        if self.2 == 0 {
-            format!("  {}\n^", self.1)
-        } else {
-            format!("  {}\n  {}^", self.1, " ".repeat(self.2 - 1))
-        }
+        format!("  {}\n  {}^", self.1, " ".repeat(self.2.saturating_sub(1)))
     }
 }
 

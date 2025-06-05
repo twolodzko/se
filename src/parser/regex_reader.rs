@@ -39,7 +39,7 @@ fn read_until<R: Reader>(
                     acc.push(e);
                 } else {
                     acc.push(c);
-                    bail!(Error::InvalidAddr(acc.to_string()));
+                    bail!("escaped character is missing");
                 }
             }
             '(' => {
