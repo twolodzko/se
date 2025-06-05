@@ -159,8 +159,14 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
         None
     } else {
         let rhs: usize = s.parse()?;
-        if rhs == 0 || rhs < lhs {
-            bail!("invalid character index range: {}-{}", lhs + 1, rhs);
+        if rhs == 0 || lhs > rhs {
+            bail!(
+                "invalid character index range: {} > {} in {}-{}",
+                lhs + 1,
+                rhs,
+                lhs + 1,
+                rhs,
+            );
         }
         Some(rhs - lhs)
     };

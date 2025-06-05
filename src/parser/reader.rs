@@ -12,7 +12,7 @@ use crate::Error;
 pub(crate) trait Reader {
     fn next(&mut self) -> Result<Option<char>>;
     fn peek(&mut self) -> Result<Option<char>>;
-    fn current_position(&self) -> String;
+    fn line_position(&self) -> (String, usize);
 
     fn skip(&mut self) {
         self.next().unwrap();
@@ -65,8 +65,8 @@ impl Reader for StringReader {
         Ok(None)
     }
 
-    fn current_position(&self) -> String {
-        format!("  {}\n  {}^", self.1, " ".repeat(self.2.saturating_sub(1)))
+    fn line_position(&self) -> (String, usize) {
+        (self.1.to_string(), self.2)
     }
 }
 
@@ -111,8 +111,8 @@ impl Reader for FileReader {
         }
     }
 
-    fn current_position(&self) -> String {
-        self.buffer.current_position()
+    fn line_position(&self) -> (String, usize) {
+        self.buffer.line_position()
     }
 }
 

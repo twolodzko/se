@@ -12,8 +12,7 @@ impl TryFrom<&std::path::PathBuf> for Program {
 
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
-        let (actions, finally) = parse(reader)
-            .with_context(|| format!("failed to parse:\n\n{}", reader.current_position()))?;
+        let (actions, finally) = parse(reader).with_context(|| error_context(reader))?;
         Ok(Program(actions, finally))
     }
 }
@@ -23,8 +22,7 @@ impl FromStr for Program {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
-        let (actions, finally) = parse(reader)
-            .with_context(|| format!("failed to parse:\n\n{}", reader.current_position()))?;
+        let (actions, finally) = parse(reader).with_context(|| error_context(reader))?;
         Ok(Program(actions, finally))
     }
 }
@@ -37,6 +35,15 @@ fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>)> {
         skip_whitespace(reader);
     }
     Ok((actions, finally))
+}
+
+fn error_context<R: Reader>(reader: &R) -> String {
+    let (s, i) = reader.line_position();
+    format!(
+        "failed to parse:\n\n  {}\n  {}^",
+        s,
+        " ".repeat(i.saturating_sub(1))
+    )
 }
 
 #[cfg(test)]
