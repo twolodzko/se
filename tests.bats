@@ -36,7 +36,7 @@ teardown() {
 }
 
 @test "Print vs Println" {
-	run diff <(./se 'p' README.md) <(./se 'P"\n"' README.md)
+	run diff <(./se 'p' README.md) <(./se 'Pn' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -70,12 +70,12 @@ teardown() {
 }
 
 @test "Consistent with sed line counting" {
-   run diff <(sed '=' README.md) <(./se '="\n"p' README.md)
+   run diff <(sed '=' README.md) <(./se '=np' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Special characters in template" {
-   run diff <(./se '="\n"p' README.md) <(./se '="\n"p' README.md)
+   run diff <(./se '=np' README.md) <(./se '="\n"p' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -269,7 +269,19 @@ only_for_gsed() {
    [ "$status" -eq 0 ]
 }
 
+@test "Loops example" {
+   run diff <(./se '/other/ =tpq' README.md) \
+            <(./se ':{ /other/ . R } =tpq' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Nested loops" {
+   run diff <(printf "3\n4\n13\n14\n21\n22\n23\n24\n") \
+            <(seq 1 25 | ./se ':{ R ; /2/ :{ R ; /5/ . p } }')
+   [ "$status" -eq 0 ]
+}
+
 @test "Run the examples in README.md" {
-   run sed -nE 's/^.*`(se .+ README.md)`.*/.\/\1/e' README.md
+   run sed -nE 's/^.*`(se .+)`.*/.\/\1/e' README.md
    [ "$status" -eq 0 ]
 }

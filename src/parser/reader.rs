@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use std::{
     fs::File,
     io::{BufRead, BufReader, Lines},
@@ -7,6 +7,8 @@ use std::{
     vec::IntoIter,
 };
 
+use crate::Error;
+
 pub(crate) trait Reader {
     fn next(&mut self) -> Result<Option<char>>;
     fn peek(&mut self) -> Result<Option<char>>;
@@ -14,9 +16,15 @@ pub(crate) trait Reader {
     fn skip(&mut self) {
         self.next().unwrap();
     }
+    fn expect(&mut self, value: char) -> Result<()> {
+        match self.next()? {
+            Some(c) if c != value => bail!(Error::Missing(value)),
+            _ => Ok(()),
+        }
+    }
 
     /// If next character is `value` proceed and return `true`,
-    /// otherwiser return `false` and don't proceed.
+    /// otherwise return `false` and don't proceed.
     fn next_is(&mut self, value: char) -> Result<bool> {
         if let Some(c) = self.peek()? {
             if c == value {
