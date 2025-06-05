@@ -156,6 +156,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Reverse lines like tac" {
+   run diff <(tac README.md) <(./se '1! j ; $ p ; h' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Flags work" {
    # no flag
    run diff <(sed -n '/Address/p' README.md) <(./se '/Address/p' README.md)

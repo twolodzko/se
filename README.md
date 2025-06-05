@@ -179,6 +179,7 @@ It is an imperative way of defining the `/other/ =tpq` code.
 |    other                             |   `se`                           |
 |--------------------------------------|----------------------------------|
 | `cat README.md`                      | `se 'p' README.md`               |
+| `tac README.md`                      | `se '1!j ; $p ; h' README.md`    |
 | `cat -n README.md`                   | `se '=tp' README.md`             |
 | `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_$1_/p' README.md`  |
 | `sed -n 's/a/#/p' README.md`         | `se '_ s/a/#/1p' README.md`      |
