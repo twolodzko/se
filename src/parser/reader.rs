@@ -1,3 +1,4 @@
+use super::Error;
 use anyhow::{bail, Result};
 use std::{
     fs::File,
@@ -6,8 +7,6 @@ use std::{
     path::PathBuf,
     vec::IntoIter,
 };
-
-use crate::Error;
 
 pub(crate) trait Reader {
     fn next(&mut self) -> Result<Option<char>>;

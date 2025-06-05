@@ -1,5 +1,4 @@
-use super::reader::Reader;
-use crate::Error;
+use super::{reader::Reader, Error};
 use anyhow::{bail, Result};
 
 pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String> {
@@ -39,7 +38,7 @@ fn read_until<R: Reader>(
                     acc.push(e);
                 } else {
                     acc.push(c);
-                    bail!(Error::InvalidAddr(acc.to_string()));
+                    bail!("escaped character is missing");
                 }
             }
             '(' => {

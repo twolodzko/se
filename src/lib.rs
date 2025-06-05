@@ -80,21 +80,3 @@ fn run<R: Iterator<Item = Result<Line>>>(
     }
     Ok(status)
 }
-
-#[derive(Debug)]
-pub enum Error {
-    Missing(char),
-    Unexpected(char),
-    InvalidAddr(String),
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Error::*;
-        match self {
-            Missing(c) => write!(f, "missing '{}'", c),
-            Unexpected(c) => write!(f, "unexpected '{}'", c),
-            InvalidAddr(a) => write!(f, "invalid address: {}", a),
-        }
-    }
-}

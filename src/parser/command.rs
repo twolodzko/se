@@ -2,11 +2,9 @@ use super::{
     instruction::parse_instruction,
     reader::Reader,
     utils::{parse_regex, read_integer, skip_line, skip_whitespace},
-};
-use crate::{
-    command::Command::{self, *},
     Error,
 };
+use crate::command::Command::{self, *};
 use anyhow::{anyhow, bail, Result};
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
@@ -159,8 +157,14 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
         None
     } else {
         let rhs: usize = s.parse()?;
-        if rhs == 0 || rhs < lhs {
-            bail!("invalid character index range: {}-{}", lhs + 1, rhs);
+        if rhs == 0 || lhs > rhs {
+            bail!(
+                "invalid character index range: {} > {} in {}-{}",
+                lhs + 1,
+                rhs,
+                lhs + 1,
+                rhs,
+            );
         }
         Some(rhs - lhs)
     };

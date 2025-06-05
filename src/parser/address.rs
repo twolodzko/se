@@ -2,12 +2,9 @@ use super::{
     reader::Reader,
     utils::{parse_regex, read_integer, skip_line, skip_whitespace},
 };
-use crate::{
-    address::{
-        self,
-        Address::{self, *},
-    },
-    Error,
+use crate::address::{
+    self,
+    Address::{self, *},
 };
 use anyhow::{bail, Result};
 
@@ -63,10 +60,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
         let rhs = parse_simple_addr(reader)?.unwrap_or(Final);
         if let (Location(lo), Location(hi)) = (&lhs, &rhs) {
             if lo > hi {
-                bail!(Error::InvalidAddr(format!(
-                    "{} > {} in {}-{}",
-                    lo, hi, lo, hi
-                )));
+                bail!("invalid bounds: {} > {} in {}-{}", lo, hi, lo, hi);
             }
         }
         return Ok(Between(address::Between::new(lhs, rhs)));
@@ -94,7 +88,7 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 match s.parse() {
                     Ok(num) => {
                         if num == 0 {
-                            bail!(Error::InvalidAddr(s));
+                            bail!("invalid address: {}", s);
                         }
                         return Ok(Some(Location(num)));
                     }
