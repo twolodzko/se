@@ -158,7 +158,7 @@ It is an imperative way of defining the `/other/ =tpq` code.
   it is an instruction set that runs unconditionally on the program stop.
 * `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
-  To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
+  To imitate `sed`s execution flow conditional on substitutions, use `_` (see [addresses](#addresses)).
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
