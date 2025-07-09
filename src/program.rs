@@ -1,5 +1,8 @@
+use std::io::StdoutLock;
+
 use crate::{command, run, Action, Line, Status};
 use anyhow::Result;
+use std::io::Write;
 
 #[derive(Debug, PartialEq)]
 pub struct Program(pub(crate) Vec<Action>, pub(crate) Vec<command::Command>);
@@ -9,6 +12,7 @@ impl Program {
         &self,
         reader: &mut R,
         print_all: bool,
+        out: &mut StdoutLock,
     ) -> Result<(Status, usize)> {
         use Status::*;
 
@@ -21,7 +25,7 @@ impl Program {
             pattern = line?;
             status = Normal;
 
-            if let Some(s) = run(&self.0, &mut pattern, &mut hold, reader)? {
+            if let Some(s) = run(&self.0, &mut pattern, &mut hold, reader, out)? {
                 status = s;
                 matches += 1;
             }
@@ -30,7 +34,7 @@ impl Program {
                 continue;
             }
             if print_all {
-                println!("{}", pattern.1)
+                writeln!(out, "{}", pattern.1)?;
             }
             if let Quit(_) = status {
                 break;
@@ -38,7 +42,7 @@ impl Program {
         }
 
         for cmd in self.1.iter() {
-            let s = cmd.run(&mut pattern, &mut hold, reader)?;
+            let s = cmd.run(&mut pattern, &mut hold, reader, out)?;
             if s != Status::Normal {
                 status = s;
                 break;
@@ -94,7 +98,14 @@ mod tests {
     fn keep(command: &str, expected: &str) {
         let func = Program::from_str(command).unwrap();
         let pattern = &mut Line(0, "123456789".to_string());
-        run(&func.0, pattern, &mut String::new(), &mut MockReader {}).unwrap();
+        run(
+            &func.0,
+            pattern,
+            &mut String::new(),
+            &mut MockReader {},
+            &mut std::io::stdout().lock(),
+        )
+        .unwrap();
         assert_eq!(pattern.1, expected)
     }
 }

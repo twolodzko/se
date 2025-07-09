@@ -4,6 +4,8 @@ mod lines;
 mod parser;
 mod program;
 
+use std::io::StdoutLock;
+
 use anyhow::Result;
 pub use {
     command::Status,
@@ -56,6 +58,7 @@ fn run<R: Iterator<Item = Result<Line>>>(
     pattern: &mut Line,
     hold: &mut String,
     reader: &mut R,
+    out: &mut StdoutLock,
 ) -> Result<Option<Status>> {
     let mut status = None;
     let mut pos = 0;
@@ -69,7 +72,7 @@ fn run<R: Iterator<Item = Result<Line>>>(
                 }
             }
             Action::Command(cmd) => {
-                let s = cmd.run(pattern, hold, reader)?;
+                let s = cmd.run(pattern, hold, reader, out)?;
                 if s != Status::Normal {
                     status = Some(s);
                     break;

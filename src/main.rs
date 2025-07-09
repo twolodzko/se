@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use se::{FilesReader, Line, Program, Status, StdinReader};
-use std::{path::PathBuf, str::FromStr};
+use std::{io::Write, path::PathBuf, str::FromStr};
 
 fn main() -> Result<()> {
     let args = parse_args();
@@ -20,10 +20,11 @@ fn main() -> Result<()> {
         Box::new(FilesReader::from(args.files))
     };
 
-    let (status, count) = program.run(&mut reader, args.all)?;
+    let out = &mut std::io::stdout().lock();
+    let (status, count) = program.run(&mut reader, args.all, out)?;
 
     if args.count {
-        println!("{}", count)
+        writeln!(out, "{}", count)?;
     }
     if let Status::Quit(code) = status {
         std::process::exit(code)

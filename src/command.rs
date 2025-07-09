@@ -1,6 +1,6 @@
 use crate::{run, Action, Line, Regex};
 use anyhow::Result;
-use std::io::Write;
+use std::io::{StdoutLock, Write};
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
@@ -73,18 +73,19 @@ impl Command {
         pattern: &mut Line,
         hold: &mut String,
         reader: &mut R,
+        out: &mut StdoutLock,
     ) -> Result<Status> {
         use Command::*;
         match self {
             // commands that print things
-            Println => println!("{}", pattern.1),
-            Print => print!("{}", pattern.1),
+            Println => writeln!(out, "{}", pattern.1)?,
+            Print => write!(out, "{}", pattern.1)?,
             Escapeln => {
                 let escaped = pattern.1.escape_default().to_string();
-                println!("{}", escaped)
+                writeln!(out, "{}", escaped)?
             }
-            LineNumber => print!("{}", pattern.0),
-            Insert(message) => print!("{}", message),
+            LineNumber => write!(out, "{}", pattern.0)?,
+            Insert(message) => write!(out, "{}", message)?,
             // commands that modify the buffers
             Substitute(regex, template, limit) => {
                 let replaced = regex.0.replacen(&pattern.1, *limit, template);
@@ -145,7 +146,7 @@ impl Command {
                 }
             }
             Loop(ref body) => loop {
-                if let Some(status) = run(body, pattern, hold, reader)? {
+                if let Some(status) = run(body, pattern, hold, reader, out)? {
                     match status {
                         Status::Normal => (),
                         Status::Break => return Ok(Status::Normal),
@@ -225,12 +226,22 @@ mod tests {
         assert_eq!(pattern.1, "start");
 
         Command::Readln(1)
-            .run(&mut pattern, &mut String::new(), &mut reader)
+            .run(
+                &mut pattern,
+                &mut String::new(),
+                &mut reader,
+                &mut std::io::stdout().lock(),
+            )
             .unwrap();
         assert_eq!(pattern.1, "start\n1");
 
         Command::Readln(4)
-            .run(&mut pattern, &mut String::new(), &mut reader)
+            .run(
+                &mut pattern,
+                &mut String::new(),
+                &mut reader,
+                &mut std::io::stdout().lock(),
+            )
             .unwrap();
         assert_eq!(pattern.1, "start\n1\n2\n3\n4\n5");
     }
@@ -240,7 +251,12 @@ mod tests {
         let mut pattern = Line(0, "one".to_string());
         let mut hold = "two".to_string();
         Command::Join
-            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .run(
+                &mut pattern,
+                &mut hold,
+                &mut MockReader {},
+                &mut std::io::stdout().lock(),
+            )
             .unwrap();
         assert_eq!(pattern.1, "onetwo");
     }
@@ -250,7 +266,12 @@ mod tests {
         let mut pattern = Line(0, "one".to_string());
         let mut hold = "two".to_string();
         Command::Joinln
-            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .run(
+                &mut pattern,
+                &mut hold,
+                &mut MockReader {},
+                &mut std::io::stdout().lock(),
+            )
             .unwrap();
         assert_eq!(pattern.1, "one\ntwo");
     }
@@ -260,7 +281,12 @@ mod tests {
         let mut pattern = Line(0, "one".to_string());
         let mut hold = "two".to_string();
         Command::Exchange
-            .run(&mut pattern, &mut hold, &mut MockReader {})
+            .run(
+                &mut pattern,
+                &mut hold,
+                &mut MockReader {},
+                &mut std::io::stdout().lock(),
+            )
             .unwrap();
         assert_eq!(pattern.1, "two");
         assert_eq!(hold, "one");
