@@ -19,8 +19,8 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Error::*;
         match self {
-            Missing(c) => write!(f, "missing '{}'", c),
-            Unexpected(c) => write!(f, "unexpected '{}'", c),
+            Missing(c) => write!(f, "missing '{c}'"),
+            Unexpected(c) => write!(f, "unexpected '{c}'"),
         }
     }
 }

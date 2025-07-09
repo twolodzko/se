@@ -102,9 +102,9 @@ impl std::fmt::Display for Address {
         match self {
             Always => write!(f, "//"),
             Final => write!(f, "$"),
-            Location(idx) => write!(f, "{}", idx),
-            Regex(regex) => write!(f, "/{}/", regex),
-            Negate(addr) => write!(f, "{}!", addr),
+            Location(idx) => write!(f, "{idx}"),
+            Regex(regex) => write!(f, "/{regex}/"),
+            Negate(addr) => write!(f, "{addr}!"),
             Between(this) => write!(f, "{}-{}", this.lhs, this.rhs),
             Set(addrs) => {
                 let list = addrs
@@ -112,7 +112,7 @@ impl std::fmt::Display for Address {
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
-                write!(f, "{}", list)
+                write!(f, "{list}")
             }
             Maybe => write!(f, "_"),
         }
@@ -235,14 +235,14 @@ mod tests {
             123
         ";
         let mut reader = StringReader::from(addr);
-        let mut addr = crate::parser::address::parse(&mut reader).unwrap();
+        let addr = crate::parser::address::parse(&mut reader).unwrap();
         assert_eq!(
             example
                 .lines()
                 .enumerate()
                 .map(|(i, s)| {
                     let line = Line(i + 1, s.to_string());
-                    (&mut addr).matches(&line)
+                    addr.matches(&line)
                 })
                 .collect::<Vec<bool>>(),
             expected

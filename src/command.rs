@@ -82,10 +82,10 @@ impl Command {
             Print => write!(out, "{}", pattern.1)?,
             Escapeln => {
                 let escaped = pattern.1.escape_default().to_string();
-                writeln!(out, "{}", escaped)?
+                writeln!(out, "{escaped}")?
             }
             LineNumber => write!(out, "{}", pattern.0)?,
-            Insert(message) => write!(out, "{}", message)?,
+            Insert(message) => write!(out, "{message}")?,
             // commands that modify the buffers
             Substitute(regex, template, limit) => {
                 let replaced = regex.0.replacen(&pattern.1, *limit, template);
@@ -184,8 +184,8 @@ impl std::fmt::Display for Command {
             Print => write!(f, "P"),
             Escapeln => write!(f, "l"),
             LineNumber => write!(f, "="),
-            Insert(s) => write!(f, "'{}'", s),
-            Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
+            Insert(s) => write!(f, "'{s}'"),
+            Substitute(r, t, l) => write!(f, "s/{r}/{t}/{l}"),
             Keep(s, None) => write!(f, "k {}-", s + 1),
             Keep(s, Some(t)) => write!(f, "k {}-{}", s + 1, s + t),
             Hold => write!(f, "h"),
@@ -193,20 +193,20 @@ impl std::fmt::Display for Command {
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),
-            Readln(n) => write!(f, "r {}", n),
+            Readln(n) => write!(f, "r {n}"),
             ReadReplace => write!(f, "R"),
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Break => write!(f, "."),
-            Quit(c) => write!(f, "q {}", c),
+            Quit(c) => write!(f, "q {c}"),
             Eval => write!(f, "e"),
             Loop(body) => {
                 let s = body
                     .iter()
-                    .map(|a| format!("  {}", a))
+                    .map(|a| format!("  {a}"))
                     .collect::<Vec<String>>()
                     .join("\n");
-                write!(f, ":{{\n{}\n}}", s)
+                write!(f, ":{{\n{s}\n}}")
             }
         }
     }
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn readln() {
-        let example = vec![1, 2, 3, 4, 5];
+        let example = [1, 2, 3, 4, 5];
         let mut reader = example.iter().map(|n| Ok(Line(*n, n.to_string())));
 
         let mut pattern = Line(0, "start".to_string());

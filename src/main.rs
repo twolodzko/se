@@ -24,7 +24,7 @@ fn main() -> Result<()> {
     let (status, count) = program.run(&mut reader, args.all, out)?;
 
     if args.count {
-        writeln!(out, "{}", count)?;
+        writeln!(out, "{count}")?;
     }
     if let Status::Quit(code) = status {
         std::process::exit(code)
