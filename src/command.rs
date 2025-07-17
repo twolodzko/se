@@ -1,4 +1,4 @@
-use crate::{run, Action, Line, Regex};
+use crate::{Line, Regex};
 use anyhow::Result;
 use std::io::{StdoutLock, Write};
 
@@ -42,8 +42,6 @@ pub(crate) enum Command {
     Quit(i32),
     /// e
     Eval,
-    /// :{ act }
-    Loop(Vec<Action>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -145,15 +143,6 @@ impl Command {
                     return Ok(Status::Quit(code));
                 }
             }
-            Loop(ref body) => loop {
-                if let Some(status) = run(body, pattern, hold, reader, out)? {
-                    match status {
-                        Status::Normal => (),
-                        Status::Break => return Ok(Status::Normal),
-                        other => return Ok(other),
-                    }
-                }
-            },
         }
         Ok(Status::Normal)
     }
@@ -200,14 +189,6 @@ impl std::fmt::Display for Command {
             Break => write!(f, "."),
             Quit(c) => write!(f, "q {c}"),
             Eval => write!(f, "e"),
-            Loop(body) => {
-                let s = body
-                    .iter()
-                    .map(|a| format!("  {a}"))
-                    .collect::<Vec<String>>()
-                    .join("\n");
-                write!(f, ":{{\n{s}\n}}")
-            }
         }
     }
 }

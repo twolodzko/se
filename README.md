@@ -115,30 +115,6 @@ when applied to this README would print it's content prepending each line contai
 with ">> " and every other line (no address) with spaces. If `;` was used instead of `.`, the
 lines containing the word "sed" would be printed twice, because of matching addresses in the both instructions.
 
-## Loops
-
-`:{ ... }` defines an infinite loops. For example, Unix's `yes` command could be imitated with
-
-```text
-:{
-  "yes\n"
-}
-```
-
-To break out of the loop, one can use the special commands `d`, `q[code]`, or `.`. The break `.` command
-in loops breaks out of the loop, rather than out of the program. For example, the following program
-
-```text
-:{
-  /other/ .
-  R
-} =tpq
-```
-
-would loop until finding the line containing the word "other", then would
-print the line number `=`, tab `t`, the line `p`, and stop `q`.
-It is an imperative way of defining the `/other/ =tpq` code.
-
 ## Differences from `sed`
 
 * Using [Rust's Regex] regular expression syntax, including the syntax for flags
@@ -191,7 +167,6 @@ It is an imperative way of defining the `/other/ =tpq` code.
 | `grep -c 'sed' README.md`            | `se -c '/sed/' README.md`        |
 | `wc -l README.md`                    | `se -c '' README.md`             |
 | `wc -l README.md`                    | `se '$=' README.md`              |
-| `yes`                                | `echo "yes" \| se ':{ p }'`      |
 
 \* – but `se` understands unicode.
 
@@ -211,8 +186,7 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Loop           = ':' '{' Script '}'
-Command        = [=bdghjJlnpPrtxz] | '\' Character | Quit | Keep | String | Substitute | Loop
+Command        = [=bdghjJlnpPrtxz] | '\' Character | Quit | Keep | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?

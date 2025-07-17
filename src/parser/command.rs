@@ -1,5 +1,4 @@
 use super::{
-    instruction::parse_instruction,
     reader::Reader,
     utils::{parse_regex, read_integer, skip_line, skip_whitespace},
     Error,
@@ -54,7 +53,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 let code = if s.is_empty() { 0 } else { s.parse()? };
                 Quit(code)
             }
-            ':' => parse_loop(reader)?,
             '\'' | '"' => {
                 let msg = unescape(read_until(reader, c)?)?;
                 Insert(msg)
@@ -169,27 +167,6 @@ fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
         Some(rhs - lhs)
     };
     Ok(Keep(lhs, rhs))
-}
-
-fn parse_loop<R: Reader>(reader: &mut R) -> Result<Command> {
-    reader.expect('{')?;
-    let mut body = Vec::new();
-    let mut finally = Vec::new();
-    loop {
-        skip_whitespace(reader);
-        match reader.peek()? {
-            Some('}') => {
-                reader.skip();
-                break;
-            }
-            Some(_) => parse_instruction(reader, &mut body, &mut finally)?,
-            None => bail!(Error::Missing('}')),
-        }
-    }
-    if !finally.is_empty() {
-        bail!("loops cannot contain the final block ($)")
-    }
-    Ok(Loop(body))
 }
 
 fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
