@@ -186,7 +186,7 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=bdghjJlnpPrtxz] | '\' Character | Quit | Keep | String | Substitute
+Command        = [=bdghjJlnpPrtxz] | Quit | Keep | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
