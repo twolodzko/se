@@ -186,12 +186,7 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-<<<<<<< HEAD
 Command        = [=bdghjJlnpPrtxz] | Quit | Keep | String | Substitute
-=======
-Loop           = ':' '{' Script '}'
-Command        = [=bdghjJlnpPrtxz] | Quit | Keep | String | Substitute | Loop
->>>>>>> main
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
