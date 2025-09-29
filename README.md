@@ -212,7 +212,7 @@ String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
 Loop           = ':' '{' Script '}'
-Command        = [=bdghjJlnpPrtxz] | '\' Character | Quit | Keep | String | Substitute | Loop
+Command        = [=bdghjJlnpPrtxz] | Quit | Keep | String | Substitute | Loop
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?
