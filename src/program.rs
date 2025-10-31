@@ -5,7 +5,10 @@ use anyhow::Result;
 use std::io::Write;
 
 #[derive(Debug, PartialEq)]
-pub struct Program(pub(crate) Vec<Action>, pub(crate) Vec<command::Command>);
+pub struct Program {
+    pub(crate) actions: Vec<Action>,
+    pub(crate) finally: Vec<command::Command>,
+}
 
 impl Program {
     pub fn run<R: Iterator<Item = Result<Line>>>(
@@ -25,7 +28,7 @@ impl Program {
             pattern = line?;
             status = Normal;
 
-            if let Some(s) = run(&self.0, &mut pattern, &mut hold, reader, out)? {
+            if let Some(s) = run(&self.actions, &mut pattern, &mut hold, reader, out)? {
                 status = s;
                 matches += 1;
             }
@@ -41,7 +44,7 @@ impl Program {
             }
         }
 
-        for cmd in self.1.iter() {
+        for cmd in self.finally.iter() {
             let s = cmd.run(&mut pattern, &mut hold, reader, out)?;
             if s != Status::Normal {
                 status = s;
@@ -55,7 +58,10 @@ impl Program {
 
 impl From<Vec<Action>> for Program {
     fn from(value: Vec<Action>) -> Self {
-        Program(value, Vec::new())
+        Program {
+            actions: value,
+            finally: Vec::new(),
+        }
     }
 }
 
@@ -99,7 +105,7 @@ mod tests {
         let func = Program::from_str(command).unwrap();
         let pattern = &mut Line(0, "123456789".to_string());
         run(
-            &func.0,
+            &func.actions,
             pattern,
             &mut String::new(),
             &mut MockReader {},

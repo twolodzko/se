@@ -13,7 +13,7 @@ impl TryFrom<&std::path::PathBuf> for Program {
     fn try_from(value: &std::path::PathBuf) -> Result<Self, Self::Error> {
         let reader = &mut FileReader::try_from(value)?;
         let (actions, finally) = parse(reader)?;
-        Ok(Program(actions, finally))
+        Ok(Program { actions, finally })
     }
 }
 
@@ -23,7 +23,7 @@ impl FromStr for Program {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let reader = &mut StringReader::from(s);
         let (actions, finally) = parse(reader)?;
-        Ok(Program(actions, finally))
+        Ok(Program { actions, finally })
     }
 }
 
