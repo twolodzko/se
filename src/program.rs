@@ -6,11 +6,15 @@ use std::io::Write;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    pub(crate) actions: Vec<Action>,
-    pub(crate) finally: Vec<command::Command>,
+    actions: Vec<Action>,
+    finally: Vec<command::Command>,
 }
 
 impl Program {
+    pub(crate) fn new(actions: Vec<Action>, finally: Vec<command::Command>) -> Program {
+        Program { actions, finally }
+    }
+
     pub fn run<R: Iterator<Item = Result<Line>>>(
         &self,
         reader: &mut R,
