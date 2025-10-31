@@ -128,7 +128,6 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * Only a subset of `sed` commands is supported and they can behave differently.
 * Instead of `a string`, use `p"string"` to print the string after
   printing the line, same applies to `sed`s `i`.
-* No support for branching. Instead, [loops](#loops) can be used as a partial replacement.
 * `sed` by default prints all the lines unless explicitly deleted.
   To achieve this behavior use `-a` (`--all`) flag to print all the lines.
 * In `sed` the block after `$` runs on the final line, in `se`
