@@ -1,4 +1,4 @@
-use crate::{Line, Regex};
+use crate::{program::Memory, Line, Regex};
 use anyhow::Result;
 use std::io::{StdoutLock, Write};
 
@@ -68,56 +68,55 @@ impl Command {
     /// and returning a status code.
     pub(crate) fn run<R: Iterator<Item = Result<Line>>>(
         &self,
-        pattern: &mut Line,
-        hold: &mut String,
+        memory: &mut Memory,
         reader: &mut R,
         out: &mut StdoutLock,
     ) -> Result<Status> {
         use Command::*;
         match self {
             // commands that print things
-            Println => writeln!(out, "{}", pattern.1)?,
-            Print => write!(out, "{}", pattern.1)?,
+            Println => writeln!(out, "{}", memory.this)?,
+            Print => write!(out, "{}", memory.this)?,
             Escapeln => {
-                let escaped = pattern.1.escape_default().to_string();
+                let escaped = memory.this.escape_default().to_string();
                 writeln!(out, "{escaped}")?
             }
-            LineNumber => write!(out, "{}", pattern.0)?,
+            LineNumber => write!(out, "{}", memory.line.0)?,
             Insert(message) => write!(out, "{message}")?,
             // commands that modify the buffers
             Substitute(regex, template, limit) => {
-                let replaced = regex.0.replacen(&pattern.1, *limit, template);
-                pattern.1 = replaced.to_string()
+                let replaced = regex.0.replacen(&memory.this, *limit, template);
+                memory.this = replaced.to_string()
             }
             Keep(skip, take) => {
-                pattern.1 = if let Some(take) = take {
-                    pattern.1.chars().skip(*skip).take(*take).collect()
+                memory.this = if let Some(take) = take {
+                    memory.this.chars().skip(*skip).take(*take).collect()
                 } else {
-                    pattern.1.chars().skip(*skip).collect()
+                    memory.this.chars().skip(*skip).collect()
                 };
             }
-            Reset => pattern.1.clear(),
+            Reset => memory.this.clear(),
             Hold => {
-                *hold = pattern.1.to_string();
+                memory.hold = memory.this.to_string();
             }
             Get => {
-                pattern.1 = hold.to_string();
+                memory.this = memory.hold.to_string();
             }
             Exchange => {
-                std::mem::swap(hold, &mut pattern.1);
+                std::mem::swap(&mut memory.hold, &mut memory.this);
             }
             Joinln => {
-                pattern.1.push('\n');
-                pattern.1.push_str(hold);
+                memory.this.push('\n');
+                memory.this.push_str(&memory.hold);
             }
             Join => {
-                pattern.1.push_str(hold);
+                memory.this.push_str(&memory.hold);
             }
             Readln(n) => {
                 for _ in 0..*n {
                     if let Some(line) = reader.next() {
-                        pattern.1.push('\n');
-                        pattern.1.push_str(&line?.1);
+                        memory.this.push('\n');
+                        memory.this.push_str(&line?.1);
                     } else {
                         break;
                     }
@@ -125,20 +124,20 @@ impl Command {
             }
             ReadReplace => {
                 if let Some(line) = reader.next() {
-                    *pattern = line?;
+                    memory.read(line?);
                 } else {
                     return Ok(Status::Break);
                 }
             }
             // commands that return special status codes
             Delete => {
-                pattern.1.clear();
+                memory.this.clear();
                 return Ok(Status::NoPrint);
             }
             Break | Quit(_) => return Ok(Status::from(self)),
             Eval => {
-                let (stdout, code) = eval_sh(&pattern.1)?;
-                pattern.1 = stdout;
+                let (stdout, code) = eval_sh(&memory.this)?;
+                memory.this = stdout;
                 if let Some(code) = code {
                     return Ok(Status::Quit(code));
                 }
@@ -196,80 +195,72 @@ impl std::fmt::Display for Command {
 #[cfg(test)]
 mod tests {
     use super::Command;
-    use crate::{lines::MockReader, Line};
+    use crate::{lines::MockReader, program::Memory, Line};
 
     #[test]
     fn readln() {
         let example = [1, 2, 3, 4, 5];
         let mut reader = example.iter().map(|n| Ok(Line(*n, n.to_string())));
-
-        let mut pattern = Line(0, "start".to_string());
-        assert_eq!(pattern.1, "start");
+        let mut memory = Memory::default();
+        memory.read(Line(0, "start".to_string()));
 
         Command::Readln(1)
-            .run(
-                &mut pattern,
-                &mut String::new(),
-                &mut reader,
-                &mut std::io::stdout().lock(),
-            )
+            .run(&mut memory, &mut reader, &mut std::io::stdout().lock())
             .unwrap();
-        assert_eq!(pattern.1, "start\n1");
+        assert_eq!(memory.this, "start\n1");
 
         Command::Readln(4)
-            .run(
-                &mut pattern,
-                &mut String::new(),
-                &mut reader,
-                &mut std::io::stdout().lock(),
-            )
+            .run(&mut memory, &mut reader, &mut std::io::stdout().lock())
             .unwrap();
-        assert_eq!(pattern.1, "start\n1\n2\n3\n4\n5");
+        assert_eq!(memory.this, "start\n1\n2\n3\n4\n5");
     }
 
     #[test]
     fn join() {
-        let mut pattern = Line(0, "one".to_string());
-        let mut hold = "two".to_string();
+        let mut memory = Memory::default();
+        memory.read(Line(0, "one".to_string()));
+        memory.hold = "two".to_string();
+
         Command::Join
             .run(
-                &mut pattern,
-                &mut hold,
+                &mut memory,
                 &mut MockReader {},
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
-        assert_eq!(pattern.1, "onetwo");
+        assert_eq!(memory.this, "onetwo");
     }
 
     #[test]
     fn joinln() {
-        let mut pattern = Line(0, "one".to_string());
-        let mut hold = "two".to_string();
+        let mut memory = Memory::default();
+        memory.read(Line(0, "one".to_string()));
+        memory.hold = "two".to_string();
+
         Command::Joinln
             .run(
-                &mut pattern,
-                &mut hold,
+                &mut memory,
                 &mut MockReader {},
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
-        assert_eq!(pattern.1, "one\ntwo");
+        assert_eq!(memory.this, "one\ntwo");
     }
 
     #[test]
     fn exchange() {
-        let mut pattern = Line(0, "one".to_string());
-        let mut hold = "two".to_string();
+        let mut memory = Memory::default();
+        memory.read(Line(0, "one".to_string()));
+        memory.hold = "two".to_string();
+
         Command::Exchange
             .run(
-                &mut pattern,
-                &mut hold,
+                &mut memory,
                 &mut MockReader {},
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
-        assert_eq!(pattern.1, "two");
-        assert_eq!(hold, "one");
+        assert_eq!(memory.this, "two");
+        assert_eq!(memory.hold, "one");
     }
 }

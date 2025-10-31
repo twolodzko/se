@@ -4,9 +4,6 @@ mod lines;
 mod parser;
 mod program;
 
-use std::io::StdoutLock;
-
-use anyhow::Result;
 pub use {
     command::Status,
     lines::{FilesReader, Line, StdinReader},
@@ -51,35 +48,4 @@ impl std::fmt::Display for Regex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
-}
-
-fn run<R: Iterator<Item = Result<Line>>>(
-    actions: &[Action],
-    pattern: &mut Line,
-    hold: &mut String,
-    reader: &mut R,
-    out: &mut StdoutLock,
-) -> Result<Option<Status>> {
-    let mut status = None;
-    let mut pos = 0;
-    while pos < actions.len() {
-        match &actions[pos] {
-            Action::Condition(cond, jump) => {
-                if cond.matches(pattern) {
-                    status = Some(Status::Normal);
-                } else {
-                    pos += jump;
-                }
-            }
-            Action::Command(cmd) => {
-                let s = cmd.run(pattern, hold, reader, out)?;
-                if s != Status::Normal {
-                    status = Some(s);
-                    break;
-                }
-            }
-        }
-        pos += 1;
-    }
-    Ok(status)
 }

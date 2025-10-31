@@ -6,7 +6,7 @@ use std::{io::Write, path::PathBuf, str::FromStr};
 fn main() -> Result<()> {
     let args = parse_args();
 
-    let program = if let Some(path) = &args.script.path {
+    let mut program = if let Some(path) = &args.script.path {
         Program::try_from(path)?
     } else if let Some(command) = &args.script.command {
         Program::from_str(command)?
