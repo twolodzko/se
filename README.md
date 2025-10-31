@@ -73,6 +73,7 @@ Same as `sed`, it can be used for string search and replace in files.
   If there's nothing to substitute, it has no effect.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
+* `&` - set pattern space to the raw, unprocessed line.
 * `h` – hold the content of the pattern space to the hold space.
 * `g` – get the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
@@ -186,7 +187,7 @@ Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
 String         = '"' [^"]* '"' | "'" [^']* "'"
 Quit           = 'q' [0-9]*
 Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=bdghjJlnpPrtxz] | Quit | Keep | String | Substitute
+Command        = [=bdghjJlnpPrtxz&] | Quit | Keep | String | Substitute
 
 Instruction    = Address? Command*
 Script         = ( Instruction ( ';' | '.' ) )* Instruction?

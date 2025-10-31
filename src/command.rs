@@ -18,6 +18,8 @@ pub(crate) enum Command {
     Substitute(Regex, String, usize),
     /// k s-e
     Keep(usize, Option<usize>),
+    /// &
+    GetLine,
     /// h
     Hold,
     /// g
@@ -102,6 +104,7 @@ impl Command {
             Get => {
                 memory.this = memory.hold.to_string();
             }
+            GetLine => memory.this = memory.line.1.to_string(),
             Exchange => {
                 std::mem::swap(&mut memory.hold, &mut memory.this);
             }
@@ -178,6 +181,7 @@ impl std::fmt::Display for Command {
             Keep(s, Some(t)) => write!(f, "k {}-{}", s + 1, s + t),
             Hold => write!(f, "h"),
             Get => write!(f, "g"),
+            GetLine => write!(f, "&"),
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),
