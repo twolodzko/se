@@ -63,12 +63,12 @@ fn address<R: Reader>(reader: &mut R) -> Result<Address> {
 }
 
 fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
-    let addr = parse_simple_addr(reader)?;
+    let addr = atom(reader)?;
     skip_whitespace(reader);
     if reader.next_is('-')? {
         let lhs = addr.unwrap_or(Location(1));
         skip_whitespace(reader);
-        let rhs = parse_simple_addr(reader)?.unwrap_or(Final);
+        let rhs = atom(reader)?.unwrap_or(Final);
         if let (Location(lo), Location(hi)) = (&lhs, &rhs)
             && lo > hi
         {
@@ -79,7 +79,7 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
     Ok(addr.unwrap_or(Always))
 }
 
-fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
+fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
     if let Some(c) = reader.peek()? {
         match c {
             '/' | '^' => {

@@ -57,7 +57,7 @@ Same as `sed`, it can be used for string search and replace in files.
 * `addr1,addr2,...,addrN` matches any of the addresses.
 * `!` before the address negates it, e.g. `!1` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
-  e.g. `(1,2,3)!` is equivalent to matching the `4-` range.
+  e.g. `!(1,2,3)` is equivalent to matching the `4-` range.
 * `?` matches the lines where the following substitution could be applied.
   It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 
