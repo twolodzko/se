@@ -176,7 +176,7 @@ mod tests {
         Action::Condition(Location(7), 1),
         Action::Command(Delete),
     ]); "multiple instructions")]
-    #[test_case(r"_ s/abc/def/5", Program::from(vec![
+    #[test_case(r"?s/abc/def/5", Program::from(vec![
         Action::Condition(Regex(crate::Regex::from_str("abc").unwrap()), 1),
         Action::Command(Substitute(
                 crate::Regex::from_str("abc").unwrap(),
@@ -184,7 +184,7 @@ mod tests {
                 5,
             )),
     ]); "maybe")]
-    #[test_case(r"1-_ s/abc/def/5", Program::from(vec![
+    #[test_case(r"1-?s/abc/def/5", Program::from(vec![
         Action::Condition(
             Between(address::Between::new(
                 Location(1),
@@ -198,7 +198,7 @@ mod tests {
                 5,
             )),
     ]); "maybe in range")]
-    #[test_case(r"1,_ s/abc/def/5", Program::from(vec![
+    #[test_case(r"1,?s/abc/def/5", Program::from(vec![
         Action::Condition(
             Set(vec![
                 Location(1),

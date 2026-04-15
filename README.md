@@ -58,8 +58,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
   e.g. `(1,2,3)!` is equivalent to matching the `4-` range.
-* `_` matches the lines where the following substitution could be applied.
-  It is a syntactic sugar for writing `_ s/src/dst/` instead of `/src/ s/src/dst/`.
+* `?` matches the lines where the following substitution could be applied.
+  It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 
 ## Commands
 
@@ -134,7 +134,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   it is an instruction set that runs unconditionally on the program stop.
 * `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
-  To imitate `sed`s execution flow conditional on substitutions, use `_` (see [addresses](#addresses)).
+  To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
@@ -158,7 +158,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `tac README.md`                      | `se '1!j ; $p ; h' README.md`    |
 | `cat -n README.md`                   | `se '=tp' README.md`             |
 | `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_$1_/p' README.md`  |
-| `sed -n 's/a/#/p' README.md`         | `se '_ s/a/#/1p' README.md`      |
+| `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`      |
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |
 | `head -n 5 README.md`                | `se '-5 p . q' README.md`        |
 | `head -n 5 README.md`                | `se 'r4 p q' README.md`          |
@@ -176,7 +176,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 Location       = [1-9][0-9]*
 Regex          = '/' [^/]* '/'
 WholeLine      = '^' [^$]* '$'
-AddressAtom    = '$' | '_' | Location | Regex | WholeLine
+AddressAtom    = '$' | '?' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
 Negated        = ( Brackets | Range ) '!'?

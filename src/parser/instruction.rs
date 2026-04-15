@@ -32,7 +32,7 @@ impl Address {
         match self {
             Address::Maybe => {
                 let Some(Command::Substitute(regex, _, _)) = subst else {
-                    bail!("_ must be followed by a substitution")
+                    bail!("{} must be followed by a substitution", self)
                 };
                 *self = Address::Regex(regex.clone());
             }
