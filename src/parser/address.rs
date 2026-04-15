@@ -6,7 +6,7 @@ use crate::address::{
     self,
     Address::{self, *},
 };
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
     let mut addrs = Vec::new();
@@ -69,10 +69,10 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
         let lhs = addr.unwrap_or(Location(1));
         skip_whitespace(reader);
         let rhs = parse_simple_addr(reader)?.unwrap_or(Final);
-        if let (Location(lo), Location(hi)) = (&lhs, &rhs) {
-            if lo > hi {
-                bail!("invalid bounds: {} > {} in {}-{}", lo, hi, lo, hi);
-            }
+        if let (Location(lo), Location(hi)) = (&lhs, &rhs)
+            && lo > hi
+        {
+            bail!("invalid bounds: {} > {} in {}-{}", lo, hi, lo, hi);
         }
         return Ok(Between(address::Between::new(lhs, rhs)));
     }

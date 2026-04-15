@@ -28,7 +28,7 @@ impl Address {
             Always => true,
             Final => false,
             Location(idx) => *idx == line.0,
-            Regex(ref regex) => regex.0.is_match(&line.1),
+            Regex(regex) => regex.0.is_match(&line.1),
             Negate(addr) => !addr.matches(line),
             Between(this) => this.matches(line),
             Set(set) => {
@@ -122,9 +122,9 @@ impl std::fmt::Display for Address {
 #[cfg(test)]
 mod tests {
     use crate::{
+        Line,
         address::Address::{self, *},
         parser::StringReader,
-        Line,
     };
     use std::str::FromStr;
     use test_case::test_case;

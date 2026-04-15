@@ -64,12 +64,12 @@ struct Script {
 
 fn parse_args() -> Args {
     let mut args = Args::parse();
-    if args.script.path.is_some() {
-        if let Some(arg) = args.script.command {
-            // it's not a command, dumbo
-            args.files.insert(0, arg.into());
-            args.script.command = None;
-        }
+    if args.script.path.is_some()
+        && let Some(arg) = args.script.command
+    {
+        // it's not a command, dumbo
+        args.files.insert(0, arg.into());
+        args.script.command = None;
     }
     args
 }

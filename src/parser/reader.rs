@@ -1,5 +1,5 @@
 use super::Error;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::{
     fs::File,
     io::{BufRead, BufReader, Lines},
@@ -25,11 +25,11 @@ pub(crate) trait Reader {
     /// If next character is `value` proceed and return `true`,
     /// otherwise return `false` and don't proceed.
     fn next_is(&mut self, value: char) -> Result<bool> {
-        if let Some(c) = self.peek()? {
-            if c == value {
-                self.skip();
-                return Ok(true);
-            }
+        if let Some(c) = self.peek()?
+            && c == value
+        {
+            self.skip();
+            return Ok(true);
         }
         Ok(false)
     }

@@ -1,5 +1,5 @@
-use super::{reader::Reader, Error};
-use anyhow::{bail, Result};
+use super::{Error, reader::Reader};
+use anyhow::{Result, bail};
 
 pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String> {
     let mut acc = String::new();

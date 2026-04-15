@@ -3,7 +3,7 @@ use super::{
     reader::{FileReader, Reader, StringReader},
     utils::skip_whitespace,
 };
-use crate::{command::Command, program::Program, Action};
+use crate::{Action, command::Command, program::Program};
 use anyhow::Result;
 use std::str::FromStr;
 
@@ -41,9 +41,9 @@ fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>)> {
 mod tests {
     use super::Program;
     use crate::{
+        Action,
         address::{self, Address::*},
         command::Command::*,
-        Action,
     };
     use std::str::FromStr;
     use test_case::test_case;

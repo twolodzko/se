@@ -1,10 +1,10 @@
 use super::{
+    Error,
     reader::Reader,
     utils::{parse_regex, read_integer, skip_line, skip_whitespace},
-    Error,
 };
 use crate::command::Command::{self, *};
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
     let mut cmds = Vec::new();

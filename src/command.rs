@@ -1,4 +1,4 @@
-use crate::{program::Memory, Line, Regex};
+use crate::{Line, Regex, program::Memory};
 use anyhow::Result;
 use std::io::{StdoutLock, Write};
 
@@ -199,7 +199,7 @@ impl std::fmt::Display for Command {
 #[cfg(test)]
 mod tests {
     use super::Command;
-    use crate::{lines::MockReader, program::Memory, Line};
+    use crate::{Line, lines::MockReader, program::Memory};
 
     #[test]
     fn readln() {

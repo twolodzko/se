@@ -1,6 +1,6 @@
 use super::{address, command, reader::Reader, utils};
-use crate::{address::Address, command::Command, Action};
-use anyhow::{bail, Result};
+use crate::{Action, address::Address, command::Command};
+use anyhow::{Result, bail};
 
 pub(crate) fn parse_instruction<R: Reader>(
     reader: &mut R,

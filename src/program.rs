@@ -1,6 +1,6 @@
 use std::io::StdoutLock;
 
-use crate::{command, Action, Line, Status};
+use crate::{Action, Line, Status, command};
 use anyhow::Result;
 use std::io::Write;
 
@@ -118,7 +118,7 @@ impl From<Vec<Action>> for Program {
 
 #[cfg(test)]
 mod tests {
-    use crate::{lines::MockReader, Line, Program};
+    use crate::{Line, Program, lines::MockReader};
     use std::str::FromStr;
     use test_case::test_case;
 
