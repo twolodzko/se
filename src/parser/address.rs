@@ -12,7 +12,12 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
     let mut addrs = Vec::new();
     let mut has_any = false;
     loop {
-        let mut addr = parse_brackets(reader)?;
+        if reader.next_is('#')? {
+            skip_line(reader);
+            skip_whitespace(reader);
+            continue;
+        }
+        let mut addr = address(reader)?;
         match addr {
             Always => has_any = true,
             Set(ref mut rhs) => addrs.append(rhs),
@@ -37,18 +42,24 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
     Ok(Set(addrs))
 }
 
-fn parse_brackets<R: Reader>(reader: &mut R) -> Result<Address> {
-    if reader.next_is('(')? {
+fn address<R: Reader>(reader: &mut R) -> Result<Address> {
+    let negated = reader.next_is('!')?;
+    skip_whitespace(reader);
+    let addr = if reader.next_is('(')? {
         skip_whitespace(reader);
         let addr = parse(reader)?;
         skip_whitespace(reader);
         reader.expect(')')?;
-        Ok(maybe_negate(addr, reader)?)
+        addr
     } else {
         let addr = parse_range(reader)?;
         skip_whitespace(reader);
-        Ok(maybe_negate(addr, reader)?)
+        addr
+    };
+    if negated {
+        return Ok(!addr);
     }
+    Ok(addr)
 }
 
 fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
@@ -71,11 +82,6 @@ fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
 fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
     if let Some(c) = reader.peek()? {
         match c {
-            '#' => {
-                skip_line(reader);
-                skip_whitespace(reader);
-                return parse_simple_addr(reader);
-            }
             '/' | '^' => {
                 let addr = match parse_regex(reader)? {
                     Some(regex) => Regex(regex),
@@ -109,14 +115,6 @@ fn parse_simple_addr<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
     Ok(None)
 }
 
-fn maybe_negate<R: Reader>(addr: Address, reader: &mut R) -> Result<Address> {
-    if reader.next_is('!')? {
-        Ok(!addr)
-    } else {
-        Ok(addr)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::Address::{self, *};
@@ -126,14 +124,14 @@ mod tests {
     #[test_case("", Always; "empty")]
     #[test_case("()", Always; "empty brackets")]
     #[test_case("//", Always; "empty regex")]
-    #[test_case("//!", Negate(Box::new(Always)); "negated empty regex")]
+    #[test_case("!//", Negate(Box::new(Always)); "negated empty regex")]
     #[test_case("!", Negate(Box::new(Always)); "negated empty")]
     #[test_case("$", Final; "finally")]
-    #[test_case("1-5!", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
-    #[test_case("((1-5)!)", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "brackets and negated range")]
+    #[test_case("!1-5", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
+    #[test_case("(!(1-5))", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "brackets and negated range")]
     #[test_case("1,$", Set(vec![Location(1), Final]); "first or last")]
-    #[test_case("1,$!", Set(vec![Location(1), Negate(Box::new(Final))]); "first or last negated")]
-    #[test_case("(1,$)!", Negate(Box::new(Set(vec![Location(1), Final]))); "negate set in brackets")]
+    #[test_case("1,!$", Set(vec![Location(1), Negate(Box::new(Final))]); "first or last negated")]
+    #[test_case("!(1,$)", Negate(Box::new(Set(vec![Location(1), Final]))); "negate set in brackets")]
     fn parse(input: &str, expected: Address) {
         let mut reader = StringReader::from(input);
         let result = super::parse(&mut reader).unwrap();

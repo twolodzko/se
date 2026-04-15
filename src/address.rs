@@ -11,7 +11,7 @@ pub(crate) enum Address {
     Location(usize),
     // /regex/ matching the line
     Regex(crate::Regex),
-    // addr! negates the addr match
+    // !addr negates the addr match
     Negate(Box<Address>),
     // // addr1 - addr2
     Between(Between),
@@ -169,7 +169,7 @@ mod tests {
         "any"
     )]
     #[test_case(
-        "//!",
+        "!//",
         vec![false, false, false, false, false, false, false, false, false, false];
         "any negated"
     )]

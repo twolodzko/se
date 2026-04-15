@@ -56,12 +56,12 @@ teardown() {
 }
 
 @test "Use negation" {
-   run diff <(./se '(1-3)! p' README.md) <(tail -n +4 README.md)
+   run diff <(./se '!(1-3) p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Use negation with set" {
-   run diff <(./se '(1,2,3)! p' README.md) <(tail -n +4 README.md)
+   run diff <(./se '!(1,2,3)p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -157,7 +157,7 @@ teardown() {
 }
 
 @test "Reverse lines like tac" {
-   run diff <(tac README.md) <(./se '1! j ; $ p ; h' README.md)
+   run diff <(tac README.md) <(./se '!1 j ; $ p ; h' README.md)
    [ "$status" -eq 0 ]
 }
 

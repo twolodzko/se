@@ -55,7 +55,7 @@ Same as `sed`, it can be used for string search and replace in files.
   Because in other cases regular expressions are delimited with `/.../`,
   even when not using slashes `\/` would be interpreted a escaped slash.
 * `addr1,addr2,...,addrN` matches any of the addresses.
-* `!` after the address negates it, e.g. `1!` means all the lines except the first.
+* `!` before the address negates it, e.g. `!1` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
   e.g. `(1,2,3)!` is equivalent to matching the `4-` range.
 * `?` matches the lines where the following substitution could be applied.
@@ -155,10 +155,10 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |    other                             |   `se`                           |
 |--------------------------------------|----------------------------------|
 | `cat README.md`                      | `se 'p' README.md`               |
-| `tac README.md`                      | `se '1!j ; $p ; h' README.md`    |
+| `tac README.md`                      | `se '!1 j ; $p ; h' README.md`   |
 | `cat -n README.md`                   | `se '=tp' README.md`             |
 | `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_$1_/p' README.md`  |
-| `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`      |
+| `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`       |
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |
 | `head -n 5 README.md`                | `se '-5 p . q' README.md`        |
 | `head -n 5 README.md`                | `se 'r4 p q' README.md`          |
@@ -179,7 +179,7 @@ WholeLine      = '^' [^$]* '$'
 AddressAtom    = '$' | '?' | Location | Regex | WholeLine
 Range          = AddressAtom? '-' AddressAtom?
 Brackets       = AddressAtom | '(' Address ')'
-Negated        = ( Brackets | Range ) '!'?
+Negated        = '!'? ( Brackets | Range )
 Address        = ( Negated ',' )+ Negated
 
 Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
