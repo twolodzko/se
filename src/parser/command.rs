@@ -29,7 +29,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             's' => parse_substitute(reader)?,
             'k' => {
                 skip_whitespace(reader);
-                parse_keep(reader)?
+                read_range(reader)?
             }
             '=' => LineNumber,
             'd' => Delete,
@@ -135,7 +135,7 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
     bail!(Error::Missing(delim))
 }
 
-fn parse_keep<R: Reader>(reader: &mut R) -> Result<Command> {
+fn read_range<R: Reader>(reader: &mut R) -> Result<Command> {
     let s = read_integer(reader)?;
     let lhs = if s.is_empty() {
         0
