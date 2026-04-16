@@ -36,7 +36,7 @@ teardown() {
 }
 
 @test "Print vs Println" {
-	run diff <(./se 'p' README.md) <(./se 'Pn' README.md)
+	run diff <(./se 'p' README.md) <(./se 'P\n' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -70,12 +70,22 @@ teardown() {
 }
 
 @test "Consistent with sed line counting" {
-   run diff <(sed '=' README.md) <(./se '=np' README.md)
+   run diff <(sed '=' README.md) <(./se '=\np' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Special characters in template" {
-   run diff <(./se '=np' README.md) <(./se '="\n"p' README.md)
+   run diff <(./se '=\np' README.md) <(./se '="\n"p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Hex characters" {
+   run diff <(./se '=\np' README.md) <(./se '=\x0Ap' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Escaped unicode characters" {
+   run diff <(./se '=\x0Ap' README.md) <(./se '=\u000Ap' README.md)
    [ "$status" -eq 0 ]
 }
 

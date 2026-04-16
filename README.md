@@ -68,7 +68,8 @@ Same as `sed`, it can be used for string search and replace in files.
 * `l` – print the content of the pattern space after escaping the characters with Rust's
   [std::char::escape_default].
 * `=` – print the line number.
-* `n`, `t` – print newline or tab character.
+* `\n`, `\t`, `\x0A`, `\uA005` – print special characters, escaping a character recognized
+  as command like `\p` would print the character "p".
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
   If there's nothing to substitute, it has no effect.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
@@ -138,7 +139,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
-| `=`              | `=np`               |
+| `=`              | `=\np`              |
 | `i text`         | `p "text\n"`        |
 | `a text`         | `"text\n" p`        |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
@@ -156,7 +157,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |--------------------------------------|----------------------------------|
 | `cat README.md`                      | `se 'p' README.md`               |
 | `tac README.md`                      | `se '!1 j ; $p ; h' README.md`   |
-| `cat -n README.md`                   | `se '=tp' README.md`             |
+| `cat -n README.md`                   | `se '=\tp' README.md`            |
 | `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_$1_/p' README.md`  |
 | `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`       |
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |

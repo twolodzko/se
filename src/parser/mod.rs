@@ -13,6 +13,7 @@ pub(crate) use reader::StringReader;
 pub enum Error {
     Missing(char),
     Unexpected(char),
+    EndOfInput,
 }
 
 impl std::fmt::Display for Error {
@@ -21,6 +22,7 @@ impl std::fmt::Display for Error {
         match self {
             Missing(c) => write!(f, "missing '{c}'"),
             Unexpected(c) => write!(f, "unexpected '{c}'"),
+            EndOfInput => write!(f, "unexpected end of input"),
         }
     }
 }

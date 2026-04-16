@@ -23,8 +23,10 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             }
             'p' => Println,
             'P' => Print,
-            'n' => Insert("\n".to_string()),
-            't' => Insert("\t".to_string()),
+            '\\' => {
+                let s = read_escaped(reader)?;
+                Insert(s)
+            }
             'l' => Escapeln,
             's' => parse_substitute(reader)?,
             'k' => {
@@ -55,7 +57,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 Quit(code)
             }
             '\'' | '"' => {
-                let msg = unescape(read_until(reader, c)?)?;
+                let msg = unescape(&read_until(reader, c)?)?;
                 Insert(msg)
             }
             '#' => {
@@ -73,6 +75,39 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
         }
     }
     Ok(cmds)
+}
+
+fn read_escaped<R: Reader>(reader: &mut R) -> Result<String> {
+    let mut acc = "\\".to_string();
+    let Some(c) = reader.next()? else {
+        bail!(Error::EndOfInput)
+    };
+    match c {
+        'u' => {
+            acc.push(c);
+            for _ in 0..4 {
+                let Some(c) = reader.next()? else {
+                    bail!(Error::EndOfInput)
+                };
+                acc.push(c);
+            }
+            unescape(&acc)
+        }
+        'x' => {
+            acc.push(c);
+            for _ in 0..2 {
+                let Some(c) = reader.next()? else {
+                    bail!(Error::EndOfInput)
+                };
+                acc.push(c);
+            }
+            unescape(&acc)
+        }
+        c => {
+            acc.push(c);
+            unescape(&acc).or(Ok(c.to_string()))
+        }
+    }
 }
 
 fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
@@ -106,7 +141,7 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
         match c {
             c if c == delim => {
                 reader.skip();
-                return unescape(acc);
+                return unescape(&acc);
             }
             c if c.is_ascii_digit() => {
                 // replace $N with ${N}
@@ -191,6 +226,6 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
     bail!(Error::Missing(delim))
 }
 
-fn unescape(s: String) -> Result<String> {
-    unescape::unescape(&s).ok_or(anyhow!("unrecognized escape characters in '{}'", s))
+fn unescape(s: &str) -> Result<String> {
+    unescape::unescape(s).ok_or(anyhow!("unrecognized escape characters in '{}'", s))
 }
