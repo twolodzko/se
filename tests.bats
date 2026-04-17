@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# shellcheck disable=SC2016
 
 is_gsed() {
    sed --version >/dev/null 2>&1
@@ -6,6 +7,7 @@ is_gsed() {
 
 setup() {
    if ! is_gsed && command -v gsed >/dev/null 2>&1 ; then
+      # shellcheck disable=SC2329
       sed() {
          gsed "$@"
       }
@@ -27,7 +29,7 @@ teardown() {
 }
 
 @test "Count works" {
-	[ $(./se -c '/the/' README.md) -eq $(grep -c 'the' README.md) ]
+	[ "$(./se -c '/the/' README.md)" -eq "$(grep -c 'the' README.md)" ]
 }
 
 @test "Print all" {
@@ -285,6 +287,11 @@ only_for_gsed() {
 }
 
 @test "Run the examples in README.md" {
-   run sed -nE 's/^.*`(se .+)`.*/.\/\1/e' README.md
+   echo "set -e" >/tmp/script.sh
+   sed -nE 's/^.*`(se (-.+ )*\x27[^\x27]*\x27 [^ ]+)`.*$/\1/p' README.md >>/tmp/script.sh
+   # make sure we take all the tests + the set -e line
+   [ "$(wc -l </tmp/script.sh )" -eq 14 ]
+
+   run source /tmp/script.sh
    [ "$status" -eq 0 ]
 }
