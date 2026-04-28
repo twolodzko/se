@@ -154,7 +154,7 @@ teardown() {
 }
 
 @test "Stop early" {
-   run diff <(se '7=q' README.md) <(printf "7")
+   run diff <(./se '7=q' README.md) <(printf "7")
    [ "$status" -eq 0 ]
 }
 
@@ -288,7 +288,7 @@ only_for_gsed() {
 
 @test "Run the examples in README.md" {
    echo "set -e" >/tmp/script.sh
-   sed -nE 's/^.*`(se (-.+ )*\x27[^\x27]*\x27 [^ ]+)`.*$/\1/p' README.md >>/tmp/script.sh
+   sed -nE 's/^.*`(se (-.+ )*\x27[^\x27]*\x27 [^ ]+)`.*$/.\/\1/p' README.md >>/tmp/script.sh
    # make sure we take all the tests + the set -e line
    [ "$(wc -l </tmp/script.sh )" -eq 14 ]
 
