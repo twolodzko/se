@@ -71,12 +71,11 @@ fn read_brackets<R: Reader>(reader: &mut R, verbose: bool, acc: &mut String) -> 
                 ')' => return Ok(local_verbose),
                 // verbose flag
                 'x' => local_verbose = true,
-                '-' => {
-                    if reader.next_is('x')? {
-                        acc.push('x');
-                        local_verbose = false;
-                    }
+                '-' if reader.next_is('x')? => {
+                    acc.push('x');
+                    local_verbose = false;
                 }
+
                 // other flags
                 _ => (),
             }

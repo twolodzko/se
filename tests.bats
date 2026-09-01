@@ -143,6 +143,16 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Replace all like in sed (using \1)" {
+   run diff <(sed -nE 's/in (`sed`)/__\1__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__\1__/p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Parse numbers correctly in replace pattern" {
+   run diff <(sed -nE 's/in (`sed`)/123_\1_123/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/123_\1_123/p' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Replace captured group like in sed" {
    run diff <(sed -nE 's/in (`sed`)/__\1__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__$1__/p' README.md)
    [ "$status" -eq 0 ]
