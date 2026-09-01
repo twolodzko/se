@@ -160,7 +160,7 @@ mod tests {
                 0,
             )),
     ]); "condense match and substitute")]
-    #[test_case(r"s/(abc)/__$123__/", Program::from(vec![
+    #[test_case(r"s/(abc)/__\123__/", Program::from(vec![
         Action::Condition(Always, 1),
         Action::Command(Substitute(
                 crate::Regex::from_str("(abc)").unwrap(),

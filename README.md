@@ -123,7 +123,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   e.g. `/(?i)regex/` is used instead of `/regex/i`. The flags can be used in
   matches as well as substitutions. With `(?x)` flag it is possible to write regular
   expressions in [verbose mode], which can include comments.
-* Using `$N` for substitutions instead of `\N` (but `\N` is allowed if N is a number).
+* When using `\N` for substitutions, N could be a name of a named group (but to avoid ambiguity best use `\{N}`).
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
   but instead reading commands directly e.g. `=p` (actually `=np`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
 * Only a subset of `sed` commands is supported and they can behave differently.
@@ -146,8 +146,8 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/src/dst/`     | `s/src/dst/1`       |
 | `s/src/dst/g`    | `s/src/dst/`        |
 | `s/src/dst/flag` | `s/(?flag)src/dst/` |
-| `s/(src)/\1/g`   | `s/(src)/$1/`       |
-| `s/(src)/&/g`    | `s/(src)/$0/`       |
+| `s/(src)/\1/g`   | `s/(src)/\1/`       |
+| `s/(src)/&/g`    | `s/(src)/\0/`       |
 | `1,5p`           | `1-5p`              |
 | `$p`             | `$p`                |
 
@@ -158,7 +158,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `cat README.md`                      | `se 'p' README.md`               |
 | `tac README.md`                      | `se '!1 j ; $p ; h' README.md`   |
 | `cat -n README.md`                   | `se '=\tp' README.md`            |
-| `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_$1_/p' README.md`  |
+| `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_\1_/p' README.md`  |
 | `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`       |
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |
 | `head -n 5 README.md`                | `se '-5 p . q' README.md`        |
