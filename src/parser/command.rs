@@ -143,12 +143,22 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
                 reader.skip();
                 return unescape(&acc);
             }
-            c if c.is_ascii_digit() => {
-                // replace $N with ${N}
-                // "$123something" string is interpreted as "${123}something" rather than "${123something}"
-                acc.push('{');
-                acc.push_str(&read_integer(reader)?);
-                acc.push('}');
+            '$' => {
+                reader.skip();
+                acc.push(c);
+                if let Some(e) = reader.peek()? {
+                    if e == '$' {
+                        // "$$" is an escape sequence for "$"
+                        reader.skip();
+                        acc.push(e);
+                    } else if e.is_ascii_digit() {
+                        // replace $N with ${N}
+                        // "$123something" string is interpreted as "${123}something" rather than "${123something}"
+                        acc.push('{');
+                        acc.push_str(&read_integer(reader)?);
+                        acc.push('}');
+                    }
+                }
             }
             '\\' => {
                 reader.skip();
