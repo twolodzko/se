@@ -9,17 +9,20 @@ use crate::address::{
 use anyhow::{Result, bail};
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
+    set(reader)
+}
+
+fn set<R: Reader>(reader: &mut R) -> Result<Address> {
     let mut addrs = Vec::new();
-    let mut has_any = false;
     loop {
         if reader.next_is('#')? {
             skip_line(reader);
             skip_whitespace(reader);
             continue;
         }
-        let mut addr = address(reader)?;
+        let mut addr = and(reader)?;
         match addr {
-            Always => has_any = true,
+            Always => {}
             Set(ref mut rhs) => addrs.append(rhs),
             _ => addrs.push(addr),
         }
@@ -32,14 +35,43 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
         }
     }
 
-    // optimizations
-    if has_any {
-        return Ok(Always);
+    let addr = match addrs.len() {
+        0 => Always,
+        1 => addrs.remove(0),
+        _ => Set(addrs),
+    };
+    Ok(addr)
+}
+
+fn and<R: Reader>(reader: &mut R) -> Result<Address> {
+    let mut addrs = Vec::new();
+    loop {
+        if reader.next_is('#')? {
+            skip_line(reader);
+            skip_whitespace(reader);
+            continue;
+        }
+        let mut addr = address(reader)?;
+        match addr {
+            Always => {}
+            And(ref mut rhs) => addrs.append(rhs),
+            _ => addrs.push(addr),
+        }
+
+        skip_whitespace(reader);
+        if reader.next_is('+')? {
+            skip_whitespace(reader);
+        } else {
+            break;
+        }
     }
-    if addrs.len() == 1 {
-        return Ok(addrs.remove(0));
-    }
-    Ok(Set(addrs))
+
+    let addr = match addrs.len() {
+        0 => Always,
+        1 => addrs.remove(0),
+        _ => And(addrs),
+    };
+    Ok(addr)
 }
 
 fn address<R: Reader>(reader: &mut R) -> Result<Address> {
@@ -47,7 +79,7 @@ fn address<R: Reader>(reader: &mut R) -> Result<Address> {
     skip_whitespace(reader);
     let addr = if reader.next_is('(')? {
         skip_whitespace(reader);
-        let addr = parse(reader)?;
+        let addr = set(reader)?;
         skip_whitespace(reader);
         reader.expect(')')?;
         addr
@@ -119,6 +151,7 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
 mod tests {
     use super::Address::{self, *};
     use crate::{address, parser::StringReader};
+    use std::str::FromStr;
     use test_case::test_case;
 
     #[test_case("", Always; "empty")]
@@ -132,6 +165,26 @@ mod tests {
     #[test_case("1,$", Set(vec![Location(1), Final]); "first or last")]
     #[test_case("1,!$", Set(vec![Location(1), Negate(Box::new(Final))]); "first or last negated")]
     #[test_case("!(1,$)", Negate(Box::new(Set(vec![Location(1), Final]))); "negate set in brackets")]
+    #[test_case("/a/,/b/+(/c/,/d/),/e/",
+        Set(vec![
+            Regex(FromStr::from_str("a").unwrap()),
+            And(vec![
+                Regex(FromStr::from_str("b").unwrap()),
+                Set(vec![
+                    Regex(FromStr::from_str("c").unwrap()),
+                    Regex(FromStr::from_str("d").unwrap()),
+                ]),
+            ]),
+            Regex(FromStr::from_str("e").unwrap()),
+        ]);
+      "set and and together")]
+    #[test_case("/a/+1-5+/b/",
+        And(vec![
+            Regex(FromStr::from_str("a").unwrap()),
+            Between(address::Between::new(Location(1), Location(5))),
+            Regex(FromStr::from_str("b").unwrap()),
+        ]);
+    "range and and")]
     fn parse(input: &str, expected: Address) {
         let mut reader = StringReader::from(input);
         let result = super::parse(&mut reader).unwrap();

@@ -163,6 +163,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "And address pattern works" {
+   run diff <(grep -e '\bsed\b' README.md | grep -e '\bse\b') <(./se '/\bsed\b/ + /\bse\b/ p' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Stop early" {
    run diff <(./se '7=q' README.md) <(printf "7")
    [ "$status" -eq 0 ]

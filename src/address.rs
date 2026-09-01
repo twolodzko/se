@@ -17,6 +17,8 @@ pub(crate) enum Address {
     Between(Between),
     // addr1, addr2, ...
     Set(Vec<Address>),
+    // addr1 + addr2 + ...
+    And(Vec<Address>),
     // _
     Maybe,
 }
@@ -38,6 +40,14 @@ impl Address {
                     }
                 }
                 false
+            }
+            And(set) => {
+                for addr in set.iter() {
+                    if !addr.matches(line) {
+                        return false;
+                    }
+                }
+                true
             }
             Maybe => unimplemented!(),
         }
@@ -112,6 +122,14 @@ impl std::fmt::Display for Address {
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
+                write!(f, "{list}")
+            }
+            And(addrs) => {
+                let list = addrs
+                    .iter()
+                    .map(|a| a.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" + ");
                 write!(f, "{list}")
             }
             Maybe => write!(f, "?"),

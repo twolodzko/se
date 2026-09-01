@@ -41,6 +41,7 @@ impl Address {
                 between.rhs.replace_maybe(subst)?;
             }
             Address::Set(addrs) => addrs.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
+            Address::And(addrs) => addrs.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
             _ => (),
         }
         Ok(())
