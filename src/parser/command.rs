@@ -162,11 +162,21 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
             }
             '\\' => {
                 reader.skip();
-                if let Some(e) = reader.next()? {
-                    if e != delim {
-                        acc.push(c);
+                if let Some(e) = reader.peek()? {
+                    if e.is_ascii_digit() {
+                        acc.push('$');
+                        // replace $N with ${N}
+                        // "$123something" string is interpreted as "${123}something" rather than "${123something}"
+                        acc.push('{');
+                        acc.push_str(&read_integer(reader)?);
+                        acc.push('}');
+                    } else {
+                        reader.skip();
+                        if e != delim {
+                            acc.push(c);
+                        }
+                        acc.push(e);
                     }
-                    acc.push(e);
                 } else {
                     break;
                 }

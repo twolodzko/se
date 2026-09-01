@@ -123,7 +123,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   e.g. `/(?i)regex/` is used instead of `/regex/i`. The flags can be used in
   matches as well as substitutions. With `(?x)` flag it is possible to write regular
   expressions in [verbose mode], which can include comments.
-* Using `$N` for substitutions instead of `\N`.
+* Using `$N` for substitutions instead of `\N` (but `\N` is allowed if N is a number).
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
   but instead reading commands directly e.g. `=p` (actually `=np`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
 * Only a subset of `sed` commands is supported and they can behave differently.
