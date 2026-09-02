@@ -46,6 +46,10 @@ benchmark: build
     fi
 
     bench 100 \
+        'sed -n "/love/ p" IMDB-Dataset.csv' \
+        './se "/love/ p" IMDB-Dataset.csv'
+
+    bench 100 \
         'sed -n "/love/ s/love/####/gp" IMDB-Dataset.csv' \
         './se "?s/love/####/gp" IMDB-Dataset.csv'
 
