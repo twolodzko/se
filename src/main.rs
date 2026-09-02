@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use se::{Program, Reader, Status};
 use std::{
+    fs::OpenOptions,
     io::{BufWriter, Write},
     path::PathBuf,
     process::ExitCode,
@@ -25,28 +26,6 @@ fn main() -> ExitCode {
     }
 }
 
-fn run(args: Args) -> Result<ExitCode> {
-    let mut program = Program::try_from(args.script)?;
-    let mut reader = Reader::from(args.files.as_ref());
-
-    let mut out: Box<dyn Write> = Box::new(std::io::stdout().lock());
-    if !args.files.is_empty() {
-        out = Box::new(BufWriter::new(out))
-    }
-
-    let (status, count) = program.run(&mut reader, args.all, &mut out)?;
-    if args.count {
-        writeln!(out, "{count}")?;
-    }
-    out.flush()?;
-
-    if let Status::Quit(code) = status {
-        Ok(ExitCode::from(code))
-    } else {
-        Ok(ExitCode::SUCCESS)
-    }
-}
-
 #[derive(Parser)]
 struct Args {
     /// Print all the lines (except the ones that were deleted)
@@ -57,11 +36,15 @@ struct Args {
     #[arg(short, long)]
     count: bool,
 
+    /// Write output to a file
+    #[arg(short, long, value_name = "FILE")]
+    output: Option<PathBuf>,
+
     #[command(flatten)]
     script: Script,
 
     /// Files that are processed
-    #[arg(name = "FILE")]
+    #[arg(value_name = "FILE")]
     files: Vec<PathBuf>,
 }
 
@@ -73,7 +56,7 @@ struct Script {
     command: Option<String>,
 
     /// Read the commands from the file
-    #[arg(short = 'f', long = "file")]
+    #[arg(short = 'f', long = "file", value_name = "FILE")]
     path: Option<PathBuf>,
 }
 
@@ -87,6 +70,38 @@ impl TryFrom<Script> for Program {
         } else {
             unreachable!()
         }
+    }
+}
+
+fn run(args: Args) -> Result<ExitCode> {
+    let mut program = Program::try_from(args.script)?;
+    let mut reader = Reader::from(args.files.as_ref());
+
+    let mut out = if let Some(path) = args.output {
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(path)?;
+        Box::new(BufWriter::new(file))
+    } else {
+        let mut out: Box<dyn Write> = Box::new(std::io::stdout().lock());
+        if !args.files.is_empty() {
+            out = Box::new(BufWriter::new(out))
+        }
+        out
+    };
+
+    let (status, count) = program.run(&mut reader, args.all, &mut out)?;
+    if args.count {
+        writeln!(out, "{count}")?;
+    }
+    out.flush()?;
+
+    if let Status::Quit(code) = status {
+        Ok(ExitCode::from(code))
+    } else {
+        Ok(ExitCode::SUCCESS)
     }
 }
 

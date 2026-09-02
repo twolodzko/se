@@ -312,3 +312,9 @@ only_for_gsed() {
    [[ ! "$output" =~ "Broken pipe" ]]
    [ "$status" -eq 0 ]
 }
+
+@test "Using output file (-o)" {
+	run ./se 'p' -o /tmp/README.md README.md
+   [ "$status" -eq 0 ]
+   diff -sq README.md /tmp/README.md
+}
