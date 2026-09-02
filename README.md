@@ -129,7 +129,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   expressions in [verbose mode], which can include comments.
 * When using `\N` for substitutions, N could be a name of a named group (but to avoid ambiguity best use `\{N}`).
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
-  but instead reading commands directly e.g. `=p` (actually `=np`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
+  but instead reading commands directly e.g. `=p` (actually `=\np`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
 * Only a subset of `sed` commands is supported and they can behave differently.
 * Instead of `a string`, use `p"string"` to print the string after
   printing the line, same applies to `sed`s `i`.
