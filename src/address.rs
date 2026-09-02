@@ -1,5 +1,5 @@
 use crate::Line;
-use std::sync::atomic;
+use std::cell::Cell;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Address {
@@ -58,7 +58,7 @@ impl Address {
 pub(crate) struct Between {
     pub(crate) lhs: Box<Address>,
     pub(crate) rhs: Box<Address>,
-    inside: atomic::AtomicBool,
+    inside: Cell<bool>,
 }
 
 impl Between {
@@ -66,20 +66,20 @@ impl Between {
         Between {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
-            inside: atomic::AtomicBool::new(false),
+            inside: Cell::new(false),
         }
     }
 
     pub(crate) fn matches(&self, line: &Line) -> bool {
-        if self.inside.load(atomic::Ordering::Relaxed) {
+        if self.inside.get() {
             if self.rhs.matches(line) {
-                self.inside.store(false, atomic::Ordering::Relaxed)
+                self.inside.set(false)
             }
             true
         } else {
             if self.lhs.matches(line) {
                 if !self.rhs.matches(line) {
-                    self.inside.store(true, atomic::Ordering::Relaxed)
+                    self.inside.set(true)
                 }
                 return true;
             }
