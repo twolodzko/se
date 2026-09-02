@@ -1,26 +1,14 @@
 use anyhow::Result;
 use clap::Parser;
-use se::{FilesReader, Line, Program, Status, StdinReader};
+use se::{Program, Reader, Status};
 use std::{io::Write, path::PathBuf, str::FromStr};
 
 fn main() -> Result<()> {
     let args = parse_args();
-
-    let mut program = if let Some(path) = &args.script.path {
-        Program::try_from(path)?
-    } else if let Some(command) = &args.script.command {
-        Program::from_str(command)?
-    } else {
-        unreachable!()
-    };
-
-    let mut reader: Box<dyn Iterator<Item = Result<Line>>> = if args.files.is_empty() {
-        Box::new(StdinReader::default())
-    } else {
-        Box::new(FilesReader::from(args.files))
-    };
-
+    let mut program = Program::try_from(args.script)?;
+    let mut reader = Reader::from(args.files);
     let out = &mut std::io::stdout().lock();
+
     let (status, count) = program.run(&mut reader, args.all, out)?;
 
     if args.count {
@@ -60,6 +48,19 @@ struct Script {
     /// Read the commands from the file
     #[arg(short = 'f', long = "file")]
     path: Option<PathBuf>,
+}
+
+impl TryFrom<Script> for Program {
+    type Error = anyhow::Error;
+    fn try_from(value: Script) -> Result<Self, Self::Error> {
+        if let Some(path) = &value.path {
+            Program::try_from(path)
+        } else if let Some(command) = &value.command {
+            Program::from_str(command)
+        } else {
+            unreachable!()
+        }
+    }
 }
 
 fn parse_args() -> Args {

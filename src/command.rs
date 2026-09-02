@@ -1,4 +1,4 @@
-use crate::{Line, Regex, program::Memory};
+use crate::{Reader, Regex, program::Memory};
 use anyhow::Result;
 use std::io::{StdoutLock, Write};
 
@@ -68,10 +68,10 @@ impl From<&Command> for Status {
 impl Command {
     /// Run the command by modifying one of the `pattern` or `hold` buffers
     /// and returning a status code.
-    pub(crate) fn run<R: Iterator<Item = Result<Line>>>(
+    pub(crate) fn run(
         &self,
         memory: &mut Memory,
-        reader: &mut R,
+        reader: &mut Reader,
         out: &mut StdoutLock,
     ) -> Result<Status> {
         use Command::*;
@@ -199,12 +199,12 @@ impl std::fmt::Display for Command {
 #[cfg(test)]
 mod tests {
     use super::Command;
-    use crate::{Line, lines::MockReader, program::Memory};
+    use crate::{Line, Reader, program::Memory};
 
     #[test]
     fn readln() {
-        let example = [1, 2, 3, 4, 5];
-        let mut reader = example.iter().map(|n| Ok(Line(*n, n.to_string())));
+        let iter = (1..=5).into_iter().map(|n| Ok(n.to_string()));
+        let mut reader = Reader::new(iter);
         let mut memory = Memory::default();
         memory.read(Line(0, "start".to_string()));
 
@@ -228,7 +228,7 @@ mod tests {
         Command::Join
             .run(
                 &mut memory,
-                &mut MockReader {},
+                &mut Reader::empty(),
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
@@ -244,7 +244,7 @@ mod tests {
         Command::Joinln
             .run(
                 &mut memory,
-                &mut MockReader {},
+                &mut Reader::empty(),
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
@@ -260,7 +260,7 @@ mod tests {
         Command::Exchange
             .run(
                 &mut memory,
-                &mut MockReader {},
+                &mut Reader::empty(),
                 &mut std::io::stdout().lock(),
             )
             .unwrap();

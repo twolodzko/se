@@ -6,7 +6,7 @@ mod program;
 
 pub use {
     command::Status,
-    lines::{FilesReader, Line, StdinReader},
+    lines::{Line, Reader},
     program::Program,
 };
 

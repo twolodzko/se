@@ -1,6 +1,6 @@
 use std::io::StdoutLock;
 
-use crate::{Action, Line, Status, command};
+use crate::{Action, Line, Reader, Status, command};
 use anyhow::Result;
 use std::io::Write;
 
@@ -34,9 +34,9 @@ impl Program {
         }
     }
 
-    pub fn run<R: Iterator<Item = Result<Line>>>(
+    pub fn run(
         &mut self,
-        reader: &mut R,
+        reader: &mut Reader,
         print_all: bool,
         out: &mut StdoutLock,
     ) -> Result<(Status, usize)> {
@@ -76,9 +76,9 @@ impl Program {
         Ok((status, matches))
     }
 
-    fn process_line<R: Iterator<Item = Result<Line>>>(
+    fn process_line(
         &mut self,
-        reader: &mut R,
+        reader: &mut Reader,
         out: &mut StdoutLock,
     ) -> Result<Option<Status>> {
         let mut status = None;
@@ -118,7 +118,7 @@ impl From<Vec<Action>> for Program {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Line, Program, lines::MockReader};
+    use crate::{Line, Program, Reader};
     use std::str::FromStr;
     use test_case::test_case;
 
@@ -155,7 +155,7 @@ mod tests {
     fn keep(command: &str, expected: &str) {
         let mut prog = Program::from_str(command).unwrap();
         prog.memory.read(Line(0, "123456789".to_string()));
-        prog.process_line(&mut MockReader {}, &mut std::io::stdout().lock())
+        prog.process_line(&mut Reader::empty(), &mut std::io::stdout().lock())
             .unwrap();
         assert_eq!(prog.memory.this, expected)
     }

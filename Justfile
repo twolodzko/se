@@ -60,3 +60,6 @@ benchmark: build
 lines:
     @ find . -name '*.rs' -exec wc -l {} \;
     @ find . -name '*.rs' -exec cat {} \; | wc -l
+
+clean:
+    rm -rf ./target
