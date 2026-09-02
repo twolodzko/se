@@ -88,7 +88,7 @@ impl Command {
             // commands that modify the buffers
             Substitute(regex, template, limit) => {
                 let replaced = regex.0.replacen(&memory.this, *limit, template);
-                memory.this = replaced.to_string()
+                memory.this = replaced.into_owned()
             }
             Keep(skip, take) => {
                 memory.this = if let Some(take) = take {
@@ -99,12 +99,12 @@ impl Command {
             }
             Reset => memory.this.clear(),
             Hold => {
-                memory.hold = memory.this.to_string();
+                memory.hold = memory.this.clone();
             }
             Get => {
-                memory.this = memory.hold.to_string();
+                memory.this = memory.hold.clone();
             }
-            GetLine => memory.this = memory.line.1.to_string(),
+            GetLine => memory.this = memory.line.1.clone(),
             Exchange => {
                 std::mem::swap(&mut memory.hold, &mut memory.this);
             }

@@ -14,9 +14,7 @@ pub(crate) fn parse_instruction<R: Reader>(
     let commands = command::parse(reader)?;
 
     if address == Address::Final {
-        for cmd in commands.into_iter() {
-            finally.push(cmd);
-        }
+        finally.extend(commands);
     } else {
         address.replace_maybe(commands.first())?;
         actions.push(Action::Condition(address, commands.len()));

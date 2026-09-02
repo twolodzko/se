@@ -33,7 +33,7 @@ benchmark: build
 
     bench 2000 \
         'sed "/sed/ =" README.md' \
-        './se -a "/sed/ =n" README.md'
+        './se -a "/sed/ =\n" README.md'
 
     bench 2000 \
         'sed -n "/sed/ { s/default/kitty/g ; p ; }" README.md' \
@@ -62,4 +62,4 @@ lines:
     @ find . -name '*.rs' -exec cat {} \; | wc -l
 
 clean:
-    rm -rf ./target
+    rm -rf ./se ./target

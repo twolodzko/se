@@ -82,7 +82,7 @@ impl FilesReader {
 impl From<Vec<PathBuf>> for FilesReader {
     fn from(value: Vec<PathBuf>) -> Self {
         FilesReader {
-            paths: value.iter().cloned().rev().collect(),
+            paths: value.into_iter().rev().collect(),
             file: None,
         }
     }
@@ -96,7 +96,7 @@ impl Iterator for FilesReader {
             if let Some(ref mut buffer) = self.file {
                 match buffer.next() {
                     Some(Ok(line)) => {
-                        return Some(Ok(line.to_string()));
+                        return Some(Ok(line));
                     }
                     Some(Err(err)) => return Some(Err(err)),
                     None => {
