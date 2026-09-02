@@ -7,6 +7,12 @@ fn main() -> ExitCode {
     let args = parse_args();
     match run(args) {
         Ok(code) => code,
+        Err(err)
+            if let Some(e) = err.downcast_ref::<std::io::Error>()
+                && e.kind() == std::io::ErrorKind::BrokenPipe =>
+        {
+            ExitCode::SUCCESS
+        }
         Err(err) => {
             eprintln!("{}", err);
             ExitCode::FAILURE

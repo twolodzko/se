@@ -310,3 +310,9 @@ only_for_gsed() {
    run source /tmp/script.sh
    [ "$status" -eq 0 ]
 }
+
+@test "Handle broken pipes" {
+	run bats_pipe --returned-status=2 yes hello \| ./se -a p \| head -n 1
+   [[ ! "$output" =~ "Broken pipe" ]]
+   [ "$status" -eq 0 ]
+}
