@@ -161,7 +161,7 @@ fn eval_sh(cmd: &str) -> Result<(String, Option<u8>)> {
     let stdout = std::str::from_utf8(&out.stdout)?.to_string();
     let code = match out.status.code() {
         Some(0) => None,
-        Some(code) => Some(code as u8),
+        Some(code) => Some(u8::try_from(code).unwrap_or(255)),
         None => Some(0),
     };
     Ok((stdout, code))
