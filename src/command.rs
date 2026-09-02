@@ -1,6 +1,6 @@
 use crate::{Reader, Regex, program::Memory};
 use anyhow::Result;
-use std::io::{StdoutLock, Write};
+use std::io::Write;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
@@ -72,7 +72,7 @@ impl Command {
         &self,
         memory: &mut Memory,
         reader: &mut Reader,
-        out: &mut StdoutLock,
+        out: &mut dyn Write,
     ) -> Result<Status> {
         use Command::*;
         match self {

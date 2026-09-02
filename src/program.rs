@@ -1,5 +1,3 @@
-use std::io::StdoutLock;
-
 use crate::{Action, Line, Reader, Status, command};
 use anyhow::Result;
 use std::io::Write;
@@ -38,7 +36,7 @@ impl Program {
         &mut self,
         reader: &mut Reader,
         print_all: bool,
-        out: &mut StdoutLock,
+        out: &mut dyn Write,
     ) -> Result<(Status, usize)> {
         use Status::*;
 
@@ -76,11 +74,7 @@ impl Program {
         Ok((status, matches))
     }
 
-    fn process_line(
-        &mut self,
-        reader: &mut Reader,
-        out: &mut StdoutLock,
-    ) -> Result<Option<Status>> {
+    fn process_line(&mut self, reader: &mut Reader, out: &mut dyn Write) -> Result<Option<Status>> {
         let mut status = None;
         let mut pos = 0;
         while pos < self.actions.len() {

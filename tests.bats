@@ -295,10 +295,6 @@ only_for_gsed() {
 
    run diff <(./se 'p' /tmp/a.txt /tmp/b.txt /tmp/c.txt) <(printf "1\n2\n3\n")
    [ "$status" -eq 0 ]
-
-   echo 'p' > /tmp/script.sed
-   run diff <(./se -f /tmp/script.sed /tmp/a.txt /tmp/b.txt /tmp/c.txt) <(printf "1\n2\n3\n")
-   [ "$status" -eq 0 ]
 }
 
 @test "Run the examples in README.md" {

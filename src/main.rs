@@ -1,7 +1,12 @@
 use anyhow::Result;
 use clap::Parser;
 use se::{Program, Reader, Status};
-use std::{io::Write, path::PathBuf, process::ExitCode, str::FromStr};
+use std::{
+    io::{BufWriter, Write},
+    path::PathBuf,
+    process::ExitCode,
+    str::FromStr,
+};
 
 fn main() -> ExitCode {
     let args = parse_args();
@@ -22,13 +27,18 @@ fn main() -> ExitCode {
 
 fn run(args: Args) -> Result<ExitCode> {
     let mut program = Program::try_from(args.script)?;
-    let mut reader = Reader::from(args.files);
-    let out = &mut std::io::stdout().lock();
+    let mut reader = Reader::from(args.files.as_ref());
 
-    let (status, count) = program.run(&mut reader, args.all, out)?;
+    let mut out: Box<dyn Write> = Box::new(std::io::stdout().lock());
+    if !args.files.is_empty() {
+        out = Box::new(BufWriter::new(out))
+    }
+
+    let (status, count) = program.run(&mut reader, args.all, &mut out)?;
     if args.count {
         writeln!(out, "{count}")?;
     }
+    out.flush()?;
 
     if let Status::Quit(code) = status {
         Ok(ExitCode::from(code))

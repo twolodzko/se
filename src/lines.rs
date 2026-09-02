@@ -38,8 +38,8 @@ impl Default for Reader<'_> {
     }
 }
 
-impl From<Vec<PathBuf>> for Reader<'_> {
-    fn from(paths: Vec<PathBuf>) -> Self {
+impl From<&[PathBuf]> for Reader<'_> {
+    fn from(paths: &[PathBuf]) -> Self {
         if paths.is_empty() {
             Self::default()
         } else {
@@ -79,10 +79,10 @@ impl FilesReader {
     }
 }
 
-impl From<Vec<PathBuf>> for FilesReader {
-    fn from(value: Vec<PathBuf>) -> Self {
+impl From<&[PathBuf]> for FilesReader {
+    fn from(value: &[PathBuf]) -> Self {
         FilesReader {
-            paths: value.into_iter().rev().collect(),
+            paths: value.iter().rev().cloned().collect(),
             file: None,
         }
     }
