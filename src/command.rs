@@ -41,7 +41,7 @@ pub(crate) enum Command {
     /// .
     Break,
     /// q [code]
-    Quit(i32),
+    Quit(u8),
     /// e
     Eval,
 }
@@ -51,7 +51,7 @@ pub enum Status {
     Normal,
     Break,
     NoPrint,
-    Quit(i32),
+    Quit(u8),
 }
 
 impl From<&Command> for Status {
@@ -150,7 +150,7 @@ impl Command {
     }
 }
 
-fn eval_sh(cmd: &str) -> Result<(String, Option<i32>)> {
+fn eval_sh(cmd: &str) -> Result<(String, Option<u8>)> {
     let out = std::process::Command::new("sh")
         .arg("-c")
         .arg(cmd)
@@ -161,7 +161,7 @@ fn eval_sh(cmd: &str) -> Result<(String, Option<i32>)> {
     let stdout = std::str::from_utf8(&out.stdout)?.to_string();
     let code = match out.status.code() {
         Some(0) => None,
-        Some(code) => Some(code),
+        Some(code) => Some(code as u8),
         None => Some(0),
     };
     Ok((stdout, code))

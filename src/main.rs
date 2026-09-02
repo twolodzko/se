@@ -1,23 +1,34 @@
 use anyhow::Result;
 use clap::Parser;
 use se::{Program, Reader, Status};
-use std::{io::Write, path::PathBuf, str::FromStr};
+use std::{io::Write, path::PathBuf, process::ExitCode, str::FromStr};
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     let args = parse_args();
+    match run(args) {
+        Ok(code) => code,
+        Err(err) => {
+            eprintln!("{}", err);
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn run(args: Args) -> Result<ExitCode> {
     let mut program = Program::try_from(args.script)?;
     let mut reader = Reader::from(args.files);
     let out = &mut std::io::stdout().lock();
 
     let (status, count) = program.run(&mut reader, args.all, out)?;
-
     if args.count {
         writeln!(out, "{count}")?;
     }
+
     if let Status::Quit(code) = status {
-        std::process::exit(code)
+        Ok(ExitCode::from(code))
+    } else {
+        Ok(ExitCode::SUCCESS)
     }
-    Ok(())
 }
 
 #[derive(Parser)]
