@@ -17,6 +17,7 @@ setup() {
 teardown() {
     rm -f /tmp/script.sed
     rm -f /tmp/{a,b,c}.txt
+    rm -f /tmp/README.md
 }
 
 @test "Fails with no arguments" {
@@ -315,6 +316,11 @@ only_for_gsed() {
 
 @test "Using output file (-o)" {
 	run ./se 'p' -o /tmp/README.md README.md
+   [ "$status" -eq 0 ]
+   diff -sq README.md /tmp/README.md
+
+   # overwrite existing file
+   run ./se 'p' -o /tmp/README.md README.md
    [ "$status" -eq 0 ]
    diff -sq README.md /tmp/README.md
 }
