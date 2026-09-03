@@ -16,7 +16,14 @@ pub(crate) fn parse_instruction<R: Reader>(
     if address == Address::Final {
         finally.extend(commands);
     } else {
-        address.replace_maybe(commands.first())?;
+        let subst = commands.iter().find_map(|c| {
+            if let Command::Substitute(regex, _, _) = c {
+                Some(regex)
+            } else {
+                None
+            }
+        });
+        address.replace_maybe(subst)?;
         actions.push(Action::Condition(address, commands.len()));
         for cmd in commands.into_iter() {
             actions.push(Action::Command(cmd));
@@ -26,10 +33,10 @@ pub(crate) fn parse_instruction<R: Reader>(
 }
 
 impl Address {
-    fn replace_maybe(&mut self, subst: Option<&Command>) -> Result<()> {
+    fn replace_maybe(&mut self, subst: Option<&crate::Regex>) -> Result<()> {
         match self {
             Address::Maybe => {
-                let Some(Command::Substitute(regex, _, _)) = subst else {
+                let Some(regex) = subst else {
                     bail!("{} must be followed by a substitution", self)
                 };
                 *self = Address::Regex(regex.clone());
