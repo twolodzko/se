@@ -1,19 +1,22 @@
 use super::{Error, reader::Reader};
 use anyhow::{Result, bail};
 
-pub(crate) fn read_regex<R: Reader>(reader: &mut R) -> Result<String> {
+pub(crate) fn read<R: Reader>(reader: &mut R) -> Result<String> {
     let mut acc = String::new();
-    match reader.next()? {
-        Some('/') => {
-            read_until(reader, '/', false, &mut acc)?;
-            acc.pop();
+    if let Some(c) = reader.peek()? {
+        match c {
+            '/' => {
+                reader.skip();
+                read_until(reader, '/', false, &mut acc)?;
+                acc.pop();
+            }
+            '^' => {
+                read_until(reader, '$', false, &mut acc)?;
+            }
+            _ => bail!(Error::Unexpected(c)),
         }
-        Some('^') => {
-            acc.push('^');
-            read_until(reader, '$', false, &mut acc)?;
-        }
-        Some(c) => bail!(Error::Unexpected(c)),
-        _ => unreachable!(),
+    } else {
+        bail!(Error::EndOfInput)
     }
     Ok(acc)
 }
@@ -33,11 +36,10 @@ fn read_until<R: Reader>(
             '\\' => {
                 if let Some(e) = reader.next()? {
                     if e != '/' {
-                        acc.push(c);
+                        acc.push('\\');
                     }
                     acc.push(e);
                 } else {
-                    acc.push(c);
                     bail!("escaped character is missing");
                 }
             }
@@ -45,10 +47,12 @@ fn read_until<R: Reader>(
                 acc.push(c);
                 verbose = read_brackets(reader, verbose, acc)?;
             }
-            '#' if verbose => {
-                acc.push(c);
-                read_line(reader, acc)?;
-            }
+            '#' if verbose => loop {
+                if let Some('\n') = reader.next()? {
+                    acc.push('\n');
+                    break;
+                }
+            },
             _ => acc.push(c),
         }
     }
@@ -87,20 +91,9 @@ fn read_brackets<R: Reader>(reader: &mut R, verbose: bool, acc: &mut String) -> 
     }
 }
 
-fn read_line<R: Reader>(reader: &mut R, acc: &mut String) -> Result<()> {
-    while let Some(c) = reader.next()? {
-        acc.push(c);
-        if c == '\n' {
-            break;
-        }
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
-    use super::read_regex;
-    use crate::parser::reader::StringReader;
+    use crate::parser::StringReader;
     use test_case::test_case;
 
     #[test_case(
@@ -139,9 +132,9 @@ mod tests {
         "many brackets"
     )]
     #[test_case(
-        r"/(?x) # /comment/
+        r"/(?x)# /comment/
         abc/<not this>",
-        r"(?x) # /comment/
+        r"(?x)
         abc";
         "verbose"
     )]
@@ -151,23 +144,23 @@ mod tests {
         "negated verbose"
     )]
     #[test_case(
-        r"/(?x: # /comment/
+        r"/(?x:# /comment/
         abc)#def/<not this>",
-        r"(?x: # /comment/
+        r"(?x:
         abc)#def";
         "inline verbose"
     )]
     #[test_case(
-        r"/((?x) # /comment/
+        r"/((?x)# /comment/
         abc)#def/<not this>",
-        r"((?x) # /comment/
+        r"((?x)
         abc)#def";
         "local verbose"
     )]
     #[test_case(
-        r"/(?x) abc ((?-x) #/# ) # /comment//
+        r"/(?x) abc ((?-x) #/# )# /comment//
         end/<not this>",
-        r"(?x) abc ((?-x) #/# ) # /comment//
+        r"(?x) abc ((?-x) #/# )
         end";
         "verbose canceled"
     )]
@@ -177,23 +170,23 @@ mod tests {
         "slash in whole line"
     )]
     #[test_case(
-        r"^\/$",
-        r"^/$";
-        "escaped slash in whole line"
-    )]
-    #[test_case(
         r"^\\/$",
         r"^\\/$";
-        "backslashes and unescaped slash in whole line"
+        "backslashes and slash in whole line"
     )]
     #[test_case(
-        r"^\\\/$",
-        r"^\\/$";
-        "backslashes and escaped slash in whole line"
+        r"^\$$",
+        r"^\$$";
+        "only dollar in whole line"
+    )]
+    #[test_case(
+        r"^/$",
+        r"^/$";
+        "only slash in whole line"
     )]
     fn read(input: &str, expected: &str) {
         let reader = &mut StringReader::from(input);
-        let result = read_regex(reader).unwrap();
+        let result = super::read(reader).unwrap();
         assert_eq!(result, expected);
         regex::Regex::new(&result).expect("regex should parse");
     }

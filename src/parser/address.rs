@@ -1,7 +1,6 @@
-use super::{
-    reader::Reader,
-    utils::{parse_regex, read_integer, skip_line, skip_whitespace},
-};
+use std::str::FromStr;
+
+use super::{read_integer, reader::Reader, regex, skip_line, skip_whitespace};
 use crate::address::{
     self,
     Address::{self, *},
@@ -105,9 +104,11 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
     if let Some(c) = reader.peek()? {
         match c {
             '/' | '^' => {
-                let addr = match parse_regex(reader)? {
-                    Some(regex) => Regex(regex),
-                    None => Always,
+                let regex = regex::read(reader)?;
+                let addr = if regex.is_empty() {
+                    Always
+                } else {
+                    Regex(crate::Regex::from_str(&regex)?)
                 };
                 return Ok(Some(addr));
             }

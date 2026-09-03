@@ -1,7 +1,7 @@
 use super::{
     instruction::parse_instruction,
     reader::{FileReader, Reader, StringReader},
-    utils::skip_whitespace,
+    skip_whitespace,
 };
 use crate::{Action, command::Command, program::Program};
 use anyhow::Result;

@@ -1,4 +1,4 @@
-use super::{address, command, reader::Reader, utils};
+use super::{address, command, reader::Reader, skip_whitespace};
 use crate::{Action, address::Address, command::Command};
 use anyhow::{Result, bail};
 
@@ -8,9 +8,9 @@ pub(crate) fn parse_instruction<R: Reader>(
     finally: &mut Vec<Command>,
 ) -> Result<()> {
     // [address][commands]
-    utils::skip_whitespace(reader);
+    skip_whitespace(reader);
     let mut address = address::parse(reader)?;
-    utils::skip_whitespace(reader);
+    skip_whitespace(reader);
     let commands = command::parse(reader)?;
 
     if address == Address::Final {

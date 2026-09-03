@@ -1,8 +1,6 @@
-use super::{
-    Error,
-    reader::Reader,
-    utils::{parse_regex, read_integer, skip_line, skip_whitespace},
-};
+use std::str::FromStr;
+
+use super::{Error, read_integer, reader::Reader, regex, skip_line, skip_whitespace};
 use crate::command::Command::{self, *};
 use anyhow::{Result, anyhow, bail};
 
@@ -111,14 +109,9 @@ fn read_escaped<R: Reader>(reader: &mut R) -> Result<String> {
 }
 
 fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
-    if reader.peek()? != Some('/') {
-        bail!(Error::Missing('/'));
-    }
-
     // Parse: s/src/dst/[limit]
-    let Some(src) = parse_regex(reader)? else {
-        bail!("empty regular expression");
-    };
+    let s = regex::read(reader)?;
+    let src = crate::Regex::from_str(&s)?;
     let dst = read_template(reader)?;
 
     let mut limit = 0;
@@ -147,6 +140,10 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
                 reader.skip();
                 if let Some(e) = reader.peek()? {
                     match e {
+                        e if e == delim => {
+                            reader.skip();
+                            acc.push(e);
+                        }
                         '$' => {
                             reader.skip();
                             acc.push_str("$$");
@@ -164,9 +161,7 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
                         }
                         _ => {
                             reader.skip();
-                            if e != delim {
-                                acc.push(c);
-                            }
+                            acc.push('\\');
                             acc.push(e);
                         }
                     }
