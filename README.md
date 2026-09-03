@@ -41,26 +41,30 @@ Same as `sed`, it can be used for string search and replace in files.
 ## Addresses
 
 * Number like `1` or `278` points to a specific line. Line numbers start at 1.
-* `1-5` an inclusive range of the lines between `1` and `5`.
-  `-5` is equivalent to `1-5`.
-  `1-` or `1-$` means all the lines from `1` to the final line.
-* `//` or no address specified means that all the lines would match.
-  If no address is given, this is the default.
 * `$` matches the final line, so `5-$` (or `5-`) means a left-open interval.
   Commands in the block after `$` would run unconditionally, after processing the files,
   even after early stopping using `q`.
 * `/regex/` matches the lines that match the regular expression specified between `/.../`.
   Regular expressions can be used as bounds of the ranges.
+* `//` means that any line would match. If no address is given, this is the default.
 * `^regex$` can be used instead of `/^regex$/` when matching the whole line.
   Because in other cases regular expressions are delimited with `/.../`,
   even when not using slashes `\/` would be interpreted a escaped slash.
-* `addr1,addr2,...,addrN` matches any of the addresses.
-* `addr1+addr2+...+addrN` matches only if all of the addresses matched.
+  `^$` would match empty lines.
+* `?` matches the lines where the following substitution could be applied.
+  It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 * `!` before the address negates it, e.g. `!1` means all the lines except the first.
 * Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
   e.g. `!(1,2,3)` is equivalent to matching the `4-` range.
-* `?` matches the lines where the following substitution could be applied.
-  It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
+
+Addresses can be combined:
+
+* `start-end` is an inclusive range. For example, `1-5` an inclusive range of the lines
+  between `1` and `5`. `-5` is equivalent to `1-5`. `1-` or `1-$` means all the lines
+  from `1` to the final line. `/foo/-/bar/` is a range of lines where the first line
+  contains the word "foo" and the last line the word "bar".
+* `addr1,addr2,...,addrN` matches any of the addresses.
+* `addr1+addr2+...+addrN` matches only if all of the addresses matched.
 
 `/a/+/b/-/c/,/d/` is equivalent to `(/a/+(/b/-/c/)),/d/` because of the `-` has higher
 precendence than `+`, and `+` then `,`.
