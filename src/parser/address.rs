@@ -13,7 +13,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
 }
 
 fn set<R: Reader>(reader: &mut R) -> Result<Address> {
-    let mut addrs = Vec::new();
+    let mut acc = Vec::new();
     loop {
         if reader.next_is('#')? {
             skip_line(reader);
@@ -23,8 +23,8 @@ fn set<R: Reader>(reader: &mut R) -> Result<Address> {
         let mut addr = and(reader)?;
         match addr {
             Always => {}
-            Set(ref mut rhs) => addrs.append(rhs),
-            _ => addrs.push(addr),
+            Set(ref mut rhs) => acc.append(rhs),
+            _ => acc.push(addr),
         }
 
         skip_whitespace(reader);
@@ -35,16 +35,16 @@ fn set<R: Reader>(reader: &mut R) -> Result<Address> {
         }
     }
 
-    let addr = match addrs.len() {
+    let addr = match acc.len() {
         0 => Always,
-        1 => addrs.remove(0),
-        _ => Set(addrs),
+        1 => acc.remove(0),
+        _ => Set(acc),
     };
     Ok(addr)
 }
 
 fn and<R: Reader>(reader: &mut R) -> Result<Address> {
-    let mut addrs = Vec::new();
+    let mut acc = Vec::new();
     loop {
         if reader.next_is('#')? {
             skip_line(reader);
@@ -54,8 +54,8 @@ fn and<R: Reader>(reader: &mut R) -> Result<Address> {
         let mut addr = address(reader)?;
         match addr {
             Always => {}
-            And(ref mut rhs) => addrs.append(rhs),
-            _ => addrs.push(addr),
+            And(ref mut rhs) => acc.append(rhs),
+            _ => acc.push(addr),
         }
 
         skip_whitespace(reader);
@@ -66,10 +66,10 @@ fn and<R: Reader>(reader: &mut R) -> Result<Address> {
         }
     }
 
-    let addr = match addrs.len() {
+    let addr = match acc.len() {
         0 => Always,
-        1 => addrs.remove(0),
-        _ => And(addrs),
+        1 => acc.remove(0),
+        _ => And(acc),
     };
     Ok(addr)
 }
@@ -77,24 +77,14 @@ fn and<R: Reader>(reader: &mut R) -> Result<Address> {
 fn address<R: Reader>(reader: &mut R) -> Result<Address> {
     let negated = reader.next_is('!')?;
     skip_whitespace(reader);
-    let addr = if reader.next_is('(')? {
-        skip_whitespace(reader);
-        let addr = set(reader)?;
-        skip_whitespace(reader);
-        reader.expect(')')?;
-        addr
-    } else {
-        let addr = parse_range(reader)?;
-        skip_whitespace(reader);
-        addr
-    };
+    let addr = between(reader)?;
     if negated {
         return Ok(!addr);
     }
     Ok(addr)
 }
 
-fn parse_range<R: Reader>(reader: &mut R) -> Result<Address> {
+fn between<R: Reader>(reader: &mut R) -> Result<Address> {
     let addr = atom(reader)?;
     skip_whitespace(reader);
     if reader.next_is('-')? {
@@ -126,7 +116,7 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 match s.parse() {
                     Ok(num) => {
                         if num == 0 {
-                            bail!("invalid address: {}", s);
+                            bail!("line numbering starts at 1");
                         }
                         return Ok(Some(Location(num)));
                     }
@@ -140,6 +130,14 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
             '?' => {
                 reader.skip();
                 return Ok(Some(Maybe));
+            }
+            '(' => {
+                reader.skip();
+                skip_whitespace(reader);
+                let addr = set(reader)?;
+                skip_whitespace(reader);
+                reader.expect(')')?;
+                return Ok(Some(addr));
             }
             _ => (),
         }
