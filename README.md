@@ -68,7 +68,7 @@ Addresses can be combined:
 * `addr1+addr2+...+addrN` matches only if all of the addresses matched.
 
 `/a/+/b/-/c/,/d/` is equivalent to `(/a/+(/b/-/c/)),/d/` because of the `-` has higher
-precendence than `+`, and `+` then `,`.
+precedence than `+`, and `+` then `,`.
 
 ## Commands
 
