@@ -39,6 +39,10 @@ benchmark: build
         'sed -n "/sed/ { s/default/kitty/g ; p ; }" README.md' \
         './se "/sed/ s/default/kitty/g p" README.md'
 
+    bench 2000 \
+        'grep -c 'sed' README.md' \
+        './se -c '/sed/' README.md'
+
     # big
 
     if [ ! -f IMDB-Dataset.csv ]; then
