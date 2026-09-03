@@ -154,6 +154,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Sequential matches of processed lines" {
+   run diff <(sed -n 's/a/_/g ; /a/ s/b/#/g ; p' README.md) <(./se 's/a/_/g ; /a/ s/b/#/g ; p' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Replace captured group like in sed" {
    run diff <(sed -nE 's/in (`sed`)/__\1__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__\1__/p' README.md)
    [ "$status" -eq 0 ]

@@ -7,7 +7,7 @@ unit-test:
     cargo test
 
 integration-test: build
-    bats tests.bats
+    bats --pretty tests.bats
 
 build:
     cargo build --release

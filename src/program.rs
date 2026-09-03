@@ -80,7 +80,7 @@ impl Program {
         while pos < self.actions.len() {
             match &self.actions[pos] {
                 Action::Condition(cond, jump) => {
-                    if cond.matches(&self.memory.line) {
+                    if cond.matches(&self.memory) {
                         status = Some(Status::Normal);
                     } else {
                         pos += jump;

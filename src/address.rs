@@ -1,4 +1,4 @@
-use crate::Line;
+use crate::program::Memory;
 use std::cell::Cell;
 
 #[derive(Debug, PartialEq)]
@@ -24,18 +24,18 @@ pub(crate) enum Address {
 }
 
 impl Address {
-    pub(crate) fn matches(&self, line: &Line) -> bool {
+    pub(crate) fn matches(&self, memory: &Memory) -> bool {
         use Address::*;
         match self {
             Always => true,
             Final => false,
-            Location(idx) => *idx == line.0,
-            Regex(regex) => regex.0.is_match(&line.1),
-            Negate(addr) => !addr.matches(line),
-            Between(this) => this.matches(line),
+            Location(idx) => *idx == memory.line.0,
+            Regex(regex) => regex.0.is_match(&memory.this),
+            Negate(addr) => !addr.matches(memory),
+            Between(this) => this.matches(memory),
             Set(set) => {
                 for addr in set.iter() {
-                    if addr.matches(line) {
+                    if addr.matches(memory) {
                         return true;
                     }
                 }
@@ -43,7 +43,7 @@ impl Address {
             }
             And(set) => {
                 for addr in set.iter() {
-                    if !addr.matches(line) {
+                    if !addr.matches(memory) {
                         return false;
                     }
                 }
@@ -70,15 +70,15 @@ impl Between {
         }
     }
 
-    pub(crate) fn matches(&self, line: &Line) -> bool {
+    pub(crate) fn matches(&self, memory: &Memory) -> bool {
         if self.inside.get() {
-            if self.rhs.matches(line) {
+            if self.rhs.matches(memory) {
                 self.inside.set(false)
             }
             true
         } else {
-            if self.lhs.matches(line) {
-                if !self.rhs.matches(line) {
+            if self.lhs.matches(memory) {
+                if !self.rhs.matches(memory) {
                     self.inside.set(true)
                 }
                 return true;
@@ -143,6 +143,7 @@ mod tests {
         Line,
         address::Address::{self, *},
         parser::StringReader,
+        program::Memory,
     };
     use std::str::FromStr;
     use test_case::test_case;
@@ -178,7 +179,9 @@ mod tests {
         "set 1,2,3 does not match line 279"
     )]
     fn matches(addr: Address, line: Line, expected: bool) {
-        assert_eq!(addr.matches(&line), expected)
+        let mut memory = Memory::default();
+        memory.read(line);
+        assert_eq!(addr.matches(&memory), expected)
     }
 
     #[test_case(
@@ -260,7 +263,9 @@ mod tests {
                 .enumerate()
                 .map(|(i, s)| {
                     let line = Line(i + 1, s.to_string());
-                    addr.matches(&line)
+                    let mut memory = Memory::default();
+                    memory.read(line);
+                    addr.matches(&memory)
                 })
                 .collect::<Vec<bool>>(),
             expected
