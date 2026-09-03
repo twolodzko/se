@@ -190,6 +190,11 @@ mod tests {
         "any"
     )]
     #[test_case(
+        "()",
+        vec![true, true, true, true, true, true, true, true, true, true];
+        "empty brackets"
+    )]
+    #[test_case(
         "!//",
         vec![false, false, false, false, false, false, false, false, false, false];
         "any negated"
@@ -213,6 +218,11 @@ mod tests {
         "2-7",
         vec![false, true, true, true, true, true, true, false, false, false];
         "range of indexes 2:7"
+    )]
+    #[test_case(
+        "(2,3)-(7,8)",
+        vec![false, true, true, true, true, true, true, false, false, false];
+        "range containing brackets"
     )]
     #[test_case(
         "1-1",
@@ -243,6 +253,11 @@ mod tests {
         "6-$",
         vec![false, false, false, false, false, true, true, true, true, true];
         "half-open range"
+    )]
+    #[test_case(
+        "/a/+/b/",
+        vec![false, false, false, false, true, true, false, false, false, false];
+        "and"
     )]
     fn multiline_example(addr: &str, expected: Vec<bool>) {
         let example = r"
