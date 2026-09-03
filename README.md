@@ -63,6 +63,7 @@ Addresses can be combined:
   between `1` and `5`. `-5` is equivalent to `1-5`. `1-` or `1-$` means all the lines
   from `1` to the final line. `/foo/-/bar/` is a range of lines where the first line
   contains the word "foo" and the last line the word "bar".
+* `start~step` matches every `step`-th line since line number `start`.
 * `addr1,addr2,...,addrN` matches any of the addresses.
 * `addr1+addr2+...+addrN` matches only if all of the addresses matched.
 

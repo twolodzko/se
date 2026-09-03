@@ -169,6 +169,21 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Empty nth is like cat" {
+   run diff <(cat README.md) <(./se '~p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "nth works like in sed" {
+   run diff <(seq 1 100 | sed -n '7~4 p') <(seq 1 100 | ./se '7~4 p')
+   [ "$status" -eq 0 ]
+}
+
+@test "nth with read line works like cat" {
+   run diff <(cat README.md) <(./se '1~4 r3 p' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "And (+) address pattern works" {
    run diff <(grep -e '\bsed\b' README.md | grep -e '\bse\b') <(./se '/\bsed\b/ + /\bse\b/ p' README.md)
    [ "$status" -eq 0 ]

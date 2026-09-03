@@ -13,8 +13,10 @@ pub(crate) enum Address {
     Regex(crate::Regex),
     // !addr negates the addr match
     Negate(Box<Address>),
-    // // addr1 - addr2
+    // addr1 - addr2
     Between(Between),
+    // start ~ step
+    Nth(usize, usize),
     // addr1, addr2, ...
     Set(Vec<Address>),
     // addr1 + addr2 + ...
@@ -33,6 +35,13 @@ impl Address {
             Regex(regex) => regex.0.is_match(&memory.this),
             Negate(addr) => !addr.matches(memory),
             Between(this) => this.matches(memory),
+            Nth(start, step) => {
+                if memory.line.0 < *start {
+                    false
+                } else {
+                    (memory.line.0 - *start).is_multiple_of(*step)
+                }
+            }
             Set(set) => {
                 for addr in set.iter() {
                     if addr.matches(memory) {
@@ -116,6 +125,7 @@ impl std::fmt::Display for Address {
             Regex(regex) => write!(f, "/{regex}/"),
             Negate(addr) => write!(f, "{addr}!"),
             Between(this) => write!(f, "{}-{}", this.lhs, this.rhs),
+            Nth(start, step) => write!(f, "{}~{}", start, step),
             Set(addrs) => {
                 let list = addrs
                     .iter()

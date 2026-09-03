@@ -86,16 +86,46 @@ fn address<R: Reader>(reader: &mut R) -> Result<Address> {
 fn between<R: Reader>(reader: &mut R) -> Result<Address> {
     let addr = atom(reader)?;
     skip_whitespace(reader);
-    if reader.next_is('-')? {
-        let lhs = addr.unwrap_or(Location(1));
-        skip_whitespace(reader);
-        let rhs = atom(reader)?.unwrap_or(Final);
-        if let (Location(lo), Location(hi)) = (&lhs, &rhs)
-            && lo > hi
-        {
-            bail!("invalid bounds: {} > {} in {}-{}", lo, hi, lo, hi);
+    if let Some(c) = reader.peek()? {
+        match c {
+            '-' => {
+                reader.skip();
+                let lhs = addr.unwrap_or(Location(1));
+                skip_whitespace(reader);
+                let rhs = atom(reader)?.unwrap_or(Final);
+                if let (Location(lo), Location(hi)) = (&lhs, &rhs)
+                    && lo > hi
+                {
+                    bail!("invalid bounds: {} > {} in {}-{}", lo, hi, lo, hi);
+                }
+                return Ok(Between(address::Between::new(lhs, rhs)));
+            }
+            '~' => {
+                reader.skip();
+                let start = if let Some(a) = addr {
+                    if let Location(n) = a
+                        && n > 0
+                    {
+                        n
+                    } else {
+                        bail!("invalid start: {}", a)
+                    }
+                } else {
+                    1
+                };
+                skip_whitespace(reader);
+                let step = if let Some(c) = reader.peek()?
+                    && c.is_ascii_digit()
+                {
+                    let s = read_integer(reader)?;
+                    usize::from_str(&s)?
+                } else {
+                    1
+                };
+                return Ok(Nth(start, step));
+            }
+            _ => {}
         }
-        return Ok(Between(address::Between::new(lhs, rhs)));
     }
     Ok(addr.unwrap_or(Always))
 }
