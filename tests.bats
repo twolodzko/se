@@ -155,7 +155,7 @@ teardown() {
 }
 
 @test "Sequential matches of processed lines" {
-   run diff <(sed -n 's/a/_/g ; /a/ s/b/#/g ; p' README.md) <(./se 's/a/_/g ; /a/ s/b/#/g ; p' README.md)
+   run diff <(sed -n 's/a/_/g ; /a/ s/b/#/g ; p' README.md) <(./se 's/a/_/ ; /a/ s/b/#/ ; p' README.md)
    [ "$status" -eq 0 ]
 }
 

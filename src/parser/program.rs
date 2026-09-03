@@ -144,7 +144,7 @@ mod tests {
                 5,
             )),
     ]); "substitute with count")]
-    #[test_case(r"s/abc/def/g", Program::from(vec![
+    #[test_case(r"s/abc/def/", Program::from(vec![
         Action::Condition(Always, 1),
         Action::Command(Substitute(
                 crate::Regex::from_str("abc").unwrap(),
@@ -152,7 +152,7 @@ mod tests {
                 0,
             )),
     ]); "substitute with global count")]
-    #[test_case(r"/abc/s/def/ghi/g", Program::from(vec![
+    #[test_case(r"/abc/s/def/ghi/", Program::from(vec![
         Action::Condition(Regex(crate::Regex::from_str("abc").unwrap()), 1),
         Action::Command(Substitute(
                 crate::Regex::from_str("def").unwrap(),

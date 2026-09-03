@@ -115,13 +115,10 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
     let dst = read_template(reader)?;
 
     let mut limit = 0;
-    if let Some(c) = reader.peek()? {
-        if c == 'g' {
-            reader.skip();
-            // g is default, no need to update the limit
-        } else if c.is_ascii_digit() {
-            limit = read_integer(reader)?.parse()?;
-        }
+    if let Some(c) = reader.peek()?
+        && c.is_ascii_digit()
+    {
+        limit = read_integer(reader)?.parse()?;
     }
 
     Ok(Substitute(src, dst, limit))

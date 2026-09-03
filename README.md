@@ -79,7 +79,7 @@ precendence than `+`, and `+` then `,`.
 * `\n`, `\t`, `\x0A`, `\uA005` – print special characters, escaping a character recognized
   as command like `\p` would print the character "p".
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
-  If there's nothing to substitute, it has no effect.
+  If there's nothing to substitute, it has no effect. `limit` is a number of matches to replace.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
 * `&` - set pattern space to the raw, unprocessed line.
@@ -141,7 +141,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   To achieve this behavior use `-a` (`--all`) flag to print all the lines.
 * In `sed` the block after `$` runs on the final line, in `se`
   it is an instruction set that runs unconditionally on the program stop.
-* `se` uses `s/src/dst/g` as a default rather than `s/src/dst/1` as `sed` does.
+* `se` by default replaces all matches (like `s/src/dst/g` in sed) so it does not use the /g flag.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
   To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
 
