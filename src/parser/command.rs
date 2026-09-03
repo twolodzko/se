@@ -66,11 +66,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             _ => bail!(Error::Unexpected(c)),
         };
         cmds.push(cmd);
-
         skip_whitespace(reader);
-        if let Some('}') = reader.peek()? {
-            break;
-        }
     }
     Ok(cmds)
 }
