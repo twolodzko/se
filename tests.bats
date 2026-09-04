@@ -20,6 +20,18 @@ teardown() {
     rm -f /tmp/README.md
 }
 
+gsed_only() {
+   if ! is_gsed ; then
+      skip "This works only on GNU Sed"
+   fi
+}
+
+linux_only() {
+   if [[ ! "$(uname -s)" =~ "Linux" ]]; then
+      skip "This test needs to run on linux"
+   fi
+}
+
 @test "Fails with no arguments" {
 	! ./se
 }
@@ -227,11 +239,13 @@ teardown() {
 }
 
 @test "base64 encode file" {
+   linux_only
    run diff <(base64 -w 0 data/utf8-test-file.txt) <(./se '1h;2-xjx;$zxjbP' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
 @test "base64 decode file" {
+   linux_only
    run diff <(cat data/utf8-test-file.txt) <(base64 -w 0 data/utf8-test-file.txt | ./se 'BP')
    [ "$status" -eq 0 ]
 }
@@ -338,26 +352,20 @@ bash_line_marker() {
    [ "$status" -eq 0 ]
 }
 
-only_for_gsed() {
-   if ! is_gsed ; then
-      skip "This works only on GNU Sed"
-   fi
-}
-
 @test "Clear buffer like gsed" {
-   only_for_gsed
+   gsed_only
    run diff <(./se -a '/sed/ z' README.md) <(sed '/sed/ z' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Append text like gsed" {
-   only_for_gsed
+   gsed_only
    run diff <(sed '/sed/a >>>' README.md) <(./se '/sed/ p ">>>\n" . p' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Insert text like gsed" {
-   only_for_gsed
+   gsed_only
    run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ ">>>\n" p . p' README.md)
    [ "$status" -eq 0 ]
 }
