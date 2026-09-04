@@ -2,7 +2,8 @@ use std::str::FromStr;
 
 use super::{Error, read_integer, reader::Reader, regex, skip_line, skip_whitespace};
 use crate::command::Command::{self, *};
-use anyhow::{Result, anyhow, bail};
+use anyhow::{Result, bail};
+use unescaper::unescape;
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
     let mut cmds = Vec::new();
@@ -13,19 +14,20 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 cmds.push(Break);
                 break;
             }
-            'b' => {
-                skip_whitespace(reader);
-                reader.expect(';')?;
-                cmds.push(Break);
-                break;
-            }
             'p' => Println,
             'P' => Print,
             '\\' => {
                 let s = read_escaped(reader)?;
                 Insert(s)
             }
-            'l' => Escapeln,
+            'l' => Escape,
+            'L' => UnEscape,
+            't' => ToHtml,
+            'T' => FromHtml,
+            'u' => ToUrl,
+            'U' => FromUrl,
+            'b' => ToBase64,
+            'B' => FromBase64,
             's' => parse_substitute(reader)?,
             'k' => {
                 skip_whitespace(reader);
@@ -85,7 +87,7 @@ fn read_escaped<R: Reader>(reader: &mut R) -> Result<String> {
                 };
                 acc.push(c);
             }
-            unescape(&acc)
+            Ok(unescape(&acc)?)
         }
         'x' => {
             acc.push(c);
@@ -95,7 +97,7 @@ fn read_escaped<R: Reader>(reader: &mut R) -> Result<String> {
                 };
                 acc.push(c);
             }
-            unescape(&acc)
+            Ok(unescape(&acc)?)
         }
         c => {
             acc.push(c);
@@ -127,7 +129,7 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
         match c {
             c if c == delim => {
                 reader.skip();
-                return unescape(&acc);
+                return Ok(unescape(&acc)?);
             }
             '\\' => {
                 reader.skip();
@@ -225,8 +227,4 @@ fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
         }
     }
     bail!(Error::Missing(delim))
-}
-
-fn unescape(s: &str) -> Result<String> {
-    unescape::unescape(s).ok_or(anyhow!("unrecognized escape characters in '{}'", s))
 }

@@ -34,17 +34,17 @@ teardown() {
 }
 
 @test "Print all" {
-	run diff <(./se 'p' README.md) <(cat README.md)
+	run diff <(./se 'p' data/utf8-test-file.txt) <(cat data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
 @test "Print vs Println" {
-	run diff <(./se 'p' README.md) <(./se 'P\n' README.md)
+	run diff <(./se 'p' data/utf8-test-file.txt) <(./se 'P\n' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
 @test "Print all with -a and no command" {
-	run diff <(./se -a '' README.md) <(cat README.md)
+	run diff <(./se -a '' data/utf8-test-file.txt) <(cat data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
@@ -170,7 +170,7 @@ teardown() {
 }
 
 @test "Empty nth is like cat" {
-   run diff <(cat README.md) <(./se '~p' README.md)
+   run diff <(cat data/utf8-test-file.txt) <(./se '~p' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
@@ -181,6 +181,26 @@ teardown() {
 
 @test "nth with read line works like cat" {
    run diff <(cat README.md) <(./se '1~4 r3 p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Escape and Unescape" {
+   run diff <(cat data/utf8-test-file.txt) <(./se 'lLp' data/utf8-test-file.txt)
+   [ "$status" -eq 0 ]
+}
+
+@test "To and From HTML" {
+   run diff <(cat data/utf8-test-file.txt) <(./se 'tTp' data/utf8-test-file.txt)
+   [ "$status" -eq 0 ]
+}
+
+@test "To and From URL" {
+   run diff <(cat data/utf8-test-file.txt) <(./se 'uUp' data/utf8-test-file.txt)
+   [ "$status" -eq 0 ]
+}
+
+@test "To and From base64" {
+   run diff <(cat data/utf8-test-file.txt) <(./se 'bBp' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
@@ -205,7 +225,7 @@ teardown() {
 }
 
 @test "Reverse lines like tac" {
-   run diff <(tac README.md) <(./se '!1 j ; $ p ; h' README.md)
+   run diff <(tac data/utf8-test-file.txt) <(./se '!1 j ; $ p ; h' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
@@ -225,7 +245,7 @@ teardown() {
 }
 
 @test "Empty regex in address" {
-   run diff <(./se '// p' README.md) <(cat README.md)
+   run diff <(./se '// p' data/utf8-test-file.txt) <(cat data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 

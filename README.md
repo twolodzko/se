@@ -74,8 +74,10 @@ precedence than `+`, and `+` then `,`.
 
 * `p` – print the content of the pattern space as-is followed by a newline character.
 * `P` – same as above, but without the newline.
-* `l` – print the content of the pattern space after escaping the characters with Rust's
-  [std::char::escape_default].
+* `l`, `L` – escape the characters with Rust's [std::char::escape_default] and unescape them.
+* `u`, `U` – URL encode and decode characters.
+* `t`, `T` – HTML-escape and unescape characters.
+* `b`, `B` – convert characters to base64 and back.
 * `=` – print the line number.
 * `\n`, `\t`, `\x0A`, `\uA005` – print special characters, escaping a character recognized
   as command like `\p` would print the character "p".
@@ -101,7 +103,6 @@ precedence than `+`, and `+` then `,`.
 * `e` – execute the content of the pattern space as a shell command. Save the stdout output
   of the command to pattern space. If the command returned with non-zero error code,
   stop and return the error code.
-* `b` – the break command, stop processing the current line.
 * `q [code]` – exit with the `code` exit code (0 by default).
 
 ## Multiple instructions
@@ -112,7 +113,7 @@ When script contains multiple instructions, they can be delimited with `;` or `.
   the pattern space would be processed using the following instruction.
 * `.` marks the final instruction. If the address of the instruction would positively match,
   the processing of the line would stop after running the command,
-  all the following instructions would be skipped. It is a shortcut for `b ;`.
+  all the following instructions would be skipped.
   In a way, `.` works like the command `d`, but it does not clear the pattern space.
 
 For example, the script

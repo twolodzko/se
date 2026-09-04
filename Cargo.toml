@@ -5,9 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
+base64 = "0.23.1"
 clap = { version = "4.5.37", features = ["derive"] }
 regex = "1.11.1"
-unescape = "0.1.0"
+unescaper = "0.2.0"
+urlencoding = "2.1.3"
 
 [dev-dependencies]
 test-case = "3.3.1"

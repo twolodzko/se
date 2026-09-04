@@ -1,6 +1,9 @@
 use crate::{Reader, Regex, program::Memory};
 use anyhow::Result;
+use base64::{Engine, prelude::BASE64_STANDARD};
+use core::str;
 use std::io::Write;
+use unescaper::unescape;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Command {
@@ -9,7 +12,21 @@ pub(crate) enum Command {
     /// P
     Print,
     /// l
-    Escapeln,
+    Escape,
+    /// L
+    UnEscape,
+    /// t
+    ToHtml,
+    /// T
+    FromHtml,
+    /// u
+    ToUrl,
+    /// U
+    FromUrl,
+    /// b
+    ToBase64,
+    /// B
+    FromBase64,
     /// =
     LineNumber,
     /// "string" or 'string'
@@ -79,9 +96,30 @@ impl Command {
             // commands that print things
             Println => writeln!(out, "{}", memory.this)?,
             Print => write!(out, "{}", memory.this)?,
-            Escapeln => {
-                let escaped = memory.this.escape_default().to_string();
-                writeln!(out, "{escaped}")?
+            Escape => {
+                memory.this = memory.this.escape_default().to_string();
+            }
+            UnEscape => {
+                memory.this = unescape(&memory.this)?;
+            }
+            ToHtml => {
+                memory.this = html_escape(&memory.this);
+            }
+            FromHtml => {
+                memory.this = html_unescape(&memory.this);
+            }
+            ToUrl => {
+                memory.this = urlencoding::encode(&memory.this).into_owned();
+            }
+            FromUrl => {
+                memory.this = urlencoding::decode(&memory.this)?.into_owned();
+            }
+            ToBase64 => {
+                memory.this = BASE64_STANDARD.encode(&memory.this);
+            }
+            FromBase64 => {
+                let b = BASE64_STANDARD.decode(&memory.this)?;
+                memory.this = String::from_utf8_lossy(&b).into_owned();
             }
             LineNumber => write!(out, "{}", memory.line.0)?,
             Insert(message) => write!(out, "{message}")?,
@@ -167,13 +205,72 @@ fn eval_sh(cmd: &str) -> Result<(String, Option<u8>)> {
     Ok((stdout, code))
 }
 
+fn html_escape(s: &str) -> String {
+    let mut acc = String::new();
+    for c in s.chars() {
+        let s = match c {
+            '"' => "&quot;",
+            '\'' => "&#39;",
+            '&' => "&amp;",
+            '<' => "&lt;",
+            '>' => "&gt;",
+            '/' => "&#x2F;",
+            _ => {
+                acc.push(c);
+                continue;
+            }
+        };
+        acc.push_str(s)
+    }
+    acc
+}
+
+fn html_unescape(s: &str) -> String {
+    let mut acc = String::new();
+    let mut iter = s.chars();
+    while let Some(c) = iter.next() {
+        if c == '&' {
+            let mut s = String::from(c);
+            for c in iter.by_ref() {
+                s.push(c);
+                if c == ';' {
+                    break;
+                }
+            }
+            let c = match s.as_str() {
+                "&quot;" => '"',
+                "&#39;" => '\'',
+                "&amp;" => '&',
+                "&lt;" => '<',
+                "&gt;" => '>',
+                "&#x2F;" => '/',
+                _ => {
+                    acc.push_str(&s);
+                    continue;
+                }
+            };
+            acc.push(c);
+        } else {
+            acc.push(c);
+        }
+    }
+    acc
+}
+
 impl std::fmt::Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Command::*;
         match self {
             Println => write!(f, "p"),
             Print => write!(f, "P"),
-            Escapeln => write!(f, "l"),
+            Escape => write!(f, "l"),
+            UnEscape => write!(f, "L"),
+            ToHtml => write!(f, "t"),
+            FromHtml => write!(f, "T"),
+            ToUrl => write!(f, "u"),
+            FromUrl => write!(f, "U"),
+            ToBase64 => write!(f, "b"),
+            FromBase64 => write!(f, "B"),
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{s}'"),
             Substitute(r, t, l) => write!(f, "s/{r}/{t}/{l}"),
