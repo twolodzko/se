@@ -196,6 +196,12 @@ mod tests {
         "";
         "clear memory"
     )]
+    #[test_case(
+        r"s/a/#/ s/b/#/; s/c/#/. s/d/#/",
+        "abracadabra",
+        "##r###d##r#";
+        "sequential substitutions"
+    )]
     fn run(command: &str, input: &str, expected: &str) {
         let mut prog = Program::from_str(command).unwrap();
         prog.memory.read(Line(0, input.to_string()));
