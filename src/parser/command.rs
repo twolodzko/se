@@ -47,8 +47,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             }
             'l' => Escape,
             'L' => UnEscape,
-            't' => ToHtml,
-            'T' => FromHtml,
             'u' => ToUrl,
             'U' => FromUrl,
             'b' => ToBase64,

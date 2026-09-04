@@ -153,4 +153,54 @@ mod tests {
             .unwrap();
         assert_eq!(prog.memory.this, expected)
     }
+
+    #[test_case(
+        r"i'>'*3",
+        "foo",
+        ">>>foo";
+        "prepend"
+    )]
+    #[test_case(
+        r"a'='*2",
+        "foo",
+        "foo==";
+        "append"
+    )]
+    #[test_case(
+        r"s/[^x]*(?P<n>x+)[^x]*/\{n}/",
+        "fooxxxbaz",
+        "xxx";
+        "substitute with named group"
+    )]
+    #[test_case(
+        r"s/a/#/3",
+        "fata morgana",
+        "f#t# morg#na";
+        "substitute with limit"
+    )]
+    #[test_case(
+        r"b",
+        "hello",
+        "aGVsbG8=";
+        "base64 encode"
+    )]
+    #[test_case(
+        r"u i'https://noai.duckduckgo.com/?q='",
+        "what is fata morgana?",
+        "https://noai.duckduckgo.com/?q=what%20is%20fata%20morgana%3F";
+        "url encode"
+    )]
+    #[test_case(
+        r"z",
+        "clear me up!",
+        "";
+        "clear memory"
+    )]
+    fn run(command: &str, input: &str, expected: &str) {
+        let mut prog = Program::from_str(command).unwrap();
+        prog.memory.read(Line(0, input.to_string()));
+        prog.process_line(&mut Reader::empty(), &mut std::io::stdout().lock())
+            .unwrap();
+        assert_eq!(prog.memory.this, expected)
+    }
 }

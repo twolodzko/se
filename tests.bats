@@ -223,11 +223,6 @@ linux_only() {
    [ "$status" -eq 0 ]
 }
 
-@test "To and From HTML" {
-   run diff <(cat data/utf8-test-file.txt) <(./se 'tTp' data/utf8-test-file.txt)
-   [ "$status" -eq 0 ]
-}
-
 @test "To and From URL" {
    run diff <(cat data/utf8-test-file.txt) <(./se 'uUp' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]

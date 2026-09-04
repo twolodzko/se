@@ -92,7 +92,6 @@ precedence than `&`, and `&` then `,`.
 * `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `l`, `L` – escape characters with Rust's [std::char::escape_default] and unescape them.
 * `u`, `U` – URL encode and decode characters.
-* `t`, `T` – HTML-escape and unescape characters.
 * `b`, `B` – convert characters to base64 and back.
 
 ### Manipulating memory

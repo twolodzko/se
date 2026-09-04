@@ -18,10 +18,6 @@ pub(crate) enum Command {
     Escape,
     /// L
     UnEscape,
-    /// t
-    ToHtml,
-    /// T
-    FromHtml,
     /// u
     ToUrl,
     /// U
@@ -108,12 +104,6 @@ impl Command {
             }
             UnEscape => {
                 memory.this = unescape(&memory.this)?;
-            }
-            ToHtml => {
-                memory.this = html_escape(&memory.this);
-            }
-            FromHtml => {
-                memory.this = html_unescape(&memory.this);
             }
             ToUrl => {
                 memory.this = urlencoding::encode(&memory.this).into_owned();
@@ -210,58 +200,6 @@ fn eval_sh(cmd: &str) -> Result<(String, Option<u8>)> {
     Ok((stdout, code))
 }
 
-fn html_escape(s: &str) -> String {
-    let mut acc = String::new();
-    for c in s.chars() {
-        let s = match c {
-            '"' => "&quot;",
-            '\'' => "&#39;",
-            '&' => "&amp;",
-            '<' => "&lt;",
-            '>' => "&gt;",
-            '/' => "&#x2F;",
-            _ => {
-                acc.push(c);
-                continue;
-            }
-        };
-        acc.push_str(s)
-    }
-    acc
-}
-
-fn html_unescape(s: &str) -> String {
-    let mut acc = String::new();
-    let mut iter = s.chars();
-    while let Some(c) = iter.next() {
-        if c == '&' {
-            let mut s = String::from(c);
-            for c in iter.by_ref() {
-                s.push(c);
-                if c == ';' {
-                    break;
-                }
-            }
-            let c = match s.as_str() {
-                "&quot;" => '"',
-                "&#39;" => '\'',
-                "&amp;" => '&',
-                "&lt;" => '<',
-                "&gt;" => '>',
-                "&#x2F;" => '/',
-                _ => {
-                    acc.push_str(&s);
-                    continue;
-                }
-            };
-            acc.push(c);
-        } else {
-            acc.push(c);
-        }
-    }
-    acc
-}
-
 impl std::fmt::Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Command::*;
@@ -274,8 +212,6 @@ impl std::fmt::Display for Command {
             Prepend(s) => write!(f, "i'{}'", s),
             Escape => write!(f, "l"),
             UnEscape => write!(f, "L"),
-            ToHtml => write!(f, "t"),
-            FromHtml => write!(f, "T"),
             ToUrl => write!(f, "u"),
             FromUrl => write!(f, "U"),
             ToBase64 => write!(f, "b"),
