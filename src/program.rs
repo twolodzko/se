@@ -117,32 +117,32 @@ mod tests {
     use test_case::test_case;
 
     #[test_case(
-        "k3-5",
+        "c3-5",
         "345";
         "range"
     )]
     #[test_case(
-        "k-5",
+        "c-5",
         "12345";
         "left-open range"
     )]
     #[test_case(
-        "k5",
+        "c5",
         "5";
         "n-th chars"
     )]
     #[test_case(
-        "k3-",
+        "c3-",
         "3456789";
         "right-open range"
     )]
     #[test_case(
-        "k1-1",
+        "c1-1",
         "1";
         "single item range"
     )]
     #[test_case(
-        "k1",
+        "c1",
         "1";
         "first item"
     )]

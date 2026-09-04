@@ -87,7 +87,7 @@ precedence than `&`, and `&` then `,`.
   If there's nothing to substitute, it has no effect. `limit` is a number of matches to replace.
 * `i[string]` – insert (prepend) string to the pattern space.
 * `a[string]` – append string to the pattern space.
-* `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
+* `c N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
 * `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `l`, `L` – escape characters with Rust's [std::char::escape_default] and unescape them.
@@ -96,7 +96,7 @@ precedence than `&`, and `&` then `,`.
 
 ### Manipulating memory
 
-* `c` - set pattern space to the original, unprocessed line.
+* `o` - set pattern space to the original, unprocessed line.
 * `h` – hold the content of the pattern space to the hold space.
 * `g` – get the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.

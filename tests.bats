@@ -158,7 +158,7 @@ linux_only() {
 }
 
 @test "Be like cut" {
-   run diff <(cut -c '2-7' src/main.rs) <(./se 'k2-7p' src/main.rs)
+   run diff <(cut -c '2-7' src/main.rs) <(./se 'c2-7p' src/main.rs)
    [ "$status" -eq 0 ]
 }
 

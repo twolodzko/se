@@ -52,13 +52,13 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             'b' => ToBase64,
             'B' => FromBase64,
             's' => parse_substitute(reader)?,
-            'k' => {
+            'c' => {
                 skip_whitespace(reader);
                 keeps_range(reader)?
             }
             '=' => LineNumber,
             'd' => Delete,
-            'c' => CancelEdits,
+            'o' => CancelEdits,
             'z' => Reset,
             'h' => Hold,
             'g' => Get,
