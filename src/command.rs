@@ -5,7 +5,7 @@ use core::str;
 use std::io::Write;
 use unescaper::unescape;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) enum Command {
     /// p
     Println,
@@ -36,7 +36,7 @@ pub(crate) enum Command {
     /// k s-e
     Keep(usize, Option<usize>),
     /// &
-    GetLine,
+    CancelEdits,
     /// h
     Hold,
     /// g
@@ -142,7 +142,7 @@ impl Command {
             Get => {
                 memory.this = memory.hold.clone();
             }
-            GetLine => memory.this = memory.line.1.clone(),
+            CancelEdits => memory.this = memory.line.1.clone(),
             Exchange => {
                 std::mem::swap(&mut memory.hold, &mut memory.this);
             }
@@ -273,21 +273,21 @@ impl std::fmt::Display for Command {
             FromBase64 => write!(f, "B"),
             LineNumber => write!(f, "="),
             Insert(s) => write!(f, "'{s}'"),
-            Substitute(r, t, l) => write!(f, "s/{r}/{t}/{l}"),
+            Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
             Keep(s, None) => write!(f, "k {}-", s + 1),
             Keep(s, Some(t)) => write!(f, "k {}-{}", s + 1, s + t),
             Hold => write!(f, "h"),
             Get => write!(f, "g"),
-            GetLine => write!(f, "&"),
+            CancelEdits => write!(f, "c"),
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),
-            Readln(n) => write!(f, "r {n}"),
+            Readln(n) => write!(f, "r{}", n),
             ReadReplace => write!(f, "R"),
             Reset => write!(f, "z"),
             Delete => write!(f, "d"),
             Break => write!(f, "."),
-            Quit(c) => write!(f, "q {c}"),
+            Quit(c) => write!(f, "q{}", c),
             Eval => write!(f, "e"),
         }
     }

@@ -13,9 +13,13 @@ pub(crate) fn parse_instruction<R: Reader>(
     skip_whitespace(reader);
     let commands = command::parse(reader)?;
 
-    if address == Address::Final {
-        finally.extend(commands);
-    } else {
+    if address.is_final() {
+        for cmd in &commands {
+            finally.push(cmd.clone());
+        }
+    }
+
+    if address.is_regular() {
         let subst = commands.iter().find_map(|c| {
             if let Command::Substitute(regex, _, _) = c {
                 Some(regex)
@@ -42,13 +46,37 @@ impl Address {
                 *self = Address::Regex(regex.clone());
             }
             Address::Between(between) => {
-                between.lhs.replace_maybe(subst)?;
-                between.rhs.replace_maybe(subst)?;
+                between.start.replace_maybe(subst)?;
+                between.end.replace_maybe(subst)?;
             }
-            Address::Set(addrs) => addrs.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
-            Address::And(addrs) => addrs.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
+            Address::Set(set) => set.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
+            Address::And(and) => and.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
             _ => (),
         }
         Ok(())
+    }
+}
+
+impl Address {
+    fn is_final(&self) -> bool {
+        use Address::*;
+        match self {
+            Final => true,
+            Extend(extend) => extend.start.is_final(),
+            Set(set) => set.iter().any(|a| a.is_final()),
+            _ => false,
+        }
+    }
+
+    fn is_regular(&self) -> bool {
+        use Address::*;
+        match self {
+            Final => false,
+            Extend(extend) => extend.start.is_regular(),
+            Set(set) => set.iter().any(|a| a.is_regular()),
+            And(and) => !and.iter().any(|a| a.is_final()),
+            Negate(not) => !matches!(not.as_ref(), Always),
+            _ => true,
+        }
     }
 }

@@ -35,7 +35,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             }
             '=' => LineNumber,
             'd' => Delete,
-            '&' => GetLine,
+            'c' => CancelEdits,
             'z' => Reset,
             'h' => Hold,
             'g' => Get,

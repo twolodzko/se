@@ -58,7 +58,7 @@ fn and<R: Reader>(reader: &mut R) -> Result<Address> {
         }
 
         skip_whitespace(reader);
-        if reader.next_is('+')? {
+        if reader.next_is('&')? {
             skip_whitespace(reader);
         } else {
             break;
@@ -124,6 +124,14 @@ fn between<R: Reader>(reader: &mut R) -> Result<Address> {
                 };
                 return Ok(Nth(start, step));
             }
+            '+' => {
+                reader.skip();
+                let start = addr.unwrap_or(Location(1));
+                skip_whitespace(reader);
+                let s = read_integer(reader)?;
+                let size = usize::from_str(&s)?;
+                return Ok(Extend(address::Extend::new(start, size)));
+            }
             _ => {}
         }
     }
@@ -143,14 +151,9 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 return Ok(Some(addr));
             }
             c if c.is_ascii_digit() => {
-                let s = read_integer(reader)?;
-                match s.parse() {
-                    Ok(num) => {
-                        if num == 0 {
-                            bail!("line numbering starts at 1");
-                        }
-                        return Ok(Some(Location(num)));
-                    }
+                match read_integer(reader)?.parse() {
+                    Ok(0) => bail!("line numbering starts at 1"),
+                    Ok(num) => return Ok(Some(Location(num))),
                     Err(err) => bail!(err),
                 };
             }
@@ -194,7 +197,7 @@ mod tests {
     #[test_case("1,$", Set(vec![Location(1), Final]); "first or last")]
     #[test_case("1,!$", Set(vec![Location(1), Negate(Box::new(Final))]); "first or last negated")]
     #[test_case("!(1,$)", Negate(Box::new(Set(vec![Location(1), Final]))); "negate set in brackets")]
-    #[test_case("/a/,/b/+(/c/,/d/),/e/",
+    #[test_case("/a/,/b/&(/c/,/d/),/e/",
         Set(vec![
             Regex(FromStr::from_str("a").unwrap()),
             And(vec![
@@ -207,7 +210,7 @@ mod tests {
             Regex(FromStr::from_str("e").unwrap()),
         ]);
       "set and and together")]
-    #[test_case("/a/+1-5+/b/",
+    #[test_case("/a/ & 1-5 & /b/",
         And(vec![
             Regex(FromStr::from_str("a").unwrap()),
             Between(address::Between::new(Location(1), Location(5))),

@@ -63,6 +63,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Match last line" {
+	run diff <(echo "100") <(seq 1 100 | ./se '$p')
+   [ "$status" -eq 0 ]
+}
+
 @test "Use negation with set" {
    run diff <(./se '!(1,2,3)p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
@@ -174,6 +179,11 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
+@test "Count lines like wc -l" {
+   run diff <(wc -l README.md | awk '{ print $1 }') <(./se '$=\n' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "nth works like in sed" {
    run diff <(seq 1 100 | sed -n '7~4 p') <(seq 1 100 | ./se '7~4 p')
    [ "$status" -eq 0 ]
@@ -181,6 +191,17 @@ teardown() {
 
 @test "nth with read line works like cat" {
    run diff <(cat README.md) <(./se '1~4 r3 p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "Extend alone" {
+   run diff <(seq 5 13) <(seq 1 100 | ./se '5+8 p')
+   [ "$status" -eq 0 ]
+}
+
+@test "Extend with nth" {
+   run bats_pipe --returned-status=1 seq 1 29 \| ./se '(1~10)+2 p'
+   [[ "$output" = $(printf "1\n2\n3\n11\n12\n13\n21\n22\n23\n") ]]
    [ "$status" -eq 0 ]
 }
 
@@ -204,13 +225,24 @@ teardown() {
    [ "$status" -eq 0 ]
 }
 
-@test "And (+) address pattern works" {
-   run diff <(grep -e '\bsed\b' README.md | grep -e '\bse\b') <(./se '/\bsed\b/ + /\bse\b/ p' README.md)
+@test "base64 encode file" {
+   run diff <(base64 -w 0 data/utf8-test-file.txt) <(./se '1h;2-xjx;$zxjbP' data/utf8-test-file.txt)
+   [ "$status" -eq 0 ]
+}
+
+@test "base64 decode file" {
+   run diff <(cat data/utf8-test-file.txt) <(base64 -w 0 data/utf8-test-file.txt | ./se 'BP')
+   [ "$status" -eq 0 ]
+}
+
+@test "And (&) address pattern works" {
+   run diff <(grep -e '\bsed\b' README.md | grep -e '\bse\b') <(./se '/\bsed\b/ & /\bse\b/ p' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Stop early" {
-   run diff <(./se '7=q' README.md) <(printf "7")
+   run ./se '7=q' README.md
+   [ "$output" = "7" ]
    [ "$status" -eq 0 ]
 }
 

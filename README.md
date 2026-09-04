@@ -41,8 +41,8 @@ Same as `sed`, it can be used for string search and replace in files.
 ## Addresses
 
 * Number like `1` or `278` points to a specific line. Line numbers start at 1.
-* `$` matches the final line, so `5-$` (or `5-`) means a left-open interval.
-  Commands in the block after `$` would run unconditionally, after processing the files,
+* `$` never matches, so `5-$` (or `5-`) means a left-open interval.
+  Commands with the `$` address would run unconditionally after processing all the lines,
   even after early stopping using `q`.
 * `/regex/` matches the lines that match the regular expression specified between `/.../`.
   Regular expressions can be used as bounds of the ranges.
@@ -54,52 +54,63 @@ Same as `sed`, it can be used for string search and replace in files.
 * `?` matches the lines where the following substitution could be applied.
   It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 * `!` before the address negates it, e.g. `!1` means all the lines except the first.
-* Addresses can be enclosed with brackets `(addr)`. It can be used together with negation,
-  e.g. `!(1,2,3)` is equivalent to matching the `4-` range.
+* Addresses can be enclosed with brackets `(addr)`.
 
 Addresses can be combined:
 
-* `start-end` is an inclusive range. For example, `1-5` an inclusive range of the lines
+* `start-end` is an inclusive range. For example, `1-5` includes lines
   between `1` and `5`. `-5` is equivalent to `1-5`. `1-` or `1-$` means all the lines
   from `1` to the final line. `/foo/-/bar/` is a range of lines where the first line
   contains the word "foo" and the last line the word "bar".
 * `start~step` matches every `step`-th line since line number `start`.
-* `addr1,addr2,...,addrN` matches any of the addresses.
-* `addr1+addr2+...+addrN` matches only if all of the addresses matched.
+* `start+window` matches `start` line and next `window` number of lines after it.
+* `addr1, addr2, ..., addrN` matches any of the addresses.
+* `addr1 & addr2 & ... & addrN` matches only if all of the addresses matched.
 
-`/a/+/b/-/c/,/d/` is equivalent to `(/a/+(/b/-/c/)),/d/` because of the `-` has higher
-precedence than `+`, and `+` then `,`.
+`/a/ & /b/-/c/, /d/` is equivalent to `(/a/ & (/b/-/c/)), /d/` because of the `-` has higher
+precedence than `&`, and `&` then `,`.
 
 ## Commands
 
+### Printing
+
 * `p` – print the content of the pattern space as-is followed by a newline character.
 * `P` – same as above, but without the newline.
-* `l`, `L` – escape the characters with Rust's [std::char::escape_default] and unescape them.
-* `u`, `U` – URL encode and decode characters.
-* `t`, `T` – HTML-escape and unescape characters.
-* `b`, `B` – convert characters to base64 and back.
 * `=` – print the line number.
 * `\n`, `\t`, `\x0A`, `\uA005` – print special characters, escaping a character recognized
   as command like `\p` would print the character "p".
+* `"string"` or `'string'` – print the `string`. The `string` can contain special escape
+  characters like `\n` or `\t`.
+
+### Editing
+
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
   If there's nothing to substitute, it has no effect. `limit` is a number of matches to replace.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
-* `&` - set pattern space to the raw, unprocessed line.
+* `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
+* `l`, `L` – escape characters with Rust's [std::char::escape_default] and unescape them.
+* `u`, `U` – URL encode and decode characters.
+* `t`, `T` – HTML-escape and unescape characters.
+* `b`, `B` – convert characters to base64 and back.
+
+### Manipulating memory
+
+* `c` - set pattern space to the original, unprocessed line.
 * `h` – hold the content of the pattern space to the hold space.
 * `g` – get the content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
 * `j` – push the content of the hold space at the back of the pattern space
   using a newline character as separator.
 * `J` – same as above, but without the separator.
+
+### Special actions
+
 * `r [num]` – read `num` lines (1 by default) and append them to pattern space
   using newline as a separator.
 * `R` – read new line and replace pattern space content with it. If it cannot read the new line,
   it send the break signal (same as `.`).
-* `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
 * `d` – clear the content of the pattern space and immediately start processing next line.
-* `"string"` or `'string'` – print the `string`. The `string` can contain special escape
-  characters like `\n` or `\t`.
 * `e` – execute the content of the pattern space as a shell command. Save the stdout output
   of the command to pattern space. If the command returned with non-zero error code,
   stop and return the error code.
@@ -180,28 +191,6 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `wc -l README.md`                    | `se '$=' README.md`              |
 
 \* – but `se` understands unicode.
-
-## Grammar
-
-```text
-Location       = [1-9][0-9]*
-Regex          = '/' [^/]* '/'
-WholeLine      = '^' [^$]* '$'
-AddressAtom    = '$' | '?' | Location | Regex | WholeLine
-Range          = AddressAtom? '-' AddressAtom?
-Brackets       = AddressAtom | '(' Address ')'
-Negated        = '!'? ( Brackets | Range )
-Address        = ( Negated ',' | '+' )+ Negated
-
-Substitute     = 's' Regex [^/]* '/' ( [1-9][0-9]* | 'g' )?
-String         = '"' [^"]* '"' | "'" [^']* "'"
-Quit           = 'q' [0-9]*
-Keep           = 'k' ([1-9][0-9]*)? '-' ([1-9][0-9]*)?
-Command        = [=bdghjJlnpPrtxz&] | Quit | Keep | String | Substitute
-
-Instruction    = Address? Command*
-Script         = ( Instruction ( ';' | '.' ) )* Instruction?
-```
 
 [`sed`]: https://www.gnu.org/software/sed/manual/sed.html
 [Rust's Regex]: https://docs.rs/regex/latest/regex/

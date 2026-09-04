@@ -3,25 +3,27 @@ use std::cell::Cell;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Address {
-    // always matches
+    /// always matches
     Always,
-    // never matches
+    /// never matches
     Final,
-    // specific index
+    /// specific index
     Location(usize),
-    // /regex/ matching the line
+    /// /regex/ matching the line
     Regex(crate::Regex),
-    // !addr negates the addr match
+    /// !addr negates the addr match
     Negate(Box<Address>),
-    // addr1 - addr2
+    /// addr1 - addr2
     Between(Between),
-    // start ~ step
+    /// start ~ step
     Nth(usize, usize),
-    // addr1, addr2, ...
+    /// addr + window
+    Extend(Extend),
+    /// addr1, addr2, ...
     Set(Vec<Address>),
-    // addr1 + addr2 + ...
+    /// addr1 & addr2 & ...
     And(Vec<Address>),
-    // _
+    /// ?
     Maybe,
 }
 
@@ -42,6 +44,7 @@ impl Address {
                     (memory.line.0 - *start).is_multiple_of(*step)
                 }
             }
+            Extend(this) => this.matches(memory),
             Set(set) => {
                 for addr in set.iter() {
                     if addr.matches(memory) {
@@ -50,44 +53,44 @@ impl Address {
                 }
                 false
             }
-            And(set) => {
-                for addr in set.iter() {
+            And(and) => {
+                for addr in and.iter() {
                     if !addr.matches(memory) {
                         return false;
                     }
                 }
                 true
             }
-            Maybe => unimplemented!(),
+            Maybe => unreachable!(),
         }
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct Between {
-    pub(crate) lhs: Box<Address>,
-    pub(crate) rhs: Box<Address>,
+    pub(crate) start: Box<Address>,
+    pub(crate) end: Box<Address>,
     inside: Cell<bool>,
 }
 
 impl Between {
     pub(crate) fn new(lhs: Address, rhs: Address) -> Self {
         Between {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
+            start: Box::new(lhs),
+            end: Box::new(rhs),
             inside: Cell::new(false),
         }
     }
 
     pub(crate) fn matches(&self, memory: &Memory) -> bool {
         if self.inside.get() {
-            if self.rhs.matches(memory) {
+            if self.end.matches(memory) {
                 self.inside.set(false)
             }
             true
         } else {
-            if self.lhs.matches(memory) {
-                if !self.rhs.matches(memory) {
+            if self.start.matches(memory) {
+                if !self.end.matches(memory) {
                     self.inside.set(true)
                 }
                 return true;
@@ -99,7 +102,47 @@ impl Between {
 
 impl PartialEq for Between {
     fn eq(&self, other: &Self) -> bool {
-        self.lhs == other.lhs && self.rhs == other.rhs
+        self.start == other.start && self.end == other.end
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct Extend {
+    pub(crate) start: Box<Address>,
+    pub(crate) size: usize,
+    count: Cell<usize>,
+}
+
+impl Extend {
+    pub(crate) fn new(start: Address, size: usize) -> Extend {
+        Extend {
+            start: Box::new(start),
+            size,
+            count: Cell::new(0),
+        }
+    }
+
+    pub(crate) fn matches(&self, memory: &Memory) -> bool {
+        match self.count.get() {
+            0 => {
+                if self.start.matches(memory) {
+                    self.count.set(self.size);
+                    true
+                } else {
+                    false
+                }
+            }
+            n => {
+                self.count.set(n - 1);
+                true
+            }
+        }
+    }
+}
+
+impl PartialEq for Extend {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start && self.size == other.size
     }
 }
 
@@ -121,18 +164,19 @@ impl std::fmt::Display for Address {
         match self {
             Always => write!(f, "//"),
             Final => write!(f, "$"),
-            Location(idx) => write!(f, "{idx}"),
-            Regex(regex) => write!(f, "/{regex}/"),
-            Negate(addr) => write!(f, "{addr}!"),
-            Between(this) => write!(f, "{}-{}", this.lhs, this.rhs),
+            Location(idx) => write!(f, "{}", idx),
+            Regex(regex) => write!(f, "/{}/", regex),
+            Negate(addr) => write!(f, "!{}", addr),
+            Between(this) => write!(f, "{}-{}", this.start, this.end),
             Nth(start, step) => write!(f, "{}~{}", start, step),
+            Extend(window) => write!(f, "{}+{}", window.start, window.size),
             Set(addrs) => {
                 let list = addrs
                     .iter()
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
-                write!(f, "{list}")
+                write!(f, "{}", list)
             }
             And(addrs) => {
                 let list = addrs
@@ -140,7 +184,7 @@ impl std::fmt::Display for Address {
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
                     .join(" + ");
-                write!(f, "{list}")
+                write!(f, "{}", list)
             }
             Maybe => write!(f, "?"),
         }
@@ -265,7 +309,7 @@ mod tests {
         "half-open range"
     )]
     #[test_case(
-        "/a/+/b/",
+        "/a/&/b/",
         vec![false, false, false, false, true, true, false, false, false, false];
         "and"
     )]
