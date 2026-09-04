@@ -51,19 +51,19 @@ mod tests {
     #[test_case("", Program::from(Vec::new()); "empty")]
     #[test_case("p", Program::from(vec![
         Action::Condition(Always, 1),
-        Action::Command(Println),
+        Action::Command(Println(None)),
     ]); "print all")]
-    #[test_case(r"='\n'p", Program::from(vec![
+    #[test_case(r"=a'\n'p", Program::from(vec![
         Action::Condition(Always, 3),
         Action::Command(LineNumber),
-        Action::Command(Insert("\n".to_string())),
-        Action::Command(Println),
+        Action::Command(Append("\n".to_string())),
+        Action::Command(Println(None)),
     ]); "print with newlines")]
-    #[test_case(r"   = '\n'  p  ", Program::from(vec![
+    #[test_case(r"   = a\n  p  ", Program::from(vec![
         Action::Condition(Always, 3),
         Action::Command(LineNumber),
-        Action::Command(Insert("\n".to_string())),
-        Action::Command(Println),
+        Action::Command(Append("\n".to_string())),
+        Action::Command(Println(None)),
     ]); "commands with spaces")]
     #[test_case("-", Program::from(vec![
         Action::Condition(Between(address::Between::new(Location(1), Final)), 0),

@@ -47,7 +47,7 @@ linux_only() {
 }
 
 @test "Count lines like wc -l" {
-   run diff <(wc -l README.md | awk '{ print $1 }') <(./se '$=\n' README.md)
+   run diff <(wc -l README.md | awk '{ print $1 }') <(./se '$=P\n' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -57,7 +57,7 @@ linux_only() {
 }
 
 @test "Print vs Println" {
-	run diff <(./se 'p' data/utf8-test-file.txt) <(./se 'P\n' data/utf8-test-file.txt)
+	run diff <(./se 'p' data/utf8-test-file.txt) <(./se 'PP\n' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
@@ -96,7 +96,7 @@ linux_only() {
 }
 
 @test "Consistent with sed line counting" {
-   run diff <(sed '=' README.md) <(./se '=\np' README.md)
+   run diff <(sed '=' README.md) <(./se '=i\np' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -188,7 +188,7 @@ linux_only() {
 }
 
 @test "Count lines like sed" {
-   run diff <(sed -n '$=' README.md) <(./se '$="\n"' README.md)
+   run diff <(sed -n '$=' README.md) <(./se '$=P\n' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -240,7 +240,7 @@ linux_only() {
 
 @test "base64 encode file" {
    linux_only
-   run diff <(base64 -w 0 data/utf8-test-file.txt) <(./se '1h;2-xjx;$zxjbP' data/utf8-test-file.txt)
+   run diff <(base64 -w 0 data/utf8-test-file.txt) <(./se '1h; 2-xjx; $ga\nbP' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
@@ -348,7 +348,7 @@ bash_line_marker() {
 }
 
 @test "The stop behavior works as intended" {
-   run diff <(bash_line_marker) <(./se '/sed/ ">>> " p . /the/ "*** " p . "    " p' README.md)
+   run diff <(bash_line_marker) <(./se '/sed/ i">>> " p . /the/ i"*** " p . i"    " p' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -360,13 +360,13 @@ bash_line_marker() {
 
 @test "Append text like gsed" {
    gsed_only
-   run diff <(sed '/sed/a >>>' README.md) <(./se '/sed/ p ">>>\n" . p' README.md)
+   run diff <(sed '/sed/a >>>' README.md) <(./se '/sed/ a"\n>>>" p . p' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Insert text like gsed" {
    gsed_only
-   run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ ">>>\n" p . p' README.md)
+   run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ i">>>\n" p . p' README.md)
    [ "$status" -eq 0 ]
 }
 

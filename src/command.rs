@@ -1,16 +1,19 @@
 use crate::{Reader, Regex, program::Memory};
 use anyhow::Result;
 use base64::{Engine, prelude::BASE64_STANDARD};
-use core::str;
 use std::io::Write;
 use unescaper::unescape;
 
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum Command {
-    /// p
-    Println,
-    /// P
-    Print,
+    /// p[string]
+    Println(Option<String>),
+    /// P[string]
+    Print(Option<String>),
+    /// a"string"
+    Append(String),
+    /// i"string"
+    Prepend(String),
     /// l
     Escape,
     /// L
@@ -29,8 +32,6 @@ pub(crate) enum Command {
     FromBase64,
     /// =
     LineNumber,
-    /// "string" or 'string'
-    Insert(String),
     /// s/src/dst/[limit]
     Substitute(Regex, String, usize),
     /// k s-e
@@ -94,8 +95,14 @@ impl Command {
         use Command::*;
         match self {
             // commands that print things
-            Println => writeln!(out, "{}", memory.this)?,
-            Print => write!(out, "{}", memory.this)?,
+            Println(None) => writeln!(out, "{}", memory.this)?,
+            Println(Some(s)) => writeln!(out, "{}", s)?,
+            Print(None) => write!(out, "{}", memory.this)?,
+            Print(Some(s)) => write!(out, "{}", s)?,
+            LineNumber => write!(out, "{}", memory.line.0)?,
+            // edit
+            Append(s) => memory.this.push_str(s),
+            Prepend(s) => memory.this = s.to_owned() + &memory.this,
             Escape => {
                 memory.this = memory.this.escape_default().to_string();
             }
@@ -121,8 +128,6 @@ impl Command {
                 let b = BASE64_STANDARD.decode(&memory.this)?;
                 memory.this = String::from_utf8_lossy(&b).into_owned();
             }
-            LineNumber => write!(out, "{}", memory.line.0)?,
-            Insert(message) => write!(out, "{message}")?,
             // commands that modify the buffers
             Substitute(regex, template, limit) => {
                 let replaced = regex.0.replacen(&memory.this, *limit, template);
@@ -261,8 +266,12 @@ impl std::fmt::Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Command::*;
         match self {
-            Println => write!(f, "p"),
-            Print => write!(f, "P"),
+            Println(None) => write!(f, "p"),
+            Println(Some(s)) => write!(f, "p'{}'", s),
+            Print(None) => write!(f, "P"),
+            Print(Some(s)) => write!(f, "P'{}'", s),
+            Append(s) => write!(f, "a'{}'", s),
+            Prepend(s) => write!(f, "i'{}'", s),
             Escape => write!(f, "l"),
             UnEscape => write!(f, "L"),
             ToHtml => write!(f, "t"),
@@ -272,7 +281,6 @@ impl std::fmt::Display for Command {
             ToBase64 => write!(f, "b"),
             FromBase64 => write!(f, "B"),
             LineNumber => write!(f, "="),
-            Insert(s) => write!(f, "'{s}'"),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
             Keep(s, None) => write!(f, "k {}-", s + 1),
             Keep(s, Some(t)) => write!(f, "k {}-{}", s + 1, s + t),

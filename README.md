@@ -74,18 +74,19 @@ precedence than `&`, and `&` then `,`.
 
 ### Printing
 
-* `p` – print the content of the pattern space as-is followed by a newline character.
-* `P` – same as above, but without the newline.
+* `p[string]` – if string is provided print it, otherwise print the content of the pattern space
+  followed by a newline character. The string could be enclosed in quotation marks `"string"` or `'string'`,
+  or be an escaped special character like `\n`, `\t`, `\x0A`, or `\uA005`. If string is followed by `*N`
+  where N is an integer, it is repeated N times, so `p'='*3` would print "===".
+* `P[string]` – same as above, but without the newline.
 * `=` – print the line number.
-* `\n`, `\t`, `\x0A`, `\uA005` – print special characters, escaping a character recognized
-  as command like `\p` would print the character "p".
-* `"string"` or `'string'` – print the `string`. The `string` can contain special escape
-  characters like `\n` or `\t`.
 
 ### Editing
 
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
   If there's nothing to substitute, it has no effect. `limit` is a number of matches to replace.
+* `i[string]` – insert (prepend) string to the pattern space.
+* `a[string]` – append string to the pattern space.
 * `k N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
   `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
 * `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
@@ -130,8 +131,8 @@ When script contains multiple instructions, they can be delimited with `;` or `.
 For example, the script
 
 ```text
-/sed/ ">> " p .
-      "   " p
+/sed/ i">> " p .
+      i"   " p
 ```
 
 when applied to this README would print it's content prepending each line containing the word "sed"
@@ -146,10 +147,9 @@ lines containing the word "sed" would be printed twice, because of matching addr
   expressions in [verbose mode], which can include comments.
 * When using `\N` for substitutions, N could be a name of a named group (but to avoid ambiguity best use `\{N}`).
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
-  but instead reading commands directly e.g. `=p` (actually `=\np`, see [above](#commands)) is equivalent to `{ = ; p }` in `sed`.
+  but instead reading commands directly e.g. `=p` (actually `=a\np`, see [above](#commands)) is equivalent
+  to `{ = ; p }` in `sed`.
 * Only a subset of `sed` commands is supported and they can behave differently.
-* Instead of `a string`, use `p"string"` to print the string after
-  printing the line, same applies to `sed`s `i`.
 * `sed` by default prints all the lines unless explicitly deleted.
   To achieve this behavior use `-a` (`--all`) flag to print all the lines.
 * In `sed` the block after `$` runs on the final line, in `se`
@@ -160,9 +160,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
-| `=`              | `=\np`              |
-| `i text`         | `p "text\n"`        |
-| `a text`         | `"text\n" p`        |
+| `=`              | `=a\np`              |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
 | `s/src/dst/`     | `s/src/dst/1`       |
 | `s/src/dst/g`    | `s/src/dst/`        |
@@ -170,7 +168,6 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/(src)/\1/g`   | `s/(src)/\1/`       |
 | `s/(src)/&/g`    | `s/(src)/\0/`       |
 | `1,5p`           | `1-5p`              |
-| `$p`             | `$p`                |
 
 ## `se` vs other command line utilities
 
@@ -178,7 +175,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 |--------------------------------------|----------------------------------|
 | `cat README.md`                      | `se 'p' README.md`               |
 | `tac README.md`                      | `se '!1 j ; $p ; h' README.md`   |
-| `cat -n README.md`                   | `se '=\tp' README.md`            |
+| `cat -n README.md`                   | `se '=i\tp' README.md`           |
 | `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_\1_/p' README.md`  |
 | `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`       |
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |

@@ -13,11 +13,37 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 cmds.push(Break);
                 break;
             }
-            'p' => Println,
-            'P' => Print,
-            '\\' => {
-                let s = read_escaped(reader)?;
-                Insert(s)
+            'p' => {
+                skip_whitespace(reader);
+                if let Some(s) = reader.peek()?
+                    && matches!(s, '"' | '\'' | '\\')
+                {
+                    let s = read_string(reader)?;
+                    Println(Some(s))
+                } else {
+                    Println(None)
+                }
+            }
+            'P' => {
+                skip_whitespace(reader);
+                if let Some(s) = reader.peek()?
+                    && matches!(s, '"' | '\'' | '\\')
+                {
+                    let s = read_string(reader)?;
+                    Print(Some(s))
+                } else {
+                    Print(None)
+                }
+            }
+            'a' => {
+                skip_whitespace(reader);
+                let s = read_string(reader)?;
+                Append(s)
+            }
+            'i' => {
+                skip_whitespace(reader);
+                let s = read_string(reader)?;
+                Prepend(s)
             }
             'l' => Escape,
             'L' => UnEscape,
@@ -54,10 +80,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 let s = read_integer(reader)?;
                 let code = if s.is_empty() { 0 } else { s.parse()? };
                 Quit(code)
-            }
-            '\'' | '"' => {
-                let msg = unescape(&read_until(reader, c)?)?;
-                Insert(msg)
             }
             '#' => {
                 skip_line(reader);
@@ -201,6 +223,27 @@ fn keeps_range<R: Reader>(reader: &mut R) -> Result<Command> {
         Some(rhs - lhs)
     };
     Ok(Keep(lhs, rhs))
+}
+
+fn read_string<R: Reader>(reader: &mut R) -> Result<String> {
+    let Some(c) = reader.next()? else {
+        bail!(Error::EndOfInput)
+    };
+    let mut s = match c {
+        '\\' => read_escaped(reader)?,
+        '"' | '\'' => unescape(&read_until(reader, c)?)?,
+        _ => bail!(Error::Unexpected(c)),
+    };
+
+    skip_whitespace(reader);
+    if let Some('*') = reader.peek()? {
+        reader.skip();
+        skip_whitespace(reader);
+        let n = usize::from_str(&read_integer(reader)?)?;
+        s = s.repeat(n);
+    }
+
+    Ok(s)
 }
 
 fn read_until<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
