@@ -1,8 +1,7 @@
-use std::str::FromStr;
-
 use super::{Error, read_integer, reader::Reader, regex, skip_line, skip_whitespace};
 use crate::command::Command::{self, *};
 use anyhow::{Result, bail};
+use std::str::FromStr;
 use unescaper::unescape;
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
@@ -31,7 +30,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             's' => parse_substitute(reader)?,
             'k' => {
                 skip_whitespace(reader);
-                read_range(reader)?
+                keeps_range(reader)?
             }
             '=' => LineNumber,
             'd' => Delete,
@@ -123,19 +122,23 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
 }
 
 fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
-    let delim = '/';
     let mut acc = String::new();
     while let Some(c) = reader.peek()? {
         match c {
-            c if c == delim => {
+            '/' => {
                 reader.skip();
                 return Ok(unescape(&acc)?);
+            }
+            '&' => {
+                // use sed's symbol for initial input
+                reader.skip();
+                acc.push_str("${0}");
             }
             '\\' => {
                 reader.skip();
                 if let Some(e) = reader.peek()? {
                     match e {
-                        e if e == delim => {
+                        '/' => {
                             reader.skip();
                             acc.push(e);
                         }
@@ -146,10 +149,10 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
                         '{' => {
                             acc.push('$');
                         }
-                        e if e.is_ascii_digit() => {
+                        '1'..='9' => {
+                            // replace sed's \N with Rust's ${N}
+                            // keep \0 as null character
                             acc.push('$');
-                            // replace $N with ${N}
-                            // "$123something" string is interpreted as "${123}something" rather than "${123something}"
                             acc.push('{');
                             acc.push_str(&read_integer(reader)?);
                             acc.push('}');
@@ -170,19 +173,17 @@ fn read_template<R: Reader>(reader: &mut R) -> Result<String> {
             }
         }
     }
-    bail!(Error::Missing(delim))
+    bail!(Error::Missing('/'))
 }
 
-fn read_range<R: Reader>(reader: &mut R) -> Result<Command> {
+fn keeps_range<R: Reader>(reader: &mut R) -> Result<Command> {
     let s = read_integer(reader)?;
     let lhs = if s.is_empty() {
         0
+    } else if s == "0" {
+        bail!("character indexes need to be >0");
     } else {
-        let lhs: usize = s.parse()?;
-        if lhs == 0 {
-            bail!("character indexes need to be >0");
-        }
-        lhs - 1
+        s.parse::<usize>()? - 1
     };
 
     if !reader.next_is('-')? {
@@ -195,13 +196,7 @@ fn read_range<R: Reader>(reader: &mut R) -> Result<Command> {
     } else {
         let rhs: usize = s.parse()?;
         if rhs == 0 || lhs > rhs {
-            bail!(
-                "invalid character index range: {} > {} in {}-{}",
-                lhs + 1,
-                rhs,
-                lhs + 1,
-                rhs,
-            );
+            bail!("invalid character index range: {}-{}", lhs + 1, rhs,);
         }
         Some(rhs - lhs)
     };

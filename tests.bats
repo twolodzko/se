@@ -30,7 +30,13 @@ teardown() {
 }
 
 @test "Count works" {
-	[ "$(./se -c '/the/' README.md)" -eq "$(grep -c 'the' README.md)" ]
+    run diff <(./se -c '/the/' README.md) <(grep -c 'the' README.md)
+	[ "$status" -eq 0 ]
+}
+
+@test "Count lines like wc -l" {
+   run diff <(wc -l README.md | awk '{ print $1 }') <(./se '$=\n' README.md)
+   [ "$status" -eq 0 ]
 }
 
 @test "Print all" {
@@ -145,7 +151,7 @@ teardown() {
 }
 
 @test "Replace all like in sed" {
-   run diff <(sed -nE 's/in (`sed`)/__&__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__\0__/p' README.md)
+   run diff <(sed -nE 's/in (`sed`)/__&__/p' README.md) <(./se '/in `sed`/ s/in (`sed`)/__&__/p' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -176,11 +182,6 @@ teardown() {
 
 @test "Empty nth is like cat" {
    run diff <(cat data/utf8-test-file.txt) <(./se '~p' data/utf8-test-file.txt)
-   [ "$status" -eq 0 ]
-}
-
-@test "Count lines like wc -l" {
-   run diff <(wc -l README.md | awk '{ print $1 }') <(./se '$=\n' README.md)
    [ "$status" -eq 0 ]
 }
 
