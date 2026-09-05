@@ -156,35 +156,38 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * `se` by default replaces all matches (like `s/src/dst/g` in sed) so it does not use the /g flag.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
   To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
+* `z` command is used for behaviors of sed's `z` and `c` commands, depending on parametrization.
+* `l` edits the pattern space instead of printing and uses Rust's escape formatting.
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
-| `=`              | `=a\np`              |
+| `=`              | `=a\np`             |
 | `{c1 ; c2 ; c3}` | `c1 c2 c3`          |
 | `s/src/dst/`     | `s/src/dst/1`       |
 | `s/src/dst/g`    | `s/src/dst/`        |
 | `s/src/dst/flag` | `s/(?flag)src/dst/` |
-| `s/(src)/\1/g`   | `s/(src)/\1/`       |
-| `s/(src)/&/g`    | `s/(src)/\0/`       |
 | `1,5p`           | `1-5p`              |
+| `c string`       | `z"string"`         |
+| `l`              | `lp`                |
 
 ## `se` vs other command line utilities
 
-|    other                             |   `se`                           |
-|--------------------------------------|----------------------------------|
-| `cat README.md`                      | `se 'p' README.md`               |
-| `tac README.md`                      | `se '!1 j ; $p ; h' README.md`   |
-| `cat -n README.md`                   | `se '=i\tp' README.md`           |
-| `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_\1_/p' README.md`  |
-| `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`       |
-| `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |
-| `head -n 5 README.md`                | `se '-5 p . q' README.md`        |
-| `head -n 5 README.md`                | `se 'r4 p q' README.md`          |
-| `cut -c '3-7' README.md`             | `se 'c3-7 p' README.md`\*        |
-| `grep 'sed' README.md`               | `se '/sed/ p' README.md`         |
-| `grep -c 'sed' README.md`            | `se -c '/sed/' README.md`        |
-| `wc -l README.md`                    | `se -c '' README.md`             |
-| `wc -l README.md`                    | `se '$=' README.md`              |
+|    other                             |   `se`                             |
+|--------------------------------------|------------------------------------|
+| `cat README.md`                      | `se 'p' README.md`                 |
+| `tac README.md`                      | `se '!1 j ; $p ; h' README.md`     |
+| `cat -n README.md`                   | `se '=i\tp' README.md`             |
+| `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_\1_/p' README.md`    |
+| `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`         |
+| `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`     |
+| `sed 'c replacement' README.md`      | `se -a 'z"replacement"' README.md` |
+| `head -n 5 README.md`                | `se '-5 p . q' README.md`          |
+| `head -n 5 README.md`                | `se 'r4 p q' README.md`            |
+| `cut -c '3-7' README.md`             | `se -a 'c3-7' README.md`\*         |
+| `grep 'sed' README.md`               | `se '/sed/ p' README.md`           |
+| `grep -c 'sed' README.md`            | `se -c '/sed/' README.md`          |
+| `wc -l README.md`                    | `se -c '' README.md`               |
+| `wc -l README.md`                    | `se '$=' README.md`                |
 
 \* – but `se` understands unicode.
 

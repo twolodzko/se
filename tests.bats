@@ -378,7 +378,7 @@ bash_line_marker() {
    echo "set -e" >/tmp/script.sh
    sed -nE 's/^.*`(se (-.+ )*\x27[^\x27]*\x27 [^ ]+)`.*$/.\/\1/p' README.md >>/tmp/script.sh
    # make sure we take all the tests + the set -e line
-   [ "$(wc -l </tmp/script.sh )" -eq 14 ]
+   [ "$(wc -l </tmp/script.sh )" -eq 15 ]
 
    run source /tmp/script.sh
    [ "$status" -eq 0 ]
