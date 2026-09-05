@@ -44,6 +44,10 @@ pub(crate) enum Command {
     Joinln,
     /// J
     Join,
+    /// k
+    Collectln,
+    /// K
+    Collect,
     /// r [num]
     Readln(usize),
     /// R
@@ -149,6 +153,13 @@ impl Command {
             Join => {
                 memory.this.push_str(&memory.hold);
             }
+            Collectln => {
+                memory.hold.push('\n');
+                memory.hold.push_str(&memory.this);
+            }
+            Collect => {
+                memory.hold.push_str(&memory.this);
+            }
             Readln(n) => {
                 for _ in 0..*n {
                     if let Some(line) = reader.next() {
@@ -227,6 +238,8 @@ impl std::fmt::Display for Command {
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),
+            Collectln => write!(f, "k"),
+            Collect => write!(f, "K"),
             Readln(n) => write!(f, "r{}", n),
             ReadReplace => write!(f, "R"),
             Reset(None) => write!(f, "z"),

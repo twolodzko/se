@@ -97,12 +97,15 @@ precedence than `&`, and `&` then `,`.
 ### Manipulating memory
 
 * `o` - set pattern space to the original, unprocessed line.
-* `h` – hold the content of the pattern space to the hold space.
-* `g` – get the content of the hold space to the pattern space.
+* `h` – hold content of the pattern space to the hold space.
+* `g` – get content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
-* `j` – push the content of the hold space at the back of the pattern space
+* `j` – push content of the hold space at the back of the pattern space
   using a newline character as separator.
 * `J` – same as above, but without the separator.
+* `k` – push content of the pattern space at the back of hold space 
+  using a newline character as separator. It is a shortcut for `xjx`.
+* `K` – same as above, but without the separator. It is a shortcut for `xJx`.
 
 ### Special actions
 

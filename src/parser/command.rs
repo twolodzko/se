@@ -75,6 +75,8 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             'x' => Exchange,
             'j' => Joinln,
             'J' => Join,
+            'k' => Collectln,
+            'K' => Collect,
             'e' => Eval,
             'r' => {
                 skip_whitespace(reader);

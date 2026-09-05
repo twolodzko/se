@@ -235,13 +235,23 @@ linux_only() {
 
 @test "base64 encode file" {
    linux_only
-   run diff <(base64 -w 0 data/utf8-test-file.txt) <(./se '1h; 2-xjx; $ga\nbP' data/utf8-test-file.txt)
+   run diff <(base64 -w 0 data/utf8-test-file.txt) <(./se '1h; 2-k; $ga\nbP' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
 @test "base64 decode file" {
    linux_only
    run diff <(cat data/utf8-test-file.txt) <(base64 -w 0 data/utf8-test-file.txt | ./se 'BP')
+   [ "$status" -eq 0 ]
+}
+
+@test "Imitate cat by collecting lines" {
+   run diff <(cat data/utf8-test-file.txt) <(./se '1h.k.$gp' data/utf8-test-file.txt)
+   [ "$status" -eq 0 ]
+}
+
+@test "k is like xjx" {
+   run diff <(./se '1h.xjx.$gp' data/utf8-test-file.txt) <(./se '1h.k.$gp' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
