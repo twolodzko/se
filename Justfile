@@ -33,7 +33,7 @@ benchmark: build
 
     bench 2000 \
         'sed "/sed/ =" README.md' \
-        './se -a "/sed/ =\n" README.md'
+        './se -a "/sed/ =P\n" README.md'
 
     bench 2000 \
         'sed -n "/sed/ { s/default/kitty/g ; p ; }" README.md' \
