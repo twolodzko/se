@@ -3,11 +3,12 @@ mod command;
 mod lines;
 mod parser;
 mod program;
+mod reader;
 
 pub use {
     command::Status,
-    lines::{Line, Reader},
     program::Program,
+    reader::{Line, Reader},
 };
 
 #[derive(Debug, Clone)]

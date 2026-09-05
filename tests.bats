@@ -41,6 +41,11 @@ linux_only() {
 	[ "$status" -eq 13 ]
 }
 
+@test "Does not fail when reading non-utf-8 content" {
+    run ./se 'p' ./se
+	[ "$status" -eq 0 ]
+}
+
 @test "Count works" {
     run diff <(./se -c '/the/' README.md) <(grep -c 'the' README.md)
 	[ "$status" -eq 0 ]

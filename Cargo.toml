@@ -7,6 +7,7 @@ edition = "2024"
 anyhow = "1.0.98"
 base64 = "0.23.1"
 clap = { version = "4.5.37", features = ["derive"] }
+memchr = "2.8.3"
 regex = "1.11.1"
 unescaper = "0.2.0"
 urlencoding = "2.1.3"

@@ -1,113 +1,65 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader, Lines, Result},
-    path::PathBuf,
-};
+use std::io::{BufRead, ErrorKind, Result};
 
-#[derive(Debug, PartialEq, Default)]
-pub struct Line(pub usize, pub String);
-
-pub struct Reader<'a> {
-    iter: Box<dyn Iterator<Item = Result<String>> + 'a>,
-    counter: usize,
+#[derive(Debug)]
+/// `std::io::Lines` re-implementation to handle invalid utf-8 characters
+pub struct LossyLines<B> {
+    buf: B,
 }
 
-impl<'a> Reader<'a> {
-    pub fn new<I>(reader: I) -> Self
-    where
-        I: Iterator<Item = Result<String>> + 'a,
-    {
-        Self {
-            iter: Box::new(reader),
-            counter: 0,
-        }
-    }
-
-    #[cfg(test)]
-    pub(crate) fn empty() -> Self {
-        Self {
-            iter: Box::new(std::iter::empty()),
-            counter: 0,
-        }
+impl<B: BufRead> LossyLines<B> {
+    pub fn new(buf: B) -> Self {
+        Self { buf }
     }
 }
 
-impl Default for Reader<'_> {
-    fn default() -> Self {
-        Self::new(BufReader::new(std::io::stdin()).lines())
-    }
-}
-
-impl From<&[PathBuf]> for Reader<'_> {
-    fn from(paths: &[PathBuf]) -> Self {
-        if paths.is_empty() {
-            Self::default()
-        } else {
-            Self::new(FilesReader::from(paths))
-        }
-    }
-}
-
-impl Iterator for Reader<'_> {
-    type Item = Result<Line>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.counter += 1;
-        let line = match self.iter.next()? {
-            Ok(line) => line,
-            Err(err) => return Some(Err(err)),
-        };
-        Some(Ok(Line(self.counter, line)))
-    }
-}
-
-struct FilesReader {
-    paths: Vec<PathBuf>,
-    file: Option<Lines<BufReader<File>>>,
-}
-
-impl FilesReader {
-    fn next_file(&mut self) -> Option<Result<()>> {
-        let path = self.paths.pop()?;
-        let file = match File::open(path) {
-            Ok(file) => file,
-            Err(err) => return Some(Err(err)),
-        };
-        let reader = BufReader::new(file).lines();
-        self.file = Some(reader);
-        Some(Ok(()))
-    }
-}
-
-impl From<&[PathBuf]> for FilesReader {
-    fn from(value: &[PathBuf]) -> Self {
-        FilesReader {
-            paths: value.iter().rev().cloned().collect(),
-            file: None,
-        }
-    }
-}
-
-impl Iterator for FilesReader {
+impl<B: BufRead> Iterator for LossyLines<B> {
     type Item = Result<String>;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if let Some(ref mut buffer) = self.file {
-                match buffer.next() {
-                    Some(Ok(line)) => {
-                        return Some(Ok(line));
-                    }
-                    Some(Err(err)) => return Some(Err(err)),
-                    None => {
-                        if let Err(err) = self.next_file()? {
-                            return Some(Err(err));
-                        }
+    fn next(&mut self) -> Option<Result<String>> {
+        let mut buf = Vec::new();
+        match read_until(&mut self.buf, b'\n', &mut buf) {
+            Ok(0) => None,
+            Ok(_n) => {
+                if buf.last().is_some_and(|b| *b == b'\n') {
+                    buf.pop();
+                    if buf.last().is_some_and(|b| *b == b'\r') {
+                        buf.pop();
                     }
                 }
-            } else if let Err(err) = self.next_file()? {
-                return Some(Err(err));
+
+                let s = String::from_utf8_lossy(&buf).into_owned();
+                Some(Ok(s))
             }
+            Err(e) => Some(Err(e)),
+        }
+    }
+}
+
+// taken from std::io with modifications
+fn read_until<R: BufRead + ?Sized>(r: &mut R, delim: u8, buf: &mut Vec<u8>) -> Result<usize> {
+    let mut read = 0;
+    loop {
+        let (done, used) = {
+            let available = match r.fill_buf() {
+                Ok(n) => n,
+                Err(ref e) if e.kind() == ErrorKind::Interrupted => continue,
+                Err(e) => return Err(e),
+            };
+            match memchr::memchr(delim, available) {
+                Some(i) => {
+                    buf.extend_from_slice(&available[..=i]);
+                    (true, i + 1)
+                }
+                None => {
+                    buf.extend_from_slice(available);
+                    (false, available.len())
+                }
+            }
+        };
+        r.consume(used);
+        read += used;
+        if done || used == 0 {
+            return Ok(read);
         }
     }
 }
