@@ -259,7 +259,7 @@ mod tests {
 
     #[test]
     fn readln() {
-        let iter = (1..=5).into_iter().map(|n| Ok(n.to_string()));
+        let iter = (b'1'..=b'5').into_iter().map(|n| Ok(vec![n]));
         let mut reader = Reader::new(iter);
         let mut memory = Memory::default();
         memory.read(Line(0, "start".to_string()));

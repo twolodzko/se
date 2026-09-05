@@ -1,4 +1,4 @@
-use crate::lines::LossyLines;
+use crate::lines::ByteLines;
 use std::{
     fs::File,
     io::{BufReader, Result},
@@ -9,14 +9,14 @@ use std::{
 pub struct Line(pub usize, pub String);
 
 pub struct Reader<'a> {
-    iter: Box<dyn Iterator<Item = Result<String>> + 'a>,
+    iter: Box<dyn Iterator<Item = Result<Vec<u8>>> + 'a>,
     counter: usize,
 }
 
 impl<'a> Reader<'a> {
     pub fn new<I>(reader: I) -> Self
     where
-        I: Iterator<Item = Result<String>> + 'a,
+        I: Iterator<Item = Result<Vec<u8>>> + 'a,
     {
         Self {
             iter: Box::new(reader),
@@ -35,7 +35,7 @@ impl<'a> Reader<'a> {
 
 impl Default for Reader<'_> {
     fn default() -> Self {
-        Self::new(LossyLines::new(BufReader::new(std::io::stdin())))
+        Self::new(ByteLines::new(BufReader::new(std::io::stdin())))
     }
 }
 
@@ -54,17 +54,18 @@ impl Iterator for Reader<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.counter += 1;
-        let line = match self.iter.next()? {
+        let buf = match self.iter.next()? {
             Ok(line) => line,
             Err(err) => return Some(Err(err)),
         };
-        Some(Ok(Line(self.counter, line)))
+        let str = String::from_utf8_lossy(&buf).into_owned();
+        Some(Ok(Line(self.counter, str)))
     }
 }
 
 struct FilesReader {
     paths: Vec<PathBuf>,
-    file: Option<LossyLines<BufReader<File>>>,
+    file: Option<ByteLines<BufReader<File>>>,
 }
 
 impl FilesReader {
@@ -74,7 +75,7 @@ impl FilesReader {
             Ok(file) => file,
             Err(err) => return Some(Err(err)),
         };
-        let reader = LossyLines::new(BufReader::new(file));
+        let reader = ByteLines::new(BufReader::new(file));
         self.file = Some(reader);
         Some(Ok(()))
     }
@@ -90,7 +91,7 @@ impl From<&[PathBuf]> for FilesReader {
 }
 
 impl Iterator for FilesReader {
-    type Item = Result<String>;
+    type Item = Result<Vec<u8>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {

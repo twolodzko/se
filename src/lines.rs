@@ -1,34 +1,32 @@
 use std::io::{BufRead, ErrorKind, Result};
 
+/// `std::io::Lines` re-implemented to return `Vec<u8>` instead of `String`
 #[derive(Debug)]
-/// `std::io::Lines` re-implementation to handle invalid utf-8 characters
-pub struct LossyLines<B> {
+pub struct ByteLines<B> {
     buf: B,
 }
 
-impl<B: BufRead> LossyLines<B> {
+impl<B: BufRead> ByteLines<B> {
     pub fn new(buf: B) -> Self {
         Self { buf }
     }
 }
 
-impl<B: BufRead> Iterator for LossyLines<B> {
-    type Item = Result<String>;
+impl<B: BufRead> Iterator for ByteLines<B> {
+    type Item = Result<Vec<u8>>;
 
-    fn next(&mut self) -> Option<Result<String>> {
+    fn next(&mut self) -> Option<Result<Vec<u8>>> {
         let mut buf = Vec::new();
         match read_until(&mut self.buf, b'\n', &mut buf) {
             Ok(0) => None,
             Ok(_n) => {
-                if buf.last().is_some_and(|b| *b == b'\n') {
+                if let Some(b'\n') = buf.last() {
                     buf.pop();
-                    if buf.last().is_some_and(|b| *b == b'\r') {
+                    if let Some(b'\r') = buf.last() {
                         buf.pop();
                     }
                 }
-
-                let s = String::from_utf8_lossy(&buf).into_owned();
-                Some(Ok(s))
+                Some(Ok(buf))
             }
             Err(e) => Some(Err(e)),
         }
