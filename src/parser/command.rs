@@ -59,7 +59,17 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             '=' => LineNumber,
             'd' => Delete,
             'o' => CancelEdits,
-            'z' => Reset,
+            'z' => {
+                skip_whitespace(reader);
+                if let Some(s) = reader.peek()?
+                    && matches!(s, '"' | '\'' | '\\')
+                {
+                    let s = read_string(reader)?;
+                    Reset(Some(s))
+                } else {
+                    Reset(None)
+                }
+            }
             'h' => Hold,
             'g' => Get,
             'x' => Exchange,

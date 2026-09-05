@@ -74,22 +74,22 @@ precedence than `&`, and `&` then `,`.
 
 ### Printing
 
-* `p[string]` – if string is provided print it, otherwise print the content of the pattern space
+* `p [string]` – if string is provided print it, otherwise print the content of the pattern space
   followed by a newline character. The string could be enclosed in quotation marks `"string"` or `'string'`,
   or be an escaped special character like `\n`, `\t`, `\x0A`, or `\uA005`. If string is followed by `*N`
   where N is an integer, it is repeated N times, so `p'='*3` would print "===".
-* `P[string]` – same as above, but without the newline.
+* `P [string]` – same as above, but without the newline.
 * `=` – print the line number.
 
 ### Editing
 
 * `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
   If there's nothing to substitute, it has no effect. `limit` is a number of matches to replace.
-* `i[string]` – insert (prepend) string to the pattern space.
-* `a[string]` – append string to the pattern space.
-* `c N-M` – keep the characters from the `N-M` range (inclusive). `M` means `M`th character,
-  `-M` is an left-open interval (same as `1-M`), `N-` is an right-open interval.
-* `z` – empty the content of pattern space. It is the same as `s/.*//`, but is more efficient.
+* `i string` – insert (prepend) string to the pattern space.
+* `a string` – append string to the pattern space.
+* `z [string]` – replace the pattern space with string, if not given empty it.
+* `c N-M` – keep the characters from the N-M range (inclusive). M means Mth character,
+  `-M` is an left-open interval (same as 1-M), N- is an right-open interval.
 * `l`, `L` – escape characters with Rust's [std::char::escape_default] and unescape them.
 * `u`, `U` – URL encode and decode characters.
 * `b`, `B` – convert characters to base64 and back.
@@ -106,7 +106,7 @@ precedence than `&`, and `&` then `,`.
 
 ### Special actions
 
-* `r [num]` – read `num` lines (1 by default) and append them to pattern space
+* `r [num]` – read num lines (1 by default) and append them to pattern space
   using newline as a separator.
 * `R` – read new line and replace pattern space content with it. If it cannot read the new line,
   it send the break signal (same as `.`).
@@ -114,7 +114,7 @@ precedence than `&`, and `&` then `,`.
 * `e` – execute the content of the pattern space as a shell command. Save the stdout output
   of the command to pattern space. If the command returned with non-zero error code,
   stop and return the error code.
-* `q [code]` – exit with the `code` exit code (0 by default).
+* `q [code]` – exit with the code exit code (0 by default).
 
 ## Multiple instructions
 
@@ -180,7 +180,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`   |
 | `head -n 5 README.md`                | `se '-5 p . q' README.md`        |
 | `head -n 5 README.md`                | `se 'r4 p q' README.md`          |
-| `cut -c '3-7' README.md`             | `se 'k3-7 p' README.md`\*        |
+| `cut -c '3-7' README.md`             | `se 'c3-7 p' README.md`\*        |
 | `grep 'sed' README.md`               | `se '/sed/ p' README.md`         |
 | `grep -c 'sed' README.md`            | `se -c '/sed/' README.md`        |
 | `wc -l README.md`                    | `se -c '' README.md`             |

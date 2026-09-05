@@ -191,16 +191,22 @@ mod tests {
         "url encode"
     )]
     #[test_case(
-        r"z",
-        "clear me up!",
-        "";
-        "clear memory"
-    )]
-    #[test_case(
         r"s/a/#/ s/b/#/; s/c/#/. s/d/#/",
         "abracadabra",
         "##r###d##r#";
         "sequential substitutions"
+    )]
+    #[test_case(
+        r"z",
+        "clear me!",
+        "";
+        "clear memory"
+    )]
+    #[test_case(
+        "z'hello, world!'",
+        "replace me",
+        "hello, world!";
+        "replace string"
     )]
     fn run(command: &str, input: &str, expected: &str) {
         let mut prog = Program::from_str(command).unwrap();

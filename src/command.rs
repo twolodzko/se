@@ -49,7 +49,7 @@ pub(crate) enum Command {
     /// R
     ReadReplace,
     /// z
-    Reset,
+    Reset(Option<String>),
     /// d
     Delete,
     /// .
@@ -130,7 +130,8 @@ impl Command {
                     memory.this.chars().skip(*skip).collect()
                 };
             }
-            Reset => memory.this.clear(),
+            Reset(None) => memory.this.clear(),
+            Reset(Some(s)) => memory.this = s.to_owned(),
             Hold => {
                 memory.hold = memory.this.clone();
             }
@@ -228,7 +229,8 @@ impl std::fmt::Display for Command {
             Join => write!(f, "J"),
             Readln(n) => write!(f, "r{}", n),
             ReadReplace => write!(f, "R"),
-            Reset => write!(f, "z"),
+            Reset(None) => write!(f, "z"),
+            Reset(Some(s)) => write!(f, "z'{}'", s),
             Delete => write!(f, "d"),
             Break => write!(f, "."),
             Quit(c) => write!(f, "q{}", c),
