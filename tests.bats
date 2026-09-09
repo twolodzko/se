@@ -285,6 +285,11 @@ linux_only() {
    [ "$status" -eq 0 ]
 }
 
+@test "cat using R command in a loop" {
+    run diff <(cat README.md) <(./se '1 :x p R b x' README.md)
+    [ "$status" -eq 0 ]
+}
+
 @test "Branching executes never matching block" {
    # not reached 5th line
    run ./se '! :x =q; 5 bx' <(echo)
