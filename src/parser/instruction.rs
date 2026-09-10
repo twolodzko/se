@@ -1,6 +1,6 @@
 use super::{address, command, reader::Reader, skip_whitespace};
 use crate::{Action, Error, Result, address::Address, command::Command, error};
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 pub(crate) fn parse_instruction<R: Reader>(
     reader: &mut R,
@@ -98,7 +98,6 @@ impl Address {
         Ok(())
     }
 
-    /// Simplify addresses that never match
     fn simplify(&mut self) -> Result<()> {
         use Address::*;
         match self {
@@ -113,6 +112,7 @@ impl Address {
                         i += 1;
                     }
                 }
+                merge_regex(set)?;
                 match set.len() {
                     0 => *self = Never,
                     1 => *self = set.remove(0),
@@ -144,4 +144,34 @@ impl Address {
         }
         Ok(())
     }
+}
+
+/// Merge `/a/,/b/,/c/` to `/a|b|c/`
+fn merge_regex(addrs: &mut Vec<Address>) -> Result<()> {
+    if let Some((first, regex)) = addrs.iter().enumerate().find_map(|(i, a)| {
+        if let Address::Regex(r) = a {
+            Some((i, r))
+        } else {
+            None
+        }
+    }) {
+        let mut s = regex.0.as_str().to_string();
+        let mut i = first + 1;
+        let mut found_more = false;
+        while i < addrs.len() {
+            if let Address::Regex(r) = &addrs[i] {
+                found_more = true;
+                s.push('|');
+                s.push_str(r.0.as_str());
+                addrs.remove(i);
+            } else {
+                i += 1;
+            }
+        }
+        if found_more {
+            let regex = crate::Regex::from_str(&s)?;
+            addrs[first] = Address::Regex(regex)
+        }
+    }
+    Ok(())
 }

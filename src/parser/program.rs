@@ -250,6 +250,13 @@ mod tests {
         Action::Condition(Set(vec![Location(1), Location(2)]), 1),
         Action::Command(Println(Some("ok".to_string()))),
     ]); "remove never blocks")]
+    #[test_case("/a/,/b/,1,/c|d/ q", Program::from(vec![
+        Action::Condition(Set(vec![
+            Regex(crate::Regex::from_str("a|b|c|d").unwrap()),
+            Location(1),
+        ]), 1),
+        Action::Command(Quit(0)),
+    ]); "simplify set of regular expressions")]
     fn parse(input: &str, expected: Program) {
         let result = Program::from_str(input).unwrap();
         assert_eq!(result, expected)
