@@ -96,8 +96,8 @@ mod tests {
         Action::Condition(Between(address::Between::new(Location(13), Location(72))), 0),
     ]); "range with spaces")]
     #[test_case("!13-72", Program::from(vec![
-        Action::Condition(Negate(Box::new(Between(address::Between::new(Location(13), Location(72))))), 0),
-    ]); "range negated")]
+        Action::Condition(Between(address::Between::new(Negate(Box::new(Location(13))), Location(72))), 0),
+    ]); "range with negated")]
     #[test_case("/abc/", Program::from(vec![
         Action::Condition(Regex(crate::Regex::from_str("abc").unwrap()), 0)
     ]); "regex match")]
@@ -238,6 +238,18 @@ mod tests {
                 5,
             )),
     ]); "maybe in set")]
+    #[test_case("1,$ p'ok'; !q", Program::new(vec![
+        Action::Condition(Location(1), 1),
+        Action::Command(Println(Some("ok".to_string()))),
+        Action::Condition(Never, 1),
+        Action::Command(Quit(0)),
+    ], vec![
+        Println(Some("ok".to_string())),
+    ]); "remove final blocks")]
+    #[test_case("1,((!//)+1),2 p'ok'", Program::from(vec![
+        Action::Condition(Set(vec![Location(1), Location(2)]), 1),
+        Action::Command(Println(Some("ok".to_string()))),
+    ]); "remove never blocks")]
     fn parse(input: &str, expected: Program) {
         let result = Program::from_str(input).unwrap();
         assert_eq!(result, expected)

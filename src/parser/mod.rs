@@ -5,7 +5,7 @@ mod program;
 mod reader;
 mod regex;
 
-use crate::{Result, address::Address};
+use crate::Result;
 use reader::Reader;
 #[cfg(test)]
 pub(crate) use reader::StringReader;
@@ -33,33 +33,4 @@ fn read_integer<R: Reader>(reader: &mut R) -> Result<String> {
         reader.skip();
     }
     Ok(num)
-}
-
-impl Address {
-    fn is_final(&self) -> bool {
-        use Address::*;
-        match self {
-            Final => true,
-            Extend(extend) => extend.start.is_final(),
-            Set(set) => set.iter().any(|a| a.is_final()),
-            _ => false,
-        }
-    }
-
-    fn is_regular(&self) -> bool {
-        if let Address::Set(set) = self {
-            return set.iter().any(|a| a.is_regular());
-        }
-        !self.is_final()
-    }
-
-    fn is_impossible(&self) -> bool {
-        use Address::*;
-        match self {
-            And(and) => and.iter().any(|a| a.is_final()),
-            Negate(not) => not.is_final(),
-            Extend(extend) => extend.start.is_impossible(),
-            _ => false,
-        }
-    }
 }

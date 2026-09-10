@@ -1,4 +1,7 @@
-use crate::{Action, Memory, Reader, Result, Status, command};
+use crate::{
+    Action, Memory, Reader, Result, Status,
+    command::{self, Command},
+};
 use std::io::Write;
 
 #[derive(Debug, PartialEq)]
@@ -84,6 +87,33 @@ impl Program {
             pos += 1;
         }
         Ok(status)
+    }
+}
+
+impl std::fmt::Display for Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut iter = self.actions.iter().peekable();
+        while let Some(a) = iter.next() {
+            write!(f, "{} ", a)?;
+            if let Action::Command(c) = a
+                && matches!(c, Command::Break)
+            {
+                continue;
+            }
+            if let Some(Action::Condition(_, _)) = iter.peek() {
+                write!(f, "; ")?;
+            }
+        }
+        if !self.finally.is_empty() {
+            if !self.actions.is_empty() {
+                write!(f, "; ")?;
+            }
+            write!(f, "$ ")?;
+            for c in &self.finally {
+                write!(f, "{} ", c)?;
+            }
+        }
+        Ok(())
     }
 }
 

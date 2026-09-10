@@ -82,38 +82,29 @@ fn and<R: Reader>(reader: &mut R) -> Result<Address> {
 }
 
 fn address<R: Reader>(reader: &mut R) -> Result<Address> {
-    let negated = reader.next_is('!')?;
     skip_whitespace(reader);
-    let addr = between(reader)?;
-    if negated {
-        if let Negate(inner) = addr {
-            return Ok(*inner);
-        } else {
-            return Ok(!addr);
-        }
-    }
-    Ok(addr)
+    between(reader)
 }
 
 fn between<R: Reader>(reader: &mut R) -> Result<Address> {
-    let addr = atom(reader)?;
+    let addr = negated(reader)?;
     skip_whitespace(reader);
     if let Some(c) = reader.peek()? {
         match c {
             '-' => {
                 reader.skip();
-                let lhs = addr.unwrap_or(Location(1));
+                let start = addr.unwrap_or(Location(1));
                 skip_whitespace(reader);
-                let rhs = atom(reader)?.unwrap_or(Final);
-                if let (Location(lo), Location(hi)) = (&lhs, &rhs)
+                let end = negated(reader)?.unwrap_or(Final);
+                if let (Location(lo), Location(hi)) = (&start, &end)
                     && lo > hi
                 {
                     return error!("invalid bounds: {} > {} in {}-{}", lo, hi, lo, hi);
                 }
-                if lhs == rhs {
-                    return Ok(lhs);
+                if start == end {
+                    return Ok(start);
                 }
-                return Ok(Between(address::Between::new(lhs, rhs)));
+                return Ok(Between(address::Between::new(start, end)));
             }
             '~' => {
                 reader.skip();
@@ -156,6 +147,20 @@ fn between<R: Reader>(reader: &mut R) -> Result<Address> {
     Ok(addr.unwrap_or(Always))
 }
 
+fn negated<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
+    let negated = reader.next_is('!')?;
+    skip_whitespace(reader);
+    let addr = atom(reader)?;
+    if negated {
+        return if let Some(a) = addr {
+            Ok(Some(!a))
+        } else {
+            Ok(Some(Never))
+        };
+    }
+    Ok(addr)
+}
+
 fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
     if let Some(c) = reader.peek()? {
         match c {
@@ -194,7 +199,7 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 reader.expect(')')?;
                 return Ok(Some(addr));
             }
-            _ => (),
+            _ => {}
         }
     }
     Ok(None)
@@ -203,20 +208,32 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
 #[cfg(test)]
 mod tests {
     use super::Address::{self, *};
-    use crate::{address, parser::StringReader};
+    use crate::{
+        address::{self, Extend},
+        parser::StringReader,
+    };
     use std::str::FromStr;
     use test_case::test_case;
 
     #[test_case("", Always; "empty")]
     #[test_case("()", Always; "empty brackets")]
     #[test_case("//", Always; "empty regex")]
+    #[test_case("!", Never; "never")]
+    #[test_case("!//", Never; "not always")]
     #[test_case("!(!//)", Always; "double negation")]
     #[test_case("$", Final; "finally")]
-    #[test_case("!1-5", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
+    #[test_case("//-!", Between(address::Between::new(Always, Never)); "between always and never")]
+    #[test_case("-5", Between(address::Between::new(Location(1), Location(5))); "left-open range")]
+    #[test_case("5-", Between(address::Between::new(Location(5), Final)); "right-open range")]
+    #[test_case("7~2", Nth(7, 2); "nth")]
+    #[test_case("!(1-5)", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
     #[test_case("(!(1-5))", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "brackets and negated range")]
     #[test_case("1,$", Set(vec![Location(1), Final]); "first or last")]
     #[test_case("1,/foo/,//", Always; "set containing always reduces")]
     #[test_case("!(1,5)", Negate(Box::new(Set(vec![Location(1), Location(5)]))); "negate set in brackets")]
+    #[test_case("1+5", Extend(Extend::new(Location(1), 5)); "extend location")]
+    #[test_case("!,1", Set(vec![Never, Location(1)]); "set with never")]
+    #[test_case("! & //", Never; "never and always")]
     #[test_case("/a/,/b/&(/c/,/d/),/e/",
         Set(vec![
             Regex(FromStr::from_str("a").unwrap()),
@@ -265,9 +282,10 @@ mod tests {
 
     #[test_case("!$ p"; "not final")]
     #[test_case("!(!(!$)) p"; "triple negated final")]
-    #[test_case("5 & $ p"; "and final")]
     #[test_case("(!$)+5 p"; "extended not final")]
     #[test_case("!($+5) p"; "negated not final extended")]
+    #[test_case("5 & $ p"; "and final")]
+    #[test_case("5 & !$ p"; "and not final")]
     fn fail_on_parse_impossibility(input: &str) {
         let mut reader = StringReader::from(input);
         let result = super::parse(&mut reader);

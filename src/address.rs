@@ -5,8 +5,10 @@ use std::cell::Cell;
 pub(crate) enum Address {
     /// always matches
     Always,
-    /// never matches
+    /// marks block that executes after processing files, never matches
     Final,
+    /// never matches
+    Never,
     /// specific index
     Location(usize),
     /// /regex/ matching the line
@@ -32,7 +34,7 @@ impl Address {
         use Address::*;
         match self {
             Always => true,
-            Final => false,
+            Final | Never => false,
             Location(idx) => *idx == memory.line.0,
             Regex(regex) => regex.0.is_match(&memory.this),
             Negate(addr) => !addr.matches(memory),
@@ -152,6 +154,8 @@ impl std::ops::Not for Address {
     fn not(self) -> Self::Output {
         use Address::*;
         match self {
+            Always => Never,
+            Never => Always,
             Negate(inner) => *inner,
             _ => Negate(Box::new(self)),
         }
@@ -164,9 +168,19 @@ impl std::fmt::Display for Address {
         match self {
             Always => write!(f, "//"),
             Final => write!(f, "$"),
+            Never => write!(f, "!"),
             Location(idx) => write!(f, "{}", idx),
             Regex(regex) => write!(f, "/{}/", regex),
-            Negate(addr) => write!(f, "!{}", addr),
+            Negate(addr) => {
+                if matches!(
+                    addr.as_ref(),
+                    Between(_) | Nth(_, _) | Extend(_) | And(_) | Set(_)
+                ) {
+                    write!(f, "!({})", addr)
+                } else {
+                    write!(f, "!{}", addr)
+                }
+            }
             Between(this) => write!(f, "{}-{}", this.start, this.end),
             Nth(start, step) => write!(f, "{}~{}", start, step),
             Extend(window) => write!(f, "{}+{}", window.start, window.size),
@@ -238,6 +252,11 @@ mod tests {
     }
 
     #[test_case(
+        "!",
+        vec![false, false, false, false, false, false, false, false, false, false];
+        "never"
+    )]
+    #[test_case(
         "//",
         vec![true, true, true, true, true, true, true, true, true, true];
         "any"
@@ -265,7 +284,32 @@ mod tests {
     #[test_case(
         "2-7",
         vec![false, true, true, true, true, true, true, false, false, false];
-        "range of indexes 2:7"
+        "range"
+    )]
+    #[test_case(
+        "!(3-5)",
+        vec![true, true, false, false, false, true, true, true, true, true];
+        "negated range"
+    )]
+    #[test_case(
+        "6+2",
+        vec![false, false, false, false, false, true, true, true, false, false];
+        "extended"
+    )]
+    #[test_case(
+        "!(2+3)",
+        vec![true, false, false, false, false, true, true, true, true, true];
+        "negated extended"
+    )]
+    #[test_case(
+        "1~2",
+        vec![true, false, true, false, true, false, true, false, true, false];
+        "nth for odd"
+    )]
+    #[test_case(
+        "!(1~2)",
+        vec![false, true, false, true, false, true, false, true, false, true];
+        "negated nth for odd"
     )]
     #[test_case(
         "(2,3)-(7,8)",
@@ -275,7 +319,7 @@ mod tests {
     #[test_case(
         "1-1",
         vec![true, false, false, false, false, false, false, false, false, false];
-        "range of indexes 1:1"
+        "range of indexes 1 to 1"
     )]
     #[test_case(
         "1-5",
