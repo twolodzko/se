@@ -1,5 +1,5 @@
 use super::{
-    instruction::parse_instruction,
+    address, command,
     reader::{FileReader, Reader, StringReader},
     skip_whitespace,
 };
@@ -44,6 +44,51 @@ fn parse<R: Reader>(reader: &mut R) -> Result<(Vec<Action>, Vec<Command>)> {
         }
     }
     Ok((actions, finally))
+}
+
+fn parse_instruction<R: Reader>(
+    reader: &mut R,
+    actions: &mut Vec<Action>,
+    finally: &mut Vec<Command>,
+    lables: &mut HashMap<String, usize>,
+) -> Result<()> {
+    // [address][commands]
+    skip_whitespace(reader);
+    let mut address = address::parse(reader)?;
+    skip_whitespace(reader);
+    let commands = command::parse(reader)?;
+
+    if address.is_final() {
+        for cmd in &commands {
+            if matches!(cmd, Command::Branch(_, _) | Command::Label(_)) {
+                return error!("branching is not supported the final block");
+            }
+            finally.push(cmd.clone());
+        }
+    }
+
+    if address.is_regular() {
+        let subst = commands.iter().find_map(|c| {
+            if let Command::Substitute(regex, _, _) = c {
+                Some(regex)
+            } else {
+                None
+            }
+        });
+        address.replace_maybe(subst)?;
+        address.simplify()?;
+        actions.push(Action::Condition(address, commands.len()));
+
+        for cmd in commands.into_iter() {
+            if let Command::Label(label) = &cmd
+                && lables.insert(label.to_owned(), actions.len()).is_some()
+            {
+                return error!("duplicated label: {}", label);
+            }
+            actions.push(Action::Command(cmd));
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
