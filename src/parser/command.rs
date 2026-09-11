@@ -39,7 +39,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             's' => parse_substitute(reader)?,
             'c' => {
                 skip_whitespace(reader);
-                keeps_range(reader)?
+                parse_cut(reader)?
             }
             '=' => LineNumber,
             'd' => Delete,
@@ -206,7 +206,7 @@ fn read_template<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
     Err(Error::Missing(delim))
 }
 
-fn keeps_range<R: Reader>(reader: &mut R) -> Result<Command> {
+fn parse_cut<R: Reader>(reader: &mut R) -> Result<Command> {
     let s = read_integer(reader)?;
     let lhs = if s.is_empty() {
         0
@@ -217,7 +217,7 @@ fn keeps_range<R: Reader>(reader: &mut R) -> Result<Command> {
     };
 
     if !reader.next_is('-')? {
-        return Ok(Keep(lhs, Some(1)));
+        return Ok(Cut(lhs, Some(1)));
     };
 
     let s = read_integer(reader)?;
@@ -230,7 +230,7 @@ fn keeps_range<R: Reader>(reader: &mut R) -> Result<Command> {
         }
         Some(rhs - lhs)
     };
-    Ok(Keep(lhs, rhs))
+    Ok(Cut(lhs, rhs))
 }
 
 fn read_string<R: Reader>(reader: &mut R) -> Result<String> {

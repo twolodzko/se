@@ -20,8 +20,8 @@ pub(crate) enum Command {
     LineNumber,
     /// s/src/dst/[limit]
     Substitute(Regex, String, usize),
-    /// k s-e
-    Keep(usize, Option<usize>),
+    /// c s-e
+    Cut(usize, Option<usize>),
     /// h [string]
     Hold(Option<String>),
     /// g
@@ -108,7 +108,7 @@ impl Command {
                     memory.this = replaced;
                 }
             }
-            Keep(skip, take) => {
+            Cut(skip, take) => {
                 memory.this = if let Some(take) = take {
                     memory.this.chars().skip(*skip).take(*take).collect()
                 } else {
@@ -221,8 +221,8 @@ impl std::fmt::Display for Command {
             UnEscape => write!(f, "L"),
             LineNumber => write!(f, "="),
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
-            Keep(s, None) => write!(f, "c{}-", s + 1),
-            Keep(s, Some(t)) => write!(f, "c{}-{}", s + 1, s + t),
+            Cut(s, None) => write!(f, "c{}-", s + 1),
+            Cut(s, Some(t)) => write!(f, "c{}-{}", s + 1, s + t),
             Hold(None) => write!(f, "h"),
             Hold(Some(s)) => write!(f, "h'{}'", s),
             Get => write!(f, "g"),
