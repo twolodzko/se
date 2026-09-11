@@ -92,13 +92,12 @@ precedence than `&`, and `&` then `,`.
 * `i string` – insert (prepend) string to the pattern space.
 * `a string` – append string to the pattern space.
 * `z [string]` – replace the pattern space with string, if not given empty it.
-* `c N-M` – keep the characters from the N-M range (inclusive). M means Mth character,
+* `c N-M` – keep only the characters from the N-M range (inclusive). M means Mth character,
   `-M` is an left-open interval (same as 1-M), N- is an right-open interval.
 * `l`, `L` – escape characters with Rust's [std::char::escape_default] and unescape them.
 
 ### Manipulating memory
 
-* `o` - set pattern space to the original, unprocessed line.
 * `h [string]` – replace the content of the hold space with the string, or if not given, with content of the pattern space.
 * `g` – get content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
@@ -154,16 +153,14 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * Not using the command groups syntax `{ cmd1 ; cmd2 ; ... }`,
   but instead reading commands directly e.g. `=p` (actually `=a\np`, see [above](#commands)) is equivalent
   to `{ = ; p }` in `sed`.
-* Only a subset of `sed` commands is supported and they can behave differently.
 * `sed` by default prints all the lines unless explicitly deleted.
   To achieve this behavior use `-a` (`--all`) flag to print all the lines.
-* In `sed` the block after `$` runs on the final line, in `se`
-  it is an instruction set that runs unconditionally on the program stop.
 * `se` by default replaces all matches (like `s/src/dst/g` in sed) so it does not use the /g flag.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
   To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
 * `z` command is used for behaviors of sed's `z` and `c` commands, depending on parametrization.
 * `l` edits the pattern space instead of printing and uses Rust's escape formatting.
+* Negation `!` in `sed` follows the address, while in `se` it precedes it.
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
@@ -175,6 +172,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `1,5p`           | `1-5p`              |
 | `c string`       | `z"string"`         |
 | `l`              | `lp`                |
+| `/regex/!`       | `!/regex/`          |
 
 ## `se` vs other command line utilities
 
@@ -188,6 +186,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`     |
 | `sed 'c replacement' README.md`      | `se -a 'z"replacement"' README.md` |
 | `sed '/sed/d' README.md`             | `se -a '/sed/d' README.md`         |
+| `sed '/sed/!d' README.md`            | `se '/sed/p' README.md`            |
 | `head -n 5 README.md`                | `se '-5 p . q' README.md`          |
 | `head -n 5 README.md`                | `se 'r4 p q' README.md`            |
 | `cut -c '3-7' README.md`             | `se -a 'c3-7' README.md`\*         |
