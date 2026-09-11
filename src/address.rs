@@ -35,15 +35,15 @@ impl Address {
         match self {
             Always => true,
             Final | Never => false,
-            Location(idx) => *idx == memory.line.0,
+            Location(idx) => *idx == memory.index,
             Regex(regex) => regex.0.is_match(&memory.this),
             Negate(addr) => !addr.matches(memory),
             Between(this) => this.matches(memory),
             Nth(start, step) => {
-                if memory.line.0 < *start {
+                if memory.index < *start {
                     false
                 } else {
-                    (memory.line.0 - *start).is_multiple_of(*step)
+                    (memory.index - *start).is_multiple_of(*step)
                 }
             }
             Extend(this) => this.matches(memory),

@@ -23,15 +23,15 @@ pub(crate) enum Action {
 
 #[derive(Debug, PartialEq, Default)]
 pub(crate) struct Memory {
-    pub(crate) line: Line,
+    pub(crate) index: usize,
     pub(crate) this: String,
     pub(crate) hold: String,
 }
 
 impl Memory {
     pub(crate) fn read(&mut self, line: Line) {
-        self.this = line.1.clone();
-        self.line = line;
+        self.index = line.0;
+        self.this = line.1;
     }
 }
 

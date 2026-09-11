@@ -22,8 +22,6 @@ pub(crate) enum Command {
     Substitute(Regex, String, usize),
     /// k s-e
     Keep(usize, Option<usize>),
-    /// o
-    CancelEdits,
     /// h [string]
     Hold(Option<String>),
     /// g
@@ -94,7 +92,7 @@ impl Command {
             Println(Some(s)) => writeln!(out, "{}", s)?,
             Print(None) => write!(out, "{}", memory.this)?,
             Print(Some(s)) => write!(out, "{}", s)?,
-            LineNumber => write!(out, "{}", memory.line.0)?,
+            LineNumber => write!(out, "{}", memory.index)?,
             // edit
             Append(s) => memory.this.push_str(s),
             Prepend(s) => memory.this.insert_str(0, s),
@@ -134,10 +132,6 @@ impl Command {
             Get => {
                 memory.this.clear();
                 memory.this.push_str(&memory.hold);
-            }
-            CancelEdits => {
-                memory.this.clear();
-                memory.this.push_str(&memory.line.1);
             }
             Exchange => {
                 std::mem::swap(&mut memory.hold, &mut memory.this);
@@ -232,7 +226,6 @@ impl std::fmt::Display for Command {
             Hold(None) => write!(f, "h"),
             Hold(Some(s)) => write!(f, "h'{}'", s),
             Get => write!(f, "g"),
-            CancelEdits => write!(f, "o"),
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),
             Join => write!(f, "J"),

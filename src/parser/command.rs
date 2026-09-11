@@ -43,7 +43,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             }
             '=' => LineNumber,
             'd' => Delete,
-            'o' => CancelEdits,
             'z' => {
                 let val = read_string_or_none(reader)?;
                 Reset(val)
