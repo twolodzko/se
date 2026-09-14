@@ -21,7 +21,7 @@ pub(crate) enum Address {
     Nth(usize, usize),
     /// addr + window
     Extend(Extend),
-    /// addr1, addr2, ...
+    /// addr1 | addr2, ...
     Set(Vec<Address>),
     /// addr1 & addr2 & ...
     And(Vec<Address>),
@@ -189,7 +189,7 @@ impl std::fmt::Display for Address {
                     .iter()
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ");
+                    .join(" | ");
                 write!(f, "{}", list)
             }
             And(addrs) => {
@@ -277,7 +277,7 @@ mod tests {
         "index 89"
     )]
     #[test_case(
-        "2,5,9",
+        "2|5|9",
         vec![false, true, false, false, true, false, false, false, true, false];
         "set of indexes"
     )]
@@ -312,7 +312,7 @@ mod tests {
         "negated nth for odd"
     )]
     #[test_case(
-        "(2,3)-(7,8)",
+        "(2|3)-(7|8)",
         vec![false, true, true, true, true, true, true, false, false, false];
         "range containing brackets"
     )]

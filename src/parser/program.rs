@@ -173,16 +173,16 @@ mod tests {
     #[test_case(" !   666   ", Program::from(vec![
         Action::Condition(Negate(Box::new(Location(666))), 0)
     ]); "negation with space")]
-    #[test_case("5,6,10", Program::from(vec![
+    #[test_case("5|6|10", Program::from(vec![
         Action::Condition(Set(vec![Location(5), Location(6), Location(10)]), 0),
     ]); "set")]
-    #[test_case("((5),((6),10))", Program::from(vec![
+    #[test_case("((5)|((6)|10))", Program::from(vec![
         Action::Condition(Set(vec![Location(5), Location(6), Location(10)]), 0),
     ]); "set with brackets")]
-    #[test_case("  5, 6  ,10   ", Program::from(vec![
+    #[test_case("  5| 6  |10   ", Program::from(vec![
         Action::Condition(Set(vec![Location(5), Location(6), Location(10)]), 0),
     ]); "set with spaces")]
-    #[test_case("5,6,!10", Program::from(vec![
+    #[test_case("5|6|!10", Program::from(vec![
         Action::Condition(Set(vec![Location(5), Location(6), Negate(Box::new(Location(10)))]), 0),
     ]); "set negated")]
     #[test_case("(((42)))", Program::from(vec![
@@ -269,7 +269,7 @@ mod tests {
                 5,
             )),
     ]); "maybe in range")]
-    #[test_case(r"1,?s/abc/def/5", Program::from(vec![
+    #[test_case(r"1|?s/abc/def/5", Program::from(vec![
         Action::Condition(
             Set(vec![
                 Location(1),
@@ -283,7 +283,7 @@ mod tests {
                 5,
             )),
     ]); "maybe in set")]
-    #[test_case("1,$ p'ok'; !q", Program::new(vec![
+    #[test_case("1|$ p'ok'; !q", Program::new(vec![
         Action::Condition(Location(1), 1),
         Action::Command(Println(Some("ok".to_string()))),
         Action::Condition(Never, 1),
@@ -291,11 +291,11 @@ mod tests {
     ], vec![
         Println(Some("ok".to_string())),
     ]); "remove final blocks")]
-    #[test_case("1,((!//)+1),2 p'ok'", Program::from(vec![
+    #[test_case("1|((!//)+1)|2 p'ok'", Program::from(vec![
         Action::Condition(Set(vec![Location(1), Location(2)]), 1),
         Action::Command(Println(Some("ok".to_string()))),
     ]); "remove never blocks")]
-    #[test_case("/a/,/b/,1,/c|d/ q", Program::from(vec![
+    #[test_case("/a/|/b/|1|/c|d/ q", Program::from(vec![
         Action::Condition(Set(vec![
             Regex(crate::Regex::from_str("a|b|c|d").unwrap()),
             Location(1),

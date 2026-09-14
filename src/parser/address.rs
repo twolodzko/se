@@ -32,7 +32,7 @@ fn set<R: Reader>(reader: &mut R) -> Result<Address> {
         }
 
         skip_whitespace(reader);
-        if reader.next_is(',')? {
+        if reader.next_is('|')? {
             skip_whitespace(reader);
         } else {
             break;
@@ -91,7 +91,7 @@ fn between<R: Reader>(reader: &mut R) -> Result<Address> {
     skip_whitespace(reader);
     if let Some(c) = reader.peek()? {
         match c {
-            '-' => {
+            '-' | ',' => {
                 reader.skip();
                 let start = addr.unwrap_or(Location(1));
                 skip_whitespace(reader);
@@ -228,13 +228,13 @@ mod tests {
     #[test_case("7~2", Nth(7, 2); "nth")]
     #[test_case("!(1-5)", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
     #[test_case("(!(1-5))", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "brackets and negated range")]
-    #[test_case("1,$", Set(vec![Location(1), Final]); "first or last")]
-    #[test_case("1,/foo/,//", Always; "set containing always reduces")]
-    #[test_case("!(1,5)", Negate(Box::new(Set(vec![Location(1), Location(5)]))); "negate set in brackets")]
+    #[test_case("1|$", Set(vec![Location(1), Final]); "first or last")]
+    #[test_case("1|/foo/|//", Always; "set containing always reduces")]
+    #[test_case("!(1|5)", Negate(Box::new(Set(vec![Location(1), Location(5)]))); "negate set in brackets")]
     #[test_case("1+5", Extend(Extend::new(Location(1), 5)); "extend location")]
-    #[test_case("!,1", Set(vec![Never, Location(1)]); "set with never")]
+    #[test_case("!|1", Set(vec![Never, Location(1)]); "set with never")]
     #[test_case("! & //", Never; "never and always")]
-    #[test_case("/a/,/b/&(/c/,/d/),/e/",
+    #[test_case("/a/|/b/&(/c/|/d/)|/e/",
         Set(vec![
             Regex(FromStr::from_str("a").unwrap()),
             And(vec![
@@ -264,7 +264,7 @@ mod tests {
         ]);
     "nested and"
     )]
-    #[test_case("(1, 2), ((3, 4), 5)",
+    #[test_case("(1 | 2) | ((3 | 4) | 5)",
         Set(vec![
             Location(1),
             Location(2),

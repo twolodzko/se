@@ -98,7 +98,7 @@ linux_only() {
 }
 
 @test "Use negation with set" {
-   run diff <(./se '!(1,2,3)p' README.md) <(tail -n +4 README.md)
+   run diff <(./se '!(1|2|3)p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -398,6 +398,11 @@ bash_line_marker() {
 @test "Insert text like gsed" {
    gsed_only
    run diff <(sed '/sed/i >>>' README.md) <(./se '/sed/ i">>>\n" p . p' README.md)
+   [ "$status" -eq 0 ]
+}
+
+@test "- and , work for range addresses" {
+   run diff <(./se '5-17p' src/main.rs) <(./se '5,17p' src/main.rs)
    [ "$status" -eq 0 ]
 }
 

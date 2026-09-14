@@ -61,16 +61,16 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
 
 Addresses can be combined:
 
-* `start-end` is an inclusive range. For example, `1-5` includes lines
+* `start-end` (or `start,end`) is an inclusive range. For example, `1-5` includes lines
   between 1 and 5. `-5` is equivalent to `1-5`. `1-` or `1-$` means all the lines from 1.
   `/foo/-/bar/` is a range of lines where the first line contains the word "foo" and the last line the word "bar".
 * `N~M` matches every Mth line since line number N.
 * `start+N` matches `start` line and next N number of lines after it.
-* `addr1, addr2, ..., addrN` matches any of the addresses.
+* `addr1 | addr2 | ... | addrN` matches any of the addresses.
 * `addr1 & addr2 & ... & addrN` matches only if all of the addresses matched.
 
-`/a/ & /b/-/c/, /d/` is equivalent to `(/a/ & (/b/-/c/)), /d/` because of the `-` has higher
-precedence than `&`, and `&` then `,`.
+`/a/ & /b/-/c/ | /d/` is equivalent to `(/a/ & (/b/-/c/)) | /d/` because of the `-` has higher
+precedence than `&`, and `&` then `|`.
 
 ## Commands
 
@@ -169,7 +169,6 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/src/dst/`     | `s/src/dst/1`       |
 | `s/src/dst/g`    | `s/src/dst/`        |
 | `s/src/dst/flag` | `s/(?flag)src/dst/` |
-| `1,5p`           | `1-5p`              |
 | `c string`       | `z"string"`         |
 | `l`              | `lp`                |
 | `/regex/!`       | `!/regex/`          |
