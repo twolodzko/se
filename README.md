@@ -159,6 +159,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
   To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
 * `z` command is used for behaviors of sed's `z` and `c` commands, depending on parametrization.
+* `c` command works like command line `cut -c`, not like sed's `c`.
 * `l` edits the pattern space instead of printing and uses Rust's escape formatting.
 * Negation `!` in `sed` follows the address, while in `se` it precedes it.
 
