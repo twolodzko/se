@@ -286,6 +286,7 @@ mod tests {
     #[test_case("!($+5) p"; "negated not final extended")]
     #[test_case("5 & $ p"; "and final")]
     #[test_case("5 & !$ p"; "and not final")]
+    #[test_case("!? s/hello/world/p"; "not maybe")]
     fn fail_on_parse_impossibility(input: &str) {
         let mut reader = StringReader::from(input);
         let result = super::parse(&mut reader);

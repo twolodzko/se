@@ -58,7 +58,7 @@ impl Address {
         use Address::*;
         match self {
             And(and) => and.iter().any(|a| a.is_final() || a.is_impossible()),
-            Negate(not) => not.is_final(),
+            Negate(not) => not.is_final() || matches!(**not, Maybe),
             Extend(extend) => extend.start.is_impossible(),
             Between(between) => between.start.is_impossible(),
             _ => false,

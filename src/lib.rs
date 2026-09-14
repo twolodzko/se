@@ -87,7 +87,7 @@ impl std::fmt::Display for Error {
             Missing(c) => write!(f, "missing '{c}'"),
             Unexpected(c) => write!(f, "unexpected '{c}'"),
             EndOfInput => write!(f, "unexpected end of input"),
-            Impossible(a) => write!(f, "{} is an impossible condition", a),
+            Impossible(a) => write!(f, "{} is an nonsensical condition", a),
             Io(e) => write!(f, "{}", e),
             Custom(s) => write!(f, "{}", s),
             ParseInt(e) => write!(f, "{}", e),
