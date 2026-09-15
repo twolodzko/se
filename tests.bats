@@ -322,6 +322,11 @@ linux_only() {
    [ "$status" -eq 0 ]
 }
 
+@test "Print all and quit" {
+   run diff <(sed '14q' README.md) <(./se -a '14q' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Empty regex in address" {
    run diff <(./se '// p' data/utf8-test-file.txt) <(cat data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
