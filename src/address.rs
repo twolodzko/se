@@ -3,12 +3,12 @@ use std::cell::Cell;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Address {
-    /// always matches
+    /// matches on any line
     Always,
-    /// marks block that executes after processing files, never matches
-    Final,
     /// never matches
     Never,
+    /// marks block that executes after processing files, never matches
+    Final,
     /// specific index
     Location(usize),
     /// /regex/ matching the line
@@ -33,11 +33,11 @@ impl Address {
     pub(crate) fn matches(&self, memory: &Memory) -> bool {
         use Address::*;
         match self {
-            Always => true,
+            Always => memory.index != 0,
             Final | Never => false,
-            Location(idx) => *idx == memory.index,
-            Regex(regex) => regex.0.is_match(&memory.this),
-            Negate(addr) => !addr.matches(memory),
+            Location(idx) => memory.index == *idx,
+            Regex(regex) => memory.index != 0 && regex.0.is_match(&memory.this),
+            Negate(addr) => !addr.matches(memory) && memory.index != 0,
             Between(this) => this.matches(memory),
             Nth(start, step) => {
                 if memory.index < *start {
@@ -167,8 +167,8 @@ impl std::fmt::Display for Address {
         use Address::*;
         match self {
             Always => write!(f, "//"),
-            Final => write!(f, "$"),
             Never => write!(f, "!"),
+            Final => write!(f, "$"),
             Location(idx) => write!(f, "{}", idx),
             Regex(regex) => write!(f, "/{}/", regex),
             Negate(addr) => {

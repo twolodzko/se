@@ -1,5 +1,5 @@
 use crate::{
-    Action, Memory, Reader, Result, Status,
+    Action, Line, Memory, Reader, Result, Status,
     command::{self, Command},
 };
 use std::io::Write;
@@ -31,7 +31,16 @@ impl Program {
         let mut matches = 0;
         let mut status = Normal;
 
-        while let Some(line) = reader.next() {
+        // before processing lines
+        self.memory.read(Line::default());
+        if let Some(s) = self.process_line(reader, out)? {
+            status = s;
+        }
+
+        // process lines
+        while let Some(line) = reader.next()
+            && !matches!(status, Quit(_))
+        {
             self.memory.read(line?);
             status = Normal;
 
@@ -46,11 +55,9 @@ impl Program {
             if print_all {
                 writeln!(out, "{}", self.memory.this)?;
             }
-            if let Quit(_) = status {
-                break;
-            }
         }
 
+        // after processing lines
         for cmd in self.finally.iter() {
             let s = cmd.run(&mut self.memory, reader, out)?;
             if s != Status::Normal {
@@ -155,7 +162,7 @@ mod tests {
     )]
     fn keep(command: &str, expected: &str) {
         let mut prog = Program::from_str(command).unwrap();
-        prog.memory.read(Line(0, "123456789".to_string()));
+        prog.memory.read(Line(1, "123456789".to_string()));
         prog.process_line(&mut Reader::empty(), &mut std::io::stdout().lock())
             .unwrap();
         assert_eq!(prog.memory.this, expected)
@@ -211,7 +218,7 @@ mod tests {
     )]
     fn run(command: &str, input: &str, expected: &str) {
         let mut prog = Program::from_str(command).unwrap();
-        prog.memory.read(Line(0, input.to_string()));
+        prog.memory.read(Line(1, input.to_string()));
         prog.process_line(&mut Reader::empty(), &mut std::io::stdout().lock())
             .unwrap();
         assert_eq!(prog.memory.this, expected)

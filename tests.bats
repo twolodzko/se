@@ -411,6 +411,50 @@ bash_line_marker() {
    [ "$status" -eq 0 ]
 }
 
+@test "Just print Hello, World! without processing the file" {
+   run ./se '0 p"Hello, World!"' README.md
+   [ "$output" = "Hello, World!" ]
+   [ "$status" -eq 0 ]
+}
+
+@test "Don't count any lines" {
+   run ./se -c '0q' README.md
+   [ "$output" = "0" ]
+   [ "$status" -eq 0 ]
+}
+
+@test "Print odd lines" {
+   run diff <(seq 1 2 13) <(seq 1 13 | ./se '1~2p')
+   [ "$status" -eq 0 ]
+}
+
+@test "Print even lines" {
+   run diff <(seq 2 2 13) <(seq 1 13 | ./se '!0 & 0~2 p')
+   [ "$status" -eq 0 ]
+}
+
+@test "Any line starts at first line" {
+   run bats_pipe --returned-status=1 seq 1 10 \| ./se '=q'
+   [ "$output" = "1" ]
+   [ "$status" -eq 0 ]
+}
+
+@test "Negate extend from zero" {
+   run diff <(seq 6 10) <(seq 1 10 | ./se '!(0+5) p')
+   [ "$status" -eq 0 ]
+}
+
+@test "Empty line is not zero line" {
+   run bats_pipe --returned-status=1 echo \| ./se '^$ =P\n'
+   [ "$output" = "1" ]
+   [ "$status" -eq 0 ]
+}
+
+@test "Count empty lines" {
+   run diff <(awk '/^$/{ c++ } END{ print c }' README.md) <(./se -c '^$' README.md)
+   [ "$status" -eq 0 ]
+}
+
 @test "Multiple input files" {
    echo 1 > /tmp/a.txt
    echo 2 > /tmp/b.txt

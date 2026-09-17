@@ -42,7 +42,8 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
 
 ## Addresses
 
-* Number like `1` or `278` points to a specific line. Line numbers start at 1.
+* Number like `1` or `278` points to a specific line. Line numbers start at 1
+  and `0` means "before processing any line".
 * `/regex/` matches the lines that match the regular expression specified between `/.../`.
   Regular expressions can be used as bounds of the ranges. `\%regex%` is another form,
   where `%` character can be replaced with any other delimiter.

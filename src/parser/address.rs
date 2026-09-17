@@ -109,9 +109,7 @@ fn between<R: Reader>(reader: &mut R) -> Result<Address> {
             '~' => {
                 reader.skip();
                 let start = if let Some(a) = addr {
-                    if let Location(n) = a
-                        && n > 0
-                    {
+                    if let Location(n) = a {
                         n
                     } else {
                         return error!("invalid start: {}", a);
@@ -178,7 +176,6 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
             }
             c if c.is_ascii_digit() => {
                 return match read_integer(reader)?.parse() {
-                    Ok(0) => error!("line numbering starts at 1"),
                     Ok(num) => Ok(Some(Location(num))),
                     Err(err) => Err(err.into()),
                 };
