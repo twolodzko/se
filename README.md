@@ -56,8 +56,9 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
   It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 * `!` before the address negates it, e.g. `!1` means all the lines except the first.
   `!` alone means an instruction that never matches.
-* `$` never matches. Commands with the `$` address would run unconditionally after processing all the lines,
-  even after early stopping using `q`. It works in a similar way as `end { ... }` block in [awk].
+* `$` matches after processing all the lines. It can be used in a similar way as
+  `end { ... }` block in [awk]. It can be used for matching the final line.
+  The address cannot be negated.
 * Addresses can be enclosed with brackets `(addr)`.
 
 Addresses can be combined:
@@ -117,7 +118,7 @@ precedence than `&`, and `&` then `|`.
   it sends the break signal (same as `.`).
 * `d` – clear the content of the pattern space and immediately start processing next line.
 * `:label` – define a code label. The label must consist of alphanumeric characters or underscores _.
-* `b label` – unconditionally jump to the code label. Labels cannot be declared in the final block (`$` address).
+* `b label` – unconditionally jump to the code label.
 * `e [command]` – execute the command, if not provided execute the content of the pattern space
   as a shell command. Save the stdout output of the command to pattern space. Errors are propagated.
 * `q [code]` – exit with the code exit code (0 by default).

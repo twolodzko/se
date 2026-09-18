@@ -27,7 +27,7 @@ fn set<R: Reader>(reader: &mut R) -> Result<Address> {
         }
         let mut addr = and(reader)?;
         match addr {
-            Set(ref mut rhs) => acc.append(rhs),
+            Set(ref mut rhs) => acc.append(&mut rhs.addresses),
             _ => acc.push(addr),
         }
 
@@ -45,7 +45,7 @@ fn set<R: Reader>(reader: &mut R) -> Result<Address> {
     let addr = match acc.len() {
         0 => Always,
         1 => acc.remove(0),
-        _ => Set(acc),
+        _ => Set(acc.into()),
     };
     Ok(addr)
 }
@@ -61,7 +61,7 @@ fn and<R: Reader>(reader: &mut R) -> Result<Address> {
         let mut addr = address(reader)?;
         match addr {
             Always => {}
-            And(ref mut rhs) => acc.append(rhs),
+            And(ref mut rhs) => acc.append(&mut rhs.addresses),
             _ => acc.push(addr),
         }
 
@@ -76,7 +76,7 @@ fn and<R: Reader>(reader: &mut R) -> Result<Address> {
     let addr = match acc.len() {
         0 => Always,
         1 => acc.remove(0),
-        _ => And(acc),
+        _ => And(acc.into()),
     };
     Ok(addr)
 }
@@ -225,11 +225,11 @@ mod tests {
     #[test_case("7~2", Nth(7, 2); "nth")]
     #[test_case("!(1-5)", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
     #[test_case("(!(1-5))", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "brackets and negated range")]
-    #[test_case("1|$", Set(vec![Location(1), Final]); "first or last")]
+    #[test_case("1|$", Set(vec![Location(1), Final].into()); "first or last")]
     #[test_case("1|/foo/|//", Always; "set containing always reduces")]
-    #[test_case("!(1|5)", Negate(Box::new(Set(vec![Location(1), Location(5)]))); "negate set in brackets")]
+    #[test_case("!(1|5)", Negate(Box::new(Set(vec![Location(1), Location(5)].into()))); "negate set in brackets")]
     #[test_case("1+5", Extend(Extend::new(Location(1), 5)); "extend location")]
-    #[test_case("!|1", Set(vec![Never, Location(1)]); "set with never")]
+    #[test_case("!|1", Set(vec![Never, Location(1)].into()); "set with never")]
     #[test_case("! & //", Never; "never and always")]
     #[test_case("/a/|/b/&(/c/|/d/)|/e/",
         Set(vec![
@@ -239,17 +239,17 @@ mod tests {
                 Set(vec![
                     Regex(FromStr::from_str("c").unwrap()),
                     Regex(FromStr::from_str("d").unwrap()),
-                ]),
-            ]),
+                ].into()),
+            ].into()),
             Regex(FromStr::from_str("e").unwrap()),
-        ]);
+        ].into());
       "set and and together")]
     #[test_case("/a/ & 1-5 & /b/",
         And(vec![
             Regex(FromStr::from_str("a").unwrap()),
             Between(address::Between::new(Location(1), Location(5))),
             Regex(FromStr::from_str("b").unwrap()),
-        ]);
+        ].into());
     "range and and")]
     #[test_case("(1 & 2) & ((3 & 4) & 5)",
         And(vec![
@@ -258,7 +258,7 @@ mod tests {
             Location(3),
             Location(4),
             Location(5),
-        ]);
+        ].into());
     "nested and"
     )]
     #[test_case("(1 | 2) | ((3 | 4) | 5)",
@@ -268,7 +268,7 @@ mod tests {
             Location(3),
             Location(4),
             Location(5),
-        ]);
+        ].into());
     "nested or"
     )]
     fn parse(input: &str, expected: Address) {
@@ -281,9 +281,7 @@ mod tests {
     #[test_case("!(!(!$)) p"; "triple negated final")]
     #[test_case("(!$)+5 p"; "extended not final")]
     #[test_case("!($+5) p"; "negated not final extended")]
-    #[test_case("5 & $ p"; "and final")]
     #[test_case("5 & !$ p"; "and not final")]
-    #[test_case("!? s/hello/world/p"; "not maybe")]
     fn fail_on_parse_impossibility(input: &str) {
         let mut reader = StringReader::from(input);
         let result = super::parse(&mut reader);

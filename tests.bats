@@ -439,6 +439,31 @@ bash_line_marker() {
    [ "$status" -eq 0 ]
 }
 
+@test "Don't duplicate matches on final line" {
+   run ./se '$p' <(echo "print me once")
+   [ "$output" = "print me once" ]
+   [ "$status" -eq 0 ]
+}
+
+@test "Match only on zero lines input" {
+   run ./se '$ & 0 p"zero lines"' <(printf "")
+   [ "$output" = "zero lines" ]
+   [ "$status" -eq 0 ]
+}
+
+@test "Match final line using regex" {
+   run ./se '$ & /ok/ p' <(echo "ok")
+   [ "$output" = "ok" ]
+   [ "$status" -eq 0 ]
+}
+
+@test "Don't duplicate matches on final in set" {
+   run ./se '//|$ p' <(echo "print me once")
+   [ "$output" = "print me once" ]
+   [ "$status" -eq 0 ]
+}
+
+
 @test "Negate extend from zero" {
    run diff <(seq 6 10) <(seq 1 10 | ./se '!(0+5) p')
    [ "$status" -eq 0 ]

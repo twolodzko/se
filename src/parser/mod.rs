@@ -36,29 +36,11 @@ fn read_integer<R: Reader>(reader: &mut R) -> Result<String> {
 }
 
 impl Address {
-    fn is_final(&self) -> bool {
-        use Address::*;
-        match self {
-            Final => true,
-            Extend(extend) => extend.start.is_final(),
-            Set(set) => set.iter().any(|a| a.is_final()),
-            Between(between) => between.start.is_final(),
-            _ => false,
-        }
-    }
-
-    fn is_regular(&self) -> bool {
-        if let Address::Set(set) = self {
-            return set.iter().any(|a| a.is_regular());
-        }
-        !self.is_final()
-    }
-
     fn is_impossible(&self) -> bool {
         use Address::*;
         match self {
-            And(and) => and.iter().any(|a| a.is_final() || a.is_impossible()),
-            Negate(not) => not.is_final() || matches!(**not, Maybe),
+            Negate(not) => not.is_final(),
+            And(and) => and.addresses.iter().any(|a| a.is_impossible()),
             Extend(extend) => extend.start.is_impossible(),
             Between(between) => between.start.is_impossible(),
             _ => false,
@@ -78,9 +60,16 @@ impl Address {
                 between.start.replace_maybe(subst)?;
                 between.end.replace_maybe(subst)?;
             }
-            Set(set) => set.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
-            And(and) => and.iter_mut().try_for_each(|a| a.replace_maybe(subst))?,
+            Set(set) => set
+                .addresses
+                .iter_mut()
+                .try_for_each(|a| a.replace_maybe(subst))?,
+            And(and) => and
+                .addresses
+                .iter_mut()
+                .try_for_each(|a| a.replace_maybe(subst))?,
             Extend(extend) => extend.start.replace_maybe(subst)?,
+            Negate(not) => not.replace_maybe(subst)?,
             _ => {}
         }
         Ok(())
@@ -89,26 +78,25 @@ impl Address {
     fn simplify(&mut self) -> Result<()> {
         use Address::*;
         match self {
-            Final => *self = Never,
             Set(set) => {
                 let mut i = 0;
-                while i < set.len() {
-                    set[i].simplify()?;
-                    if set[i] == Never {
-                        set.remove(i);
+                while i < set.addresses.len() {
+                    set.addresses[i].simplify()?;
+                    if set.addresses[i] == Never {
+                        set.addresses.remove(i);
                     } else {
                         i += 1;
                     }
                 }
-                merge_regex(set)?;
-                match set.len() {
+                merge_regex(&mut set.addresses)?;
+                match set.addresses.len() {
                     0 => *self = Never,
-                    1 => *self = set.remove(0),
+                    1 => *self = set.addresses.remove(0),
                     _ => {}
                 }
             }
             And(and) => {
-                for addr in and.iter_mut() {
+                for addr in and.addresses.iter_mut() {
                     addr.simplify()?;
                     if *addr == Never {
                         *self = Never;
@@ -118,14 +106,14 @@ impl Address {
             }
             Extend(extend) => {
                 extend.start.simplify()?;
-                if *extend.start == Never {
-                    *self = Never
+                if matches!(*extend.start, Never | Final) {
+                    *self = *extend.start.clone();
                 }
             }
             Between(between) => {
                 between.start.simplify()?;
-                if *between.start == Never {
-                    *self = Never
+                if matches!(*between.start, Never | Final) {
+                    *self = *between.start.clone();
                 }
             }
             _ => {}
@@ -143,7 +131,7 @@ fn merge_regex(addrs: &mut Vec<Address>) -> Result<()> {
             None
         }
     }) {
-        let mut s = regex.0.as_str().to_string();
+        let mut s = regex.to_string();
         let mut i = first + 1;
         let mut found_more = false;
         while i < addrs.len() {

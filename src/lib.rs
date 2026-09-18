@@ -26,6 +26,7 @@ pub(crate) struct Memory {
     pub(crate) index: usize,
     pub(crate) this: String,
     pub(crate) hold: String,
+    pub(crate) end: bool,
 }
 
 impl Memory {

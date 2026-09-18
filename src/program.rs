@@ -1,21 +1,16 @@
-use crate::{
-    Action, Line, Memory, Reader, Result, Status,
-    command::{self, Command},
-};
+use crate::{Action, Line, Memory, Reader, Result, Status, address::Address, command::Command};
 use std::io::Write;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
     actions: Vec<Action>,
-    finally: Vec<command::Command>,
     memory: Memory,
 }
 
 impl Program {
-    pub(crate) fn new(actions: Vec<Action>, finally: Vec<command::Command>) -> Program {
+    pub(crate) fn new(actions: Vec<Action>) -> Program {
         Program {
             actions,
-            finally,
             memory: Memory::default(),
         }
     }
@@ -33,7 +28,7 @@ impl Program {
 
         // before processing lines
         self.memory.read(Line::default());
-        if let Some(s) = self.process_line(reader, out)? {
+        if let Some(s) = self.process_line(reader, out, |a, m| a.is_match(m))? {
             status = s;
         }
 
@@ -44,38 +39,41 @@ impl Program {
             self.memory.read(line?);
             status = Normal;
 
-            if let Some(s) = self.process_line(reader, out)? {
+            if let Some(s) = self.process_line(reader, out, |a, m| a.is_match(m))? {
                 status = s;
                 matches += 1;
             }
 
-            if status == NoPrint {
-                continue;
-            }
-            if print_all {
+            if status != NoPrint && print_all {
                 writeln!(out, "{}", self.memory.this)?;
             }
         }
 
-        // after processing lines
-        for cmd in self.finally.iter() {
-            let s = cmd.run(&mut self.memory, reader, out)?;
-            if s != Status::Normal {
+        // run instructions that match the final line
+        if !matches!(status, Quit(_)) {
+            self.memory.end = true;
+            if let Some(s) = self.process_line(reader, out, |a, m| a.is_final() && a.is_match(m))? {
                 status = s;
-                break;
             }
         }
-
         Ok((status, matches))
     }
 
-    fn process_line(&mut self, reader: &mut Reader, out: &mut dyn Write) -> Result<Option<Status>> {
+    fn process_line<F>(
+        &mut self,
+        reader: &mut Reader,
+        out: &mut dyn Write,
+        is_match: F,
+    ) -> Result<Option<Status>>
+    where
+        F: Fn(&Address, &Memory) -> bool,
+    {
         let mut status = None;
         let mut pos = 0;
         while pos < self.actions.len() {
             match &self.actions[pos] {
                 Action::Condition(cond, jump) => {
-                    if cond.matches(&self.memory) {
+                    if is_match(cond, &self.memory) {
                         status = Some(Status::Normal);
                     } else {
                         pos += jump;
@@ -109,15 +107,6 @@ impl std::fmt::Display for Program {
             }
             if let Some(Action::Condition(_, _)) = iter.peek() {
                 write!(f, "; ")?;
-            }
-        }
-        if !self.finally.is_empty() {
-            if !self.actions.is_empty() {
-                write!(f, "; ")?;
-            }
-            write!(f, "$ ")?;
-            for c in &self.finally {
-                write!(f, "{} ", c)?;
             }
         }
         Ok(())
@@ -163,8 +152,12 @@ mod tests {
     fn keep(command: &str, expected: &str) {
         let mut prog = Program::from_str(command).unwrap();
         prog.memory.read(Line(1, "123456789".to_string()));
-        prog.process_line(&mut Reader::empty(), &mut std::io::stdout().lock())
-            .unwrap();
+        prog.process_line(
+            &mut Reader::empty(),
+            &mut std::io::stdout().lock(),
+            |a, m| a.is_match(m),
+        )
+        .unwrap();
         assert_eq!(prog.memory.this, expected)
     }
 
@@ -219,8 +212,12 @@ mod tests {
     fn run(command: &str, input: &str, expected: &str) {
         let mut prog = Program::from_str(command).unwrap();
         prog.memory.read(Line(1, input.to_string()));
-        prog.process_line(&mut Reader::empty(), &mut std::io::stdout().lock())
-            .unwrap();
+        prog.process_line(
+            &mut Reader::empty(),
+            &mut std::io::stdout().lock(),
+            |a, m| a.is_match(m),
+        )
+        .unwrap();
         assert_eq!(prog.memory.this, expected)
     }
 }
