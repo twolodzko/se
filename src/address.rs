@@ -13,7 +13,7 @@ pub(crate) enum Address {
     Location(usize),
     /// /regex/ matching the line
     Regex(crate::Regex),
-    /// !addr negates the addr match
+    /// addr! negates the addr match
     Negate(Box<Address>),
     /// addr1 - addr2
     Between(Between),
@@ -220,9 +220,9 @@ impl std::fmt::Display for Address {
                     addr.as_ref(),
                     Between(_) | Nth(_, _) | Extend(_) | And(_) | Set(_)
                 ) {
-                    write!(f, "!({})", addr)
+                    write!(f, "({})!", addr)
                 } else {
-                    write!(f, "!{}", addr)
+                    write!(f, "{}!", addr)
                 }
             }
             Between(this) => write!(f, "{}-{}", this.start, this.end),
@@ -333,7 +333,7 @@ mod tests {
         "range"
     )]
     #[test_case(
-        "!(3-5)",
+        "(3-5)!",
         vec![true, true, false, false, false, true, true, true, true, true];
         "negated range"
     )]
@@ -343,7 +343,7 @@ mod tests {
         "extended"
     )]
     #[test_case(
-        "!(2+3)",
+        "(2+3)!",
         vec![true, false, false, false, false, true, true, true, true, true];
         "negated extended"
     )]
@@ -353,7 +353,7 @@ mod tests {
         "nth for odd"
     )]
     #[test_case(
-        "!(1~2)",
+        "(1~2)!",
         vec![false, true, false, true, false, true, false, true, false, true];
         "negated nth for odd"
     )]

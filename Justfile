@@ -40,6 +40,10 @@ benchmark: build
         './se "/sed/ s/default/kitty/ p" README.md'
 
     bench 2000 \
+        'grep 'sed' README.md' \
+        './se '/sed/p' README.md'
+
+    bench 2000 \
         'grep -c 'sed' README.md' \
         './se -c '/sed/' README.md'
 

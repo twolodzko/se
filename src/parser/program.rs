@@ -121,7 +121,7 @@ mod tests {
     #[test_case(" 13  -   72 ", Program::new(vec![
         Action::Condition(Between(address::Between::new(Location(13), Location(72))), 0),
     ]); "range with spaces")]
-    #[test_case("!13-72", Program::new(vec![
+    #[test_case("13!-72", Program::new(vec![
         Action::Condition(Between(address::Between::new(Negate(Box::new(Location(13))), Location(72))), 0),
     ]); "range with negated")]
     #[test_case("/abc/", Program::new(vec![
@@ -148,10 +148,10 @@ mod tests {
             Regex(crate::Regex::from_str("def").unwrap()),
         )), 0),
     ]); "regex range")]
-    #[test_case("!(!1)", Program::new(vec![
+    #[test_case("(1!)!", Program::new(vec![
         Action::Condition(Location(1), 0),
     ]); "double negation")]
-    #[test_case(" !   666   ", Program::new(vec![
+    #[test_case("  666  !   ", Program::new(vec![
         Action::Condition(Negate(Box::new(Location(666))), 0)
     ]); "negation with space")]
     #[test_case("5|6|10", Program::new(vec![
@@ -163,7 +163,7 @@ mod tests {
     #[test_case("  5| 6  |10   ", Program::new(vec![
         Action::Condition(Set(vec![Location(5), Location(6), Location(10)].into()), 0),
     ]); "set with spaces")]
-    #[test_case("5|6|!10", Program::new(vec![
+    #[test_case("5|6|10!", Program::new(vec![
         Action::Condition(Set(vec![Location(5), Location(6), Negate(Box::new(Location(10)))].into()), 0),
     ]); "set negated")]
     #[test_case("(((42)))", Program::new(vec![
@@ -270,7 +270,7 @@ mod tests {
         Action::Condition(Never, 1),
         Action::Command(Quit(0)),
     ]); "remove final blocks")]
-    #[test_case("1|((!//)+1)|2 p'ok'", Program::new(vec![
+    #[test_case("1|((//!)+1)|2 p'ok'", Program::new(vec![
         Action::Condition(Set(vec![Location(1), Location(2)].into()), 1),
         Action::Command(Println(Some("ok".to_string()))),
     ]); "remove never blocks")]

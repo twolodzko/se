@@ -146,10 +146,9 @@ fn between<R: Reader>(reader: &mut R) -> Result<Address> {
 }
 
 fn negated<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
-    let negated = reader.next_is('!')?;
-    skip_whitespace(reader);
     let addr = atom(reader)?;
-    if negated {
+    skip_whitespace(reader);
+    if reader.next_is('!')? {
         return if let Some(a) = addr {
             Ok(Some(!a))
         } else {
@@ -216,18 +215,18 @@ mod tests {
     #[test_case("()", Always; "empty brackets")]
     #[test_case("//", Always; "empty regex")]
     #[test_case("!", Never; "never")]
-    #[test_case("!//", Never; "not always")]
-    #[test_case("!(!//)", Always; "double negation")]
+    #[test_case("//!", Never; "not always")]
+    #[test_case("(//!)!", Always; "double negation")]
     #[test_case("$", Final; "finally")]
     #[test_case("//-!", Between(address::Between::new(Always, Never)); "between always and never")]
     #[test_case("-5", Between(address::Between::new(Location(1), Location(5))); "left-open range")]
     #[test_case("5-", Between(address::Between::new(Location(5), Final)); "right-open range")]
     #[test_case("7~2", Nth(7, 2); "nth")]
-    #[test_case("!(1-5)", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
-    #[test_case("(!(1-5))", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "brackets and negated range")]
+    #[test_case("(1-5)!", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "negated range")]
+    #[test_case("((1-5)!)", Negate(Box::new(Between(address::Between::new(Location(1), Location(5))))); "brackets and negated range")]
     #[test_case("1|$", Set(vec![Location(1), Final].into()); "first or last")]
     #[test_case("1|/foo/|//", Always; "set containing always reduces")]
-    #[test_case("!(1|5)", Negate(Box::new(Set(vec![Location(1), Location(5)].into()))); "negate set in brackets")]
+    #[test_case("(1|5)!", Negate(Box::new(Set(vec![Location(1), Location(5)].into()))); "negate set in brackets")]
     #[test_case("1+5", Extend(Extend::new(Location(1), 5)); "extend location")]
     #[test_case("!|1", Set(vec![Never, Location(1)].into()); "set with never")]
     #[test_case("! & //", Never; "never and always")]
@@ -277,11 +276,11 @@ mod tests {
         assert_eq!(result, expected)
     }
 
-    #[test_case("!$ p"; "not final")]
-    #[test_case("!(!(!$)) p"; "triple negated final")]
-    #[test_case("(!$)+5 p"; "extended not final")]
-    #[test_case("!($+5) p"; "negated not final extended")]
-    #[test_case("5 & !$ p"; "and not final")]
+    #[test_case("$! p"; "not final")]
+    #[test_case("(($!)!)! p"; "triple negated final")]
+    #[test_case("($!)+5 p"; "extended not final")]
+    #[test_case("($+5)! p"; "negated not final extended")]
+    #[test_case("5 & $! p"; "and not final")]
     fn fail_on_parse_impossibility(input: &str) {
         let mut reader = StringReader::from(input);
         let result = super::parse(&mut reader);

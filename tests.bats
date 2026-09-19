@@ -88,7 +88,7 @@ linux_only() {
 }
 
 @test "Use negation" {
-   run diff <(./se '!(1-3) p' README.md) <(tail -n +4 README.md)
+   run diff <(./se '(1-3)! p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -98,7 +98,7 @@ linux_only() {
 }
 
 @test "Use negation with set" {
-   run diff <(./se '!(1|2|3)p' README.md) <(tail -n +4 README.md)
+   run diff <(./se '(1|2|3)!p' README.md) <(tail -n +4 README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -271,7 +271,7 @@ linux_only() {
 }
 
 @test "Reverse lines like tac" {
-   run diff <(tac data/utf8-test-file.txt) <(./se '!1 j ; $ p ; h' data/utf8-test-file.txt)
+   run diff <(tac data/utf8-test-file.txt) <(./se '1! j ; $ p ; h' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 
@@ -429,7 +429,7 @@ bash_line_marker() {
 }
 
 @test "Print even lines" {
-   run diff <(seq 2 2 13) <(seq 1 13 | ./se '!0 & 0~2 p')
+   run diff <(seq 2 2 13) <(seq 1 13 | ./se '0! & 0~2 p')
    [ "$status" -eq 0 ]
 }
 
@@ -465,7 +465,7 @@ bash_line_marker() {
 
 
 @test "Negate extend from zero" {
-   run diff <(seq 6 10) <(seq 1 10 | ./se '!(0+5) p')
+   run diff <(seq 6 10) <(seq 1 10 | ./se '(0+5)! p')
    [ "$status" -eq 0 ]
 }
 
