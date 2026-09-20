@@ -56,9 +56,9 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
   It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
   `!` alone means an instruction that never matches.
-* `$` matches after processing all the lines. It can be used in a similar way as
-  `end { ... }` block in [awk]. It can be used for matching the final line.
-  The address cannot be negated.
+* `$` matches after processing all the lines. The address cannot be negated.
+  It is similar to the `end { ... }` block in [awk]. `$` can be used as if matching
+  the final line, but keep in mind that it technically matches *after* matching all the lines.
 * Addresses can be enclosed with brackets `(addr)`.
 
 Addresses can be combined:
