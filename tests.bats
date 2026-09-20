@@ -63,42 +63,60 @@ linux_only() {
 }
 
 @test "Print all" {
-	run diff <(./se 'p' data/utf8-test-file.txt) <(cat data/utf8-test-file.txt)
-   [ "$status" -eq 0 ]
+	run diff <(cat data/utf8-test-file.txt) <(./se 'p' data/utf8-test-file.txt)
+	[ "$status" -eq 0 ]
+}
+
+@test "Print nothing" {
+    run ./se '!p' data/utf8-test-file.txt
+    [ "$output" = "" ]
+    [ "$status" -eq 0 ]
+}
+
+@test "Count nothing" {
+    run ./se -c '!' data/utf8-test-file.txt
+    [ "$output" = "0" ]
+    [ "$status" -eq 0 ]
 }
 
 @test "Print vs Println" {
 	run diff <(./se 'p' data/utf8-test-file.txt) <(./se 'PP\n' data/utf8-test-file.txt)
-   [ "$status" -eq 0 ]
+	[ "$status" -eq 0 ]
 }
 
 @test "Print all with -a and no command" {
-	run diff <(./se -a '' data/utf8-test-file.txt) <(cat data/utf8-test-file.txt)
-   [ "$status" -eq 0 ]
+	run diff <(cat data/utf8-test-file.txt) <(./se -a '' data/utf8-test-file.txt)
+	[ "$status" -eq 0 ]
 }
 
 @test "Group of commands" {
-	run diff <(./se '1ppp' README.md) <(sed -n '1 {p;p;p;}' README.md)
-   [ "$status" -eq 0 ]
+	run diff <(sed -n '1 {p;p;p;}' README.md) <(./se '1ppp' README.md)
+	[ "$status" -eq 0 ]
 }
 
 @test "Delete lines" {
-	run diff <(./se -a '/sed/ d' README.md) <(sed '/sed/ d' README.md)
-   [ "$status" -eq 0 ]
+	run diff <(sed '/sed/ d' README.md) <(./se -a '/sed/ d' README.md)
+	[ "$status" -eq 0 ]
+}
+
+@test "Delete all lines" {
+	run ./se -a 'd' data/utf8-test-file.txt
+	[ "$output" = "" ]
+	[ "$status" -eq 0 ]
 }
 
 @test "Use negation" {
-   run diff <(./se '(1-3)! p' README.md) <(tail -n +4 README.md)
+   run diff <(tail -n +4 README.md) <(./se '(1-3)! p' README.md)
    [ "$status" -eq 0 ]
 }
 
 @test "Match last line" {
 	run diff <(echo "100") <(seq 1 100 | ./se '$p')
-   [ "$status" -eq 0 ]
+	[ "$status" -eq 0 ]
 }
 
 @test "Use negation with set" {
-   run diff <(./se '(1|2|3)!p' README.md) <(tail -n +4 README.md)
+   run diff <(tail -n +4 README.md) <(./se '(1|2|3)!p' README.md)
    [ "$status" -eq 0 ]
 }
 
