@@ -42,8 +42,9 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
 
 ## Addresses
 
-* Number like `1` or `278` points to a specific line. Line numbers start at 1
-  and `0` means "before processing any line".
+* Number like `1` or `278` points to a specific line. Line numbers start at 1.
+* `0` means "before processing any line".
+* `$` matches the final line.
 * `/regex/` matches the lines that match the regular expression specified between `/.../`.
   Regular expressions can be used as bounds of the ranges. `\%regex%` is another form,
   where `%` character can be replaced with any other delimiter.
@@ -56,7 +57,6 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
   It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
   `!` alone means an instruction that never matches.
-* `$` matches the final line.
 * Addresses can be enclosed with brackets `(addr)`.
 
 Addresses can be combined:
