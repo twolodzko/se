@@ -36,17 +36,6 @@ fn read_integer<R: Reader>(reader: &mut R) -> Result<String> {
 }
 
 impl Address {
-    fn is_impossible(&self) -> bool {
-        use Address::*;
-        match self {
-            Negate(not) => not.is_final(),
-            And(and) => and.addresses.iter().any(|a| a.is_impossible()),
-            Extend(extend) => extend.start.is_impossible(),
-            Between(between) => between.start.is_impossible(),
-            _ => false,
-        }
-    }
-
     fn replace_maybe(&mut self, subst: Option<&crate::Regex>) -> Result<()> {
         use Address::*;
         match self {

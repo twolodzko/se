@@ -5,7 +5,6 @@ mod parser;
 mod program;
 mod reader;
 
-use crate::address::Address;
 pub use {
     command::Status,
     program::Program,
@@ -72,8 +71,6 @@ pub enum Error {
     Missing(char),
     Unexpected(char),
     EndOfInput,
-    #[allow(private_interfaces)]
-    Impossible(Address),
     Io(std::io::Error),
     Custom(String),
     ParseInt(std::num::ParseIntError),
@@ -88,7 +85,6 @@ impl std::fmt::Display for Error {
             Missing(c) => write!(f, "missing '{c}'"),
             Unexpected(c) => write!(f, "unexpected '{c}'"),
             EndOfInput => write!(f, "unexpected end of input"),
-            Impossible(a) => write!(f, "{} is an nonsensical condition", a),
             Io(e) => write!(f, "{}", e),
             Custom(s) => write!(f, "{}", s),
             ParseInt(e) => write!(f, "{}", e),

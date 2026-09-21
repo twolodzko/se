@@ -10,11 +10,7 @@ use crate::{
 use std::str::FromStr;
 
 pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Address> {
-    let addr = set(reader)?;
-    if addr.is_impossible() {
-        return Err(Error::Impossible(addr));
-    }
-    Ok(addr)
+    set(reader)
 }
 
 fn set<R: Reader>(reader: &mut R) -> Result<Address> {
@@ -274,16 +270,5 @@ mod tests {
         let mut reader = StringReader::from(input);
         let result = super::parse(&mut reader).unwrap();
         assert_eq!(result, expected)
-    }
-
-    #[test_case("$! p"; "not final")]
-    #[test_case("(($!)!)! p"; "triple negated final")]
-    #[test_case("($!)+5 p"; "extended not final")]
-    #[test_case("($+5)! p"; "negated not final extended")]
-    #[test_case("5 & $! p"; "and not final")]
-    fn fail_on_parse_impossibility(input: &str) {
-        let mut reader = StringReader::from(input);
-        let result = super::parse(&mut reader);
-        assert!(matches!(result, Err(crate::Error::Impossible(_))))
     }
 }

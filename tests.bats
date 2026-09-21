@@ -73,6 +73,18 @@ linux_only() {
     [ "$status" -eq 0 ]
 }
 
+@test "Last line on empty input" {
+    run ./se '$p"ok"' <(printf "")
+    [ "$output" = "ok" ]
+    [ "$status" -eq 0 ]
+}
+
+@test "Check for empty input" {
+    run ./se '0 & $ p"empty input"' <(printf "")
+    [ "$output" = "empty input" ]
+    [ "$status" -eq 0 ]
+}
+
 @test "Count nothing" {
     run ./se -c '!' data/utf8-test-file.txt
     [ "$output" = "0" ]
@@ -182,7 +194,7 @@ linux_only() {
 
 @test "Print tail" {
    run diff <(tail -n 5 README.md) \
-            <(./se '1 r4x . x s/[^\n]*\n(.*)/\1/1 jx . $ xp' README.md)
+            <(./se '1 r4x . x s/[^\n]*\n(.*)/\1/1 jx ; $ xp' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -253,7 +265,7 @@ linux_only() {
 }
 
 @test "Imitate cat by collecting lines" {
-   run diff <(cat data/utf8-test-file.txt) <(./se '1h.k.$gp' data/utf8-test-file.txt)
+   run diff <(cat data/utf8-test-file.txt) <(./se '1h.k;$gp' data/utf8-test-file.txt)
    [ "$status" -eq 0 ]
 }
 

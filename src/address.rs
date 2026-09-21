@@ -54,14 +54,16 @@ impl Address {
         }
     }
 
-    pub(crate) fn is_final(&self) -> bool {
+    pub(crate) fn contains_final(&self) -> bool {
         use Address::*;
         match self {
             Final => true,
-            Extend(extend) => extend.start.is_final(),
-            Set(set) => set.is_final(),
-            And(and) => and.addresses.iter().any(|a| a.is_final()),
-            Between(between) => between.start.is_final(),
+            Extend(extend) => extend.start.contains_final(),
+            Set(set) => set.addresses.iter().any(|a| a.contains_final()),
+            And(and) => and.addresses.iter().any(|a| a.contains_final()),
+            // no need to check if between.end is final, it can just run without the stop
+            Between(between) => between.start.contains_final(),
+            Negate(not) => not.contains_final(),
             _ => false,
         }
     }
@@ -138,35 +140,22 @@ impl Extend {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Set {
     pub(crate) addresses: Vec<Address>,
-    seen: Cell<bool>,
 }
 
 impl Set {
     pub(crate) fn is_match(&self, memory: &Memory) -> bool {
-        let mut ok = false;
         for addr in self.addresses.iter() {
             if addr.is_match(memory) {
-                ok = true;
-                break;
+                return true;
             }
         }
-        self.seen.set(ok);
-        ok
-    }
-
-    fn is_final(&self) -> bool {
-        // if it was already used, it doesn't matter
-        // that it contains the final address
-        self.addresses.iter().any(|a| a.is_final()) && !self.seen.get()
+        false
     }
 }
 
 impl From<Vec<Address>> for Set {
     fn from(value: Vec<Address>) -> Self {
-        Set {
-            addresses: value,
-            seen: Cell::new(false),
-        }
+        Set { addresses: value }
     }
 }
 

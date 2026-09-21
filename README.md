@@ -56,14 +56,12 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
   It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
   `!` alone means an instruction that never matches.
-* `$` matches after processing all the lines. The address cannot be negated.
-  It is similar to the `end { ... }` block in [awk]. `$` can be used as if matching
-  the final line, but keep in mind that it technically matches *after* matching all the lines.
+* `$` matches the final line.
 * Addresses can be enclosed with brackets `(addr)`.
 
 Addresses can be combined:
 
-* `start-end` (or `start,end`) is an inclusive range. For example, `1-5` includes lines
+* `start-end` (or `start,end` as in sed) is an inclusive range. For example, `1-5` includes lines
   between 1 and 5. `-5` is equivalent to `1-5`. `1-` or `1-$` means all the lines from 1.
   `/foo/-/bar/` is a range of lines where the first line contains the word "foo" and the last line the word "bar".
 * `N~M` matches every Mth line since line number N.
@@ -202,4 +200,3 @@ lines containing the word "sed" would be printed twice, because of matching addr
 [verbose mode]: https://docs.rs/regex/latest/regex/?search=verbose#example-verbose-mode
 [std::char::escape_default]: https://doc.rust-lang.org/std/primitive.char.html#method.escape_default
 [similar way as `sed`]: https://www.gnu.org/software/sed/manual/sed.html#Execution-Cycle
-[awk]: https://www.gnu.org/software/gawk/manual/html_node/Using-BEGIN_002fEND.html

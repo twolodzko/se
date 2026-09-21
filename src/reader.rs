@@ -2,34 +2,43 @@ use crate::lines::ByteLines;
 use std::{
     fs::File,
     io::{BufReader, Result},
+    iter::Peekable,
     path::PathBuf,
 };
 
 #[derive(Debug, PartialEq, Default)]
 pub struct Line(pub usize, pub String);
 
+type Item = Result<Vec<u8>>;
+
 pub struct Reader<'a> {
-    iter: Box<dyn Iterator<Item = Result<Vec<u8>>> + 'a>,
+    iter: Peekable<Box<dyn Iterator<Item = Item> + 'a>>,
     counter: usize,
 }
 
 impl<'a> Reader<'a> {
     pub fn new<I>(reader: I) -> Self
     where
-        I: Iterator<Item = Result<Vec<u8>>> + 'a,
+        I: Iterator<Item = Item> + 'a,
     {
+        let boxed: Box<dyn Iterator<Item = Item> + 'a> = Box::new(reader);
         Self {
-            iter: Box::new(reader),
+            iter: boxed.peekable(),
             counter: 0,
         }
     }
 
     #[cfg(test)]
     pub(crate) fn empty() -> Self {
+        let boxed: Box<dyn Iterator<Item = Item> + 'a> = Box::new(std::iter::empty());
         Self {
-            iter: Box::new(std::iter::empty()),
+            iter: boxed.peekable(),
             counter: 0,
         }
+    }
+
+    pub(crate) fn peek(&mut self) -> Option<&Item> {
+        self.iter.peek()
     }
 }
 
@@ -91,7 +100,7 @@ impl From<&[PathBuf]> for FilesReader {
 }
 
 impl Iterator for FilesReader {
-    type Item = Result<Vec<u8>>;
+    type Item = Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
