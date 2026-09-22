@@ -112,7 +112,7 @@ precedence than `&`, and `&` then `|`.
 
 * `r [num]` – read num lines (1 by default) and append them to pattern space
   using newline as a separator.
-* `R` – read new line and replace pattern space content with it. If it cannot read the new line,
+* `n` – read new line and replace pattern space content with it. If it cannot read the new line,
   it sends the break signal (same as `.`).
 * `d` – clear the content of the pattern space and immediately start processing next line.
 * `:label` – define a code label. The label must consist of alphanumeric characters or underscores _.
@@ -161,6 +161,8 @@ lines containing the word "sed" would be printed twice, because of matching addr
 * `z` command is used for behaviors of sed's `z` and `c` commands, depending on parametrization.
 * `c` command works like command line `cut -c`, not like sed's `c`.
 * `l` edits the pattern space instead of printing and uses Rust's escape formatting.
+* `r` is a different command than sed's `r`.
+* `n` command does not print the pattern space.
 
 |      `sed`       |       `se`          |
 |------------------|---------------------|
@@ -171,6 +173,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `s/src/dst/flag` | `s/(?flag)src/dst/` |
 | `c string`       | `z"string"`         |
 | `l`              | `lp`                |
+| `n`              | `pn`                |
 
 ## `se` vs other command line utilities
 

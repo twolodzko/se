@@ -38,8 +38,8 @@ pub(crate) enum Command {
     Collect,
     /// r[num]
     Readln(usize),
-    /// R
-    ReadReplace,
+    /// n
+    Next,
     /// z
     Reset(Option<String>),
     /// d
@@ -156,7 +156,7 @@ impl Command {
                     }
                 }
             }
-            ReadReplace => {
+            Next => {
                 if let Some(line) = reader.next() {
                     memory.read(line?);
                 } else {
@@ -227,7 +227,7 @@ impl std::fmt::Display for Command {
             Collectln => write!(f, "k"),
             Collect => write!(f, "K"),
             Readln(n) => write!(f, "r{}", n),
-            ReadReplace => write!(f, "R"),
+            Next => write!(f, "R"),
             Reset(None) => write!(f, "z"),
             Reset(Some(s)) => write!(f, "z'{}'", s),
             Delete => write!(f, "d"),

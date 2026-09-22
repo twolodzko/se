@@ -71,7 +71,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 let num = if s.is_empty() { 1 } else { s.parse()? };
                 Readln(num)
             }
-            'R' => ReadReplace,
+            'n' => Next,
             'q' => {
                 skip_whitespace(reader);
                 let s = read_integer(reader)?;

@@ -315,8 +315,13 @@ linux_only() {
    [ "$status" -eq 0 ]
 }
 
-@test "cat using R command in a loop" {
-    run diff <(cat README.md) <(./se '1 :x p R b x' README.md)
+@test "Be (almost) like sed's n command" {
+   run diff <(seq 6 | sed 'n;n;s/./x/') <(seq 6 | ./se -a 'pn;pn;s/./x/')
+   [ "$status" -eq 0 ]
+}
+
+@test "cat using n command in a loop" {
+    run diff <(cat README.md) <(./se '1 :x p n b x' README.md)
     [ "$status" -eq 0 ]
 }
 
