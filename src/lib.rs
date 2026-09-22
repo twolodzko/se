@@ -121,7 +121,7 @@ impl From<regex::Error> for Error {
 #[macro_export]
 macro_rules! error {
     ($($arg:tt)*) => {
-        Err(Error::Custom(format!($($arg)*)))
+        Err($crate::Error::Custom(format!($($arg)*)))
     };
 }
 

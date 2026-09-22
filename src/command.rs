@@ -1,4 +1,4 @@
-use crate::{Error, Memory, Reader, Regex, Result, error};
+use crate::{Memory, Reader, Regex, Result, error};
 use std::{borrow::Cow, io::Write};
 use unescaper::unescape;
 
