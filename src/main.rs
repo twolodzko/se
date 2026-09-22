@@ -23,7 +23,7 @@ fn main() -> ExitCode {
 #[derive(Parser)]
 struct Args {
     /// Print all the lines (except the ones that were deleted)
-    #[arg(short, long)]
+    #[arg(short, long, env = "SE_PRINT_ALL")]
     all: bool,
 
     /// Print the number of matches

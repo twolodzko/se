@@ -154,7 +154,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   but instead reading commands directly e.g. `=p` (actually `=a\np`, see [above](#commands)) is equivalent
   to `{ = ; p }` in `sed`.
 * `sed` by default prints all the lines unless explicitly deleted.
-  To achieve this behavior use `-a` (`--all`) flag to print all the lines.
+  To achieve this behavior use `-a` (`--all`) flag to print all the lines or set the `SE_PRINT_ALL` environment variable.
 * `se` by default replaces all matches (like `s/src/dst/g` in sed) so it does not use the /g flag.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
   To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
