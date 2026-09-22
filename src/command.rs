@@ -22,8 +22,8 @@ pub(crate) enum Command {
     Substitute(Regex, String, usize),
     /// c s-e
     Cut(usize, Option<usize>),
-    /// h [string]
-    Hold(Option<String>),
+    /// h
+    Hold,
     /// g
     Get,
     /// x
@@ -121,13 +121,9 @@ impl Command {
                     memory.this.push_str(s);
                 }
             }
-            Hold(o) => {
+            Hold => {
                 memory.hold.clear();
-                if let Some(s) = o {
-                    memory.hold.push_str(s);
-                } else {
-                    memory.hold.push_str(&memory.this);
-                }
+                memory.hold.push_str(&memory.this);
             }
             Get => {
                 memory.this.clear();
@@ -223,8 +219,7 @@ impl std::fmt::Display for Command {
             Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
             Cut(s, None) => write!(f, "c{}-", s + 1),
             Cut(s, Some(t)) => write!(f, "c{}-{}", s + 1, s + t),
-            Hold(None) => write!(f, "h"),
-            Hold(Some(s)) => write!(f, "h'{}'", s),
+            Hold => write!(f, "h"),
             Get => write!(f, "g"),
             Exchange => write!(f, "x"),
             Joinln => write!(f, "j"),

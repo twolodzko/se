@@ -47,10 +47,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 let val = read_string_or_none(reader)?;
                 Reset(val)
             }
-            'h' => {
-                let val = read_string_or_none(reader)?;
-                Hold(val)
-            }
+            'h' => Hold,
             'g' => Get,
             'x' => Exchange,
             'j' => Joinln,

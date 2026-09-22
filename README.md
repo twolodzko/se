@@ -98,7 +98,7 @@ precedence than `&`, and `&` then `|`.
 
 ### Manipulating memory
 
-* `h [string]` – replace the content of the hold space with the string, or if not given, with content of the pattern space.
+* `h` – replace the content of the hold space with the content of the pattern space.
 * `g` – get content of the hold space to the pattern space.
 * `x` – exchange the content of the pattern space with content of the hold space.
 * `j`, `J` – push content of the hold space at the back of the pattern space
