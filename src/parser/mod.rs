@@ -4,7 +4,7 @@ mod program;
 mod reader;
 mod regex;
 
-use crate::{Error, Result, address::Address, error};
+use crate::{Result, address::Address, error};
 use reader::Reader;
 #[cfg(test)]
 pub(crate) use reader::StringReader;
