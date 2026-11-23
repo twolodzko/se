@@ -67,6 +67,16 @@ linux_only() {
 	[ "$status" -eq 0 ]
 }
 
+@test "Substitute nothing with nothing" {
+	run diff <(cat data/utf8-test-file.txt) <(./se 's///p' data/utf8-test-file.txt)
+	[ "$status" -eq 0 ]
+}
+
+@test "Match any line" {
+	run diff <(cat data/utf8-test-file.txt) <(./se '//p' data/utf8-test-file.txt)
+	[ "$status" -eq 0 ]
+}
+
 @test "Print nothing" {
     run ./se '!p' data/utf8-test-file.txt
     [ "$output" = "" ]
@@ -405,6 +415,24 @@ EOF
    [ "$status" -eq 0 ]
 }
 
+@test "Branch conditionally" {
+    run diff <(./se ':l s/ping/pong/ tp s/pong/ping/ :p p bl' <<< "pong" | head -n 4) \
+             <(printf "ping\npong\nping\npong\n")
+    [ "$status" -eq 0 ]
+}
+
+@test "Empty substitution succeeds" {
+    run diff <(./se ':l s/// p"yes" tl' <<< "" | head -n 4) \
+             <(printf "yes\nyes\nyes\nyes\n")
+    [ "$status" -eq 0 ]
+}
+
+@test "Conditional delete" {
+    run diff <(./se '!:x d; s/sed/###/ Tx p' README.md) \
+             <(./se 's/sed/###/?p' README.md)
+    [ "$status" -eq 0 ]
+}
+
 bash_line_marker() {
    while IFS="" read -r line || [ -n "$line" ]
    do
@@ -497,7 +525,6 @@ bash_line_marker() {
    [ "$output" = "print me once" ]
    [ "$status" -eq 0 ]
 }
-
 
 @test "Negate extend from zero" {
    run diff <(seq 6 10) <(seq 1 10 | ./se '(0+5)! p')

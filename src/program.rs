@@ -5,6 +5,7 @@ use std::io::Write;
 pub struct Program {
     actions: Vec<Action>,
     memory: Memory,
+    success: bool,
     check_final: bool,
 }
 
@@ -20,6 +21,7 @@ impl Program {
         Program {
             actions,
             memory: Memory::default(),
+            success: false,
             check_final,
         }
     }
@@ -72,7 +74,7 @@ impl Program {
                     }
                 }
                 Action::Command(cmd) => {
-                    let s = cmd.run(&mut self.memory, reader, out)?;
+                    let s = cmd.run(&mut self.memory, reader, &mut self.success, out)?;
                     if let Status::GoTo(idx) = s {
                         pos = idx;
                     } else if s != Status::Normal {

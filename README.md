@@ -83,13 +83,10 @@ precedence than `&`, and `&` then `|`.
 
 ### Editing
 
-* `s/src/dst/[limit][?]` – use regular expression to replace `src` with `dst` in the pattern space.
+* `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
   If there's nothing to substitute, it has no effect. `limit` is a number of matches to replace.
   Instead of `/`, other character can be used as a delimiter, for example `s#src#dst#`.
   `s^src$dst$` is the whole line match form for substituting using the `^src$` regular expression.
-  With `?` flag if substitution doesn't succeed, the processing of further commands is stopped
-  and nothing is printed (as with `d` command). The `?` command can be used to imitate sed's behavior,
-  where `s` matches lines.
 * `i string` – insert (prepend) string to the pattern space.
 * `a string` – append string to the pattern space.
 * `z [string]` – replace the pattern space with string, if not given empty it.
@@ -116,8 +113,11 @@ precedence than `&`, and `&` then `|`.
 * `n` – read new line and replace pattern space content with it. If it cannot read the new line,
   it sends the break signal (same as `.`).
 * `d` – clear the content of the pattern space and immediately start processing next line.
+* `?` - if last substitution didn't succeed, act like `d`.
 * `:label` – define a code label. The label must consist of alphanumeric characters or underscores _.
 * `b label` – unconditionally jump to the code label.
+* `t label` - if last substitution succeeded, act like `b`.
+* `T label` - if last substitution didn't succeed, act like `b`.
 * `e [command]` – execute the command, if not provided execute the content of the pattern space
   as a shell command. Save the stdout output of the command to pattern space. Errors are propagated.
 * `q [code]` – exit with the code exit code (0 by default).
@@ -158,7 +158,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
   To achieve this behavior use `-a` (`--all`) flag to print all the lines or set the `SE_PRINT_ALL` environment variable.
 * `se` by default replaces all matches (like `s/src/dst/g` in sed) so it does not use the /g flag.
 * `s/src/dst/` does pure substitution. It returns unchanged lines on no match, unlike `sed` which skips such lines.
-  To imitate `sed`s execution flow conditional on substitutions, use `?` (see [addresses](#addresses)).
+  To imitate `sed`s line skipping conditional on failed substitutions, use `?` (see [Special actions](#special-actions)).
 * `z` command is used for behaviors of sed's `z` and `c` commands, depending on parametrization.
 * `c` command works like command line `cut -c`, not like sed's `c`.
 * `l` edits the pattern space instead of printing and uses Rust's escape formatting.

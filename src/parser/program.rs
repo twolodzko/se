@@ -34,7 +34,10 @@ fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Action>> {
         skip_whitespace(reader);
     }
     for action in actions.iter_mut() {
-        if let Action::Command(Command::Branch(label, pos)) = action {
+        use Command::*;
+        if let Action::Command(Branch(label, pos) | IfSuccess(label, pos) | IfFailure(label, pos)) =
+            action
+        {
             if let Some(idx) = labels.get(label) {
                 *pos = *idx;
             } else {
@@ -170,7 +173,6 @@ mod tests {
                 crate::Regex::from_str("abc").unwrap(),
                 "def".to_string(),
                 0,
-                false,
             )),
     ]); "substitute")]
     #[test_case(r"s/abc/def/5", Program::new(vec![
@@ -179,7 +181,6 @@ mod tests {
                 crate::Regex::from_str("abc").unwrap(),
                 "def".to_string(),
                 5,
-                false,
             )),
     ]); "substitute with count")]
     #[test_case(r"s/abc/def/", Program::new(vec![
@@ -188,7 +189,6 @@ mod tests {
                 crate::Regex::from_str("abc").unwrap(),
                 "def".to_string(),
                 0,
-                false,
             )),
     ]); "substitute with global count")]
     #[test_case(r"s\/\//\", Program::new(vec![
@@ -197,7 +197,6 @@ mod tests {
                 crate::Regex::from_str("/").unwrap(),
                 "//".to_string(),
                 0,
-                false,
             )),
     ]); "substitute with custom delimiter")]
     #[test_case(r"/abc/s/def/ghi/", Program::new(vec![
@@ -206,7 +205,6 @@ mod tests {
                 crate::Regex::from_str("def").unwrap(),
                 "ghi".to_string(),
                 0,
-                false,
             )),
     ]); "condense match and substitute")]
     #[test_case(r"s/(abc)/__\123__/", Program::new(vec![
@@ -215,7 +213,6 @@ mod tests {
                 crate::Regex::from_str("(abc)").unwrap(),
                 "__${123}__".to_string(),
                 0,
-                false,
             )),
     ]); "substitute with numbered group")]
     #[test_case(r"1d;3d;7d", Program::new(vec![
@@ -226,15 +223,6 @@ mod tests {
         Action::Condition(Location(7), 1),
         Action::Command(Delete),
     ]); "multiple instructions")]
-    #[test_case(r"s/abc/def/5?", Program::new(vec![
-        Action::Condition(Always, 1),
-        Action::Command(Substitute(
-                crate::Regex::from_str("abc").unwrap(),
-                "def".to_string(),
-                5,
-                true,
-            )),
-    ]); "substitute check")]
     #[test_case("1|$ p'ok'; !q", Program::new(vec![
         Action::Condition(Set(vec![Location(1), Final].into()), 1),
         Action::Command(Println(Some("ok".to_string()))),

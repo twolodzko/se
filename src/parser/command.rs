@@ -43,6 +43,7 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             }
             '=' => LineNumber,
             'd' => Delete,
+            '?' => OrDelete,
             'z' => {
                 let val = read_string_or_none(reader)?;
                 Reset(val)
@@ -85,6 +86,14 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             'b' => {
                 let label = read_label(reader)?;
                 Branch(label, 0)
+            }
+            't' => {
+                let label = read_label(reader)?;
+                IfSuccess(label, 0)
+            }
+            'T' => {
+                let label = read_label(reader)?;
+                IfFailure(label, 0)
             }
             '#' => {
                 skip_line(reader);
@@ -145,14 +154,7 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
         limit = read_integer(reader)?.parse()?;
     }
 
-    let check = if let Some('?') = reader.peek()? {
-        reader.skip();
-        true
-    } else {
-        false
-    };
-
-    Ok(Substitute(src, dst, limit, check))
+    Ok(Substitute(src, dst, limit))
 }
 
 fn read_template<R: Reader>(reader: &mut R, delim: char) -> Result<String> {

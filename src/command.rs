@@ -18,8 +18,8 @@ pub(crate) enum Command {
     UnEscape,
     /// =
     LineNumber,
-    /// s/src/dst/[limit][?]
-    Substitute(Regex, String, usize, bool),
+    /// s/src/dst/[limit]
+    Substitute(Regex, String, usize),
     /// c s-e
     Cut(usize, Option<usize>),
     /// h
@@ -44,6 +44,8 @@ pub(crate) enum Command {
     Reset(Option<String>),
     /// d
     Delete,
+    /// ?
+    OrDelete,
     /// .
     Break,
     /// q[code]
@@ -54,6 +56,10 @@ pub(crate) enum Command {
     Label(String),
     /// b label
     Branch(String, usize),
+    /// t label
+    IfSuccess(String, usize),
+    /// T label
+    IfFailure(String, usize),
 }
 
 #[derive(Debug, PartialEq)]
@@ -83,6 +89,7 @@ impl Command {
         &self,
         memory: &mut Memory,
         reader: &mut Reader,
+        success: &mut bool,
         out: &mut dyn Write,
     ) -> Result<Status> {
         use Command::*;
@@ -103,11 +110,14 @@ impl Command {
                 memory.this = unescape(&memory.this)?;
             }
             // commands that modify the buffers
-            Substitute(regex, template, limit, check) => {
+            Substitute(regex, template, limit) => {
                 if let Cow::Owned(replaced) = regex.0.replacen(&memory.this, *limit, template) {
+                    // assert, since we depend on implementation details of replace that may change
+                    debug_assert_ne!(memory.this, replaced);
                     memory.this = replaced;
-                } else if *check {
-                    return Ok(Status::NoPrint);
+                    *success = true;
+                } else {
+                    *success = false;
                 }
             }
             Cut(skip, take) => {
@@ -168,10 +178,26 @@ impl Command {
             // branching
             Label(_) => {}
             Branch(_, pos) => return Ok(Status::GoTo(*pos)),
+            IfSuccess(_, pos) => {
+                if *success {
+                    return Ok(Status::GoTo(*pos));
+                }
+            }
+            IfFailure(_, pos) => {
+                if !*success {
+                    return Ok(Status::GoTo(*pos));
+                }
+            }
             // commands that return special status codes
             Delete => {
                 memory.this.clear();
                 return Ok(Status::NoPrint);
+            }
+            OrDelete => {
+                if !*success {
+                    memory.this.clear();
+                    return Ok(Status::NoPrint);
+                }
             }
             Break | Quit(_) => return Ok(Status::from(self)),
             Eval(cmd) => {
@@ -218,7 +244,7 @@ impl std::fmt::Display for Command {
             Escape => write!(f, "l"),
             UnEscape => write!(f, "L"),
             LineNumber => write!(f, "="),
-            Substitute(r, t, l, c) => write!(f, "s/{}/{}/{}{}", r, t, l, if *c { "?" } else { "" }),
+            Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
             Cut(s, None) => write!(f, "c{}-", s + 1),
             Cut(s, Some(t)) => write!(f, "c{}-{}", s + 1, s + t),
             Hold => write!(f, "h"),
@@ -233,12 +259,15 @@ impl std::fmt::Display for Command {
             Reset(None) => write!(f, "z"),
             Reset(Some(s)) => write!(f, "z'{}'", s),
             Delete => write!(f, "d"),
+            OrDelete => write!(f, "?"),
             Break => write!(f, "."),
             Quit(c) => write!(f, "q{}", c),
             Eval(None) => write!(f, "e"),
             Eval(Some(s)) => write!(f, "e'{}'", s),
             Label(s) => write!(f, ":{}", s),
             Branch(s, _) => write!(f, "b {}", s),
+            IfSuccess(s, _) => write!(f, "t {}", s),
+            IfFailure(s, _) => write!(f, "T {}", s),
         }
     }
 }
@@ -254,14 +283,25 @@ mod tests {
         let mut reader = Reader::new(iter);
         let mut memory = Memory::default();
         memory.read(Line(0, "start".to_string()));
+        let mut success = true;
 
         Command::Readln(1)
-            .run(&mut memory, &mut reader, &mut std::io::stdout().lock())
+            .run(
+                &mut memory,
+                &mut reader,
+                &mut success,
+                &mut std::io::stdout().lock(),
+            )
             .unwrap();
         assert_eq!(memory.this, "start\n1");
 
         Command::Readln(4)
-            .run(&mut memory, &mut reader, &mut std::io::stdout().lock())
+            .run(
+                &mut memory,
+                &mut reader,
+                &mut success,
+                &mut std::io::stdout().lock(),
+            )
             .unwrap();
         assert_eq!(memory.this, "start\n1\n2\n3\n4\n5");
     }
@@ -271,11 +311,13 @@ mod tests {
         let mut memory = Memory::default();
         memory.read(Line(0, "one".to_string()));
         memory.hold = "two".to_string();
+        let mut success = true;
 
         Command::Join
             .run(
                 &mut memory,
                 &mut Reader::empty(),
+                &mut success,
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
@@ -287,11 +329,13 @@ mod tests {
         let mut memory = Memory::default();
         memory.read(Line(0, "one".to_string()));
         memory.hold = "two".to_string();
+        let mut success = true;
 
         Command::Joinln
             .run(
                 &mut memory,
                 &mut Reader::empty(),
+                &mut success,
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
@@ -303,11 +347,13 @@ mod tests {
         let mut memory = Memory::default();
         memory.read(Line(0, "one".to_string()));
         memory.hold = "two".to_string();
+        let mut success = true;
 
         Command::Exchange
             .run(
                 &mut memory,
                 &mut Reader::empty(),
+                &mut success,
                 &mut std::io::stdout().lock(),
             )
             .unwrap();
