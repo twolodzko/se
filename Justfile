@@ -58,16 +58,8 @@ benchmark: build
         './se "/love/ p" IMDB-Dataset.csv'
 
     bench 100 \
-        'sed -n "/love/ s/love/####/gp" IMDB-Dataset.csv' \
-        './se "?s/love/####/p" IMDB-Dataset.csv'
-
-    bench 100 \
-        'sed "/love/ s/love/####/gp" IMDB-Dataset.csv' \
-        './se -a "?s/love/####/p" IMDB-Dataset.csv'
-
-    bench 100 \
         'sed -n "s/love/####/gp" IMDB-Dataset.csv' \
-        './se "?s/love/####/p" IMDB-Dataset.csv'
+        './se "s/love/####/?p" IMDB-Dataset.csv'
 
 lines:
     @ find . -name '*.rs' -exec wc -l {} \;

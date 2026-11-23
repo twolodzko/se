@@ -53,8 +53,6 @@ commands, or their naming. `se` is more of a re-design of `sed` than a re-implem
   Because in other cases regular expressions are delimited with `/.../`,
   even when not using slashes `\/` would be interpreted a escaped slash.
   `^$` would match empty lines.
-* `?` matches the lines where the following substitution could be applied.
-  It is a syntactic sugar for writing `?s/src/dst/` instead of `/src/ s/src/dst/`.
 * `!` after the address negates it, e.g. `1!` means all the lines except the first.
   `!` alone means an instruction that never matches.
 * Addresses can be enclosed with brackets `(addr)`.
@@ -85,10 +83,13 @@ precedence than `&`, and `&` then `|`.
 
 ### Editing
 
-* `s/src/dst/[limit]` – use regular expression to replace `src` with `dst` in the pattern space.
+* `s/src/dst/[limit][?]` – use regular expression to replace `src` with `dst` in the pattern space.
   If there's nothing to substitute, it has no effect. `limit` is a number of matches to replace.
   Instead of `/`, other character can be used as a delimiter, for example `s#src#dst#`.
   `s^src$dst$` is the whole line match form for substituting using the `^src$` regular expression.
+  With `?` flag if substitution doesn't succeed, the processing of further commands is stopped
+  and nothing is printed (as with `d` command). The `?` command can be used to imitate sed's behavior,
+  where `s` matches lines.
 * `i string` – insert (prepend) string to the pattern space.
 * `a string` – append string to the pattern space.
 * `z [string]` – replace the pattern space with string, if not given empty it.
@@ -183,7 +184,7 @@ lines containing the word "sed" would be printed twice, because of matching addr
 | `tac README.md`                      | `se '1! j ; $p ; h' README.md`     |
 | `cat -n README.md`                   | `se '=i\tp' README.md`             |
 | `sed -E 's/(sed)/_\1_/g' README.md`  | `se 's/(sed)/_\1_/p' README.md`    |
-| `sed -n 's/a/#/p' README.md`         | `se '?s/a/#/1p' README.md`         |
+| `sed -n 's/a/#/p' README.md`         | `se 's/a/#/1?p' README.md`         |
 | `sed 's/sed/###/g' README.md`        | `se -a 's/sed/###/' README.md`     |
 | `sed 'c replacement' README.md`      | `se -a 'z"replacement"' README.md` |
 | `sed '/sed/d' README.md`             | `se -a '/sed/d' README.md`         |

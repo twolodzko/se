@@ -179,10 +179,6 @@ fn atom<R: Reader>(reader: &mut R) -> Result<Option<Address>> {
                 reader.skip();
                 return Ok(Some(Final));
             }
-            '?' => {
-                reader.skip();
-                return Ok(Some(Maybe));
-            }
             '(' => {
                 reader.skip();
                 skip_whitespace(reader);

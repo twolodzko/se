@@ -18,8 +18,8 @@ pub(crate) enum Command {
     UnEscape,
     /// =
     LineNumber,
-    /// s/src/dst/[limit]
-    Substitute(Regex, String, usize),
+    /// s/src/dst/[limit][?]
+    Substitute(Regex, String, usize, bool),
     /// c s-e
     Cut(usize, Option<usize>),
     /// h
@@ -103,9 +103,11 @@ impl Command {
                 memory.this = unescape(&memory.this)?;
             }
             // commands that modify the buffers
-            Substitute(regex, template, limit) => {
+            Substitute(regex, template, limit, check) => {
                 if let Cow::Owned(replaced) = regex.0.replacen(&memory.this, *limit, template) {
                     memory.this = replaced;
+                } else if *check {
+                    return Ok(Status::NoPrint);
                 }
             }
             Cut(skip, take) => {
@@ -216,7 +218,7 @@ impl std::fmt::Display for Command {
             Escape => write!(f, "l"),
             UnEscape => write!(f, "L"),
             LineNumber => write!(f, "="),
-            Substitute(r, t, l) => write!(f, "s/{}/{}/{}", r, t, l),
+            Substitute(r, t, l, c) => write!(f, "s/{}/{}/{}{}", r, t, l, if *c { "?" } else { "" }),
             Cut(s, None) => write!(f, "c{}-", s + 1),
             Cut(s, Some(t)) => write!(f, "c{}-{}", s + 1, s + t),
             Hold => write!(f, "h"),

@@ -25,8 +25,6 @@ pub(crate) enum Address {
     Set(Set),
     /// addr1 & addr2 & ...
     And(And),
-    /// ?
-    Maybe,
 }
 
 impl Address {
@@ -50,7 +48,6 @@ impl Address {
             Extend(extend) => extend.is_match(memory),
             Set(set) => set.is_match(memory),
             And(and) => and.is_match(memory),
-            Maybe => unreachable!(),
         }
     }
 
@@ -235,7 +232,6 @@ impl std::fmt::Display for Address {
                     .join(" & ");
                 write!(f, "{}", list)
             }
-            Maybe => write!(f, "?"),
         }
     }
 }

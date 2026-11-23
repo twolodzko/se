@@ -4,7 +4,7 @@ mod program;
 mod reader;
 mod regex;
 
-use crate::{Result, address::Address, error};
+use crate::{Result, address::Address};
 use reader::Reader;
 #[cfg(test)]
 pub(crate) use reader::StringReader;
@@ -36,34 +36,6 @@ fn read_integer<R: Reader>(reader: &mut R) -> Result<String> {
 }
 
 impl Address {
-    fn replace_maybe(&mut self, subst: Option<&crate::Regex>) -> Result<()> {
-        use Address::*;
-        match self {
-            Maybe => {
-                let Some(regex) = subst else {
-                    return error!("{} must be followed by a substitution", self);
-                };
-                *self = Regex(regex.clone());
-            }
-            Between(between) => {
-                between.start.replace_maybe(subst)?;
-                between.end.replace_maybe(subst)?;
-            }
-            Set(set) => set
-                .addresses
-                .iter_mut()
-                .try_for_each(|a| a.replace_maybe(subst))?,
-            And(and) => and
-                .addresses
-                .iter_mut()
-                .try_for_each(|a| a.replace_maybe(subst))?,
-            Extend(extend) => extend.start.replace_maybe(subst)?,
-            Negate(not) => not.replace_maybe(subst)?,
-            _ => {}
-        }
-        Ok(())
-    }
-
     fn simplify(&mut self) -> Result<()> {
         use Address::*;
         match self {

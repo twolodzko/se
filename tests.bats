@@ -173,7 +173,7 @@ linux_only() {
 }
 
 @test "Substitute and print vs sed" {
-   run diff <(sed -n 's/a/#/gp' README.md) <(./se '?s/a/#/p' README.md)
+   run diff <(sed -n 's/a/#/gp' README.md) <(./se 's/a/#/?p' README.md)
    [ "$status" -eq 0 ]
 }
 
@@ -401,7 +401,7 @@ EOF
 
 @test "Condition on substitute like sed" {
    run diff <(sed -nE 's/(sed)/__\1__/gp' README.md) \
-            <(./se '?s/(sed)/__\1__/p' README.md)
+            <(./se 's/(sed)/__\1__/?p' README.md)
    [ "$status" -eq 0 ]
 }
 

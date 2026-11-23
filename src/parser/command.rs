@@ -145,7 +145,14 @@ fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
         limit = read_integer(reader)?.parse()?;
     }
 
-    Ok(Substitute(src, dst, limit))
+    let check = if let Some('?') = reader.peek()? {
+        reader.skip();
+        true
+    } else {
+        false
+    };
+
+    Ok(Substitute(src, dst, limit, check))
 }
 
 fn read_template<R: Reader>(reader: &mut R, delim: char) -> Result<String> {
