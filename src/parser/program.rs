@@ -35,13 +35,11 @@ fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Action>> {
     }
     for action in actions.iter_mut() {
         use Command::*;
-        if let Action::Command(Branch(label, pos) | IfSuccess(label, pos) | IfFailure(label, pos)) =
-            action
-        {
-            if let Some(idx) = labels.get(label) {
-                *pos = *idx;
+        if let Action::Command(Branch(l, p) | IfSuccess(l, p) | IfFailure(l, p)) = action {
+            if let Some(idx) = labels.get(l) {
+                *p = *idx;
             } else {
-                return error!("unknown label: {}", label);
+                return error!("unknown label: {}", l);
             }
         }
     }
