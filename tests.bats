@@ -42,12 +42,12 @@ linux_only() {
 }
 
 @test "Does not fail when reading non-utf-8 content" {
-    run ./se 'p' ./se
+   run ./se 'p' ./se
 	[ "$status" -eq 0 ]
 }
 
 @test "Count works" {
-    run diff <(./se -c '/the/' README.md) <(grep -c 'the' README.md)
+   run diff <(./se -c '/the/' README.md) <(grep -c 'the' README.md)
 	[ "$status" -eq 0 ]
 }
 
@@ -78,27 +78,27 @@ linux_only() {
 }
 
 @test "Print nothing" {
-    run ./se '!p' data/utf8-test-file.txt
-    [ "$output" = "" ]
-    [ "$status" -eq 0 ]
+   run ./se '!p' data/utf8-test-file.txt
+   [ "$output" = "" ]
+   [ "$status" -eq 0 ]
 }
 
 @test "Last line on empty input" {
-    run ./se '$p"ok"' <(printf "")
-    [ "$output" = "ok" ]
-    [ "$status" -eq 0 ]
+   run ./se '$p"ok"' <(printf "")
+   [ "$output" = "ok" ]
+   [ "$status" -eq 0 ]
 }
 
 @test "Check for empty input" {
-    run ./se '0 & $ p"empty input"' <(printf "")
-    [ "$output" = "empty input" ]
-    [ "$status" -eq 0 ]
+   run ./se '0 & $ p"empty input"' <(printf "")
+   [ "$output" = "empty input" ]
+   [ "$status" -eq 0 ]
 }
 
 @test "Count nothing" {
-    run ./se -c '!' data/utf8-test-file.txt
-    [ "$output" = "0" ]
-    [ "$status" -eq 0 ]
+   run ./se -c '!' data/utf8-test-file.txt
+   [ "$output" = "0" ]
+   [ "$status" -eq 0 ]
 }
 
 @test "Print vs Println" {

@@ -128,21 +128,17 @@ When script contains multiple instructions, they can be delimited with `;` or `.
 
 * `;` is used for chaining instructions. After processing the instruction,
   the pattern space would be processed using the following instruction.
-* `.` marks the final instruction. If the address of the instruction would positively match,
-  the processing of the line would stop after running the command,
-  all the following instructions would be skipped.
-  In a way, `.` works like the command `d`, but it does not clear the pattern space.
+* `.` is the break command. It can be used as "or" keyword. For example, the script
 
-For example, the script
+  ```text
+  /sed/ i">> " p .
+        i"   " p
+  ```
 
-```text
-/sed/ i">> " p .
-      i"   " p
-```
-
-when applied to this README would print it's content prepending each line containing the word "sed"
-with ">> " and every other line (no address) with spaces. If `;` was used instead of `.`, the
-lines containing the word "sed" would be printed twice, because of matching addresses in the both instructions.
+  when applied to this README would print it's content prepending each line containing the word "sed"
+  with ">> " and every other line (no address) with spaces. If `;` was used instead of `.`, the
+  lines containing the word "sed" would be printed twice, because of matching addresses in the both instructions
+  (`/sed/` and any address). When using `.`, the line that matched `/sed/` will be the final one.
 
 ## Differences from `sed`
 
