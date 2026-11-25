@@ -255,7 +255,7 @@ impl std::fmt::Display for Command {
             Collectln => write!(f, "k"),
             Collect => write!(f, "K"),
             Readln(n) => write!(f, "r{}", n),
-            Next => write!(f, "R"),
+            Next => write!(f, "n"),
             Reset(None) => write!(f, "z"),
             Reset(Some(s)) => write!(f, "z'{}'", s),
             Delete => write!(f, "d"),

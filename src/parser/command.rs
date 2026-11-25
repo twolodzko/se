@@ -24,6 +24,10 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
                 let val = read_string_or_none(reader)?;
                 Print(val)
             }
+            'z' => {
+                let val = read_string_or_none(reader)?;
+                Reset(val)
+            }
             'a' => {
                 skip_whitespace(reader);
                 let s = read_string(reader)?;
@@ -44,10 +48,6 @@ pub(crate) fn parse<R: Reader>(reader: &mut R) -> Result<Vec<Command>> {
             '=' => LineNumber,
             'd' => Delete,
             '?' => OrDelete,
-            'z' => {
-                let val = read_string_or_none(reader)?;
-                Reset(val)
-            }
             'h' => Hold,
             'g' => Get,
             'x' => Exchange,
