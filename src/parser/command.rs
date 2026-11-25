@@ -122,7 +122,6 @@ fn read_escaped<R: Reader>(reader: &mut R) -> Result<String> {
                 };
                 acc.push(c);
             }
-            Ok(unescape(&acc)?)
         }
         'x' => {
             acc.push(c);
@@ -132,13 +131,12 @@ fn read_escaped<R: Reader>(reader: &mut R) -> Result<String> {
                 };
                 acc.push(c);
             }
-            Ok(unescape(&acc).map_err(Error::from)?)
         }
         c => {
             acc.push(c);
-            unescape(&acc).or(Ok(c.to_string()))
         }
     }
+    Ok(unescape(&acc)?)
 }
 
 fn parse_substitute<R: Reader>(reader: &mut R) -> Result<Command> {
