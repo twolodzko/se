@@ -76,8 +76,7 @@ precedence than `&`, and `&` then `|`.
 
 * `p [string]` – if string is provided print it, otherwise print the content of the pattern space
   followed by a newline character. The string could be enclosed in quotation marks `"string"` or `'string'`,
-  or be an escaped special character like `\n`, `\t`, `\x0A`, or `\uA005`. If string is followed by `*N`
-  where N is an integer, it is repeated N times, so `p'='*3` would print "===".
+  or be an escaped special character like `\n`, `\t`, `\x0A`, or `\uA005`.
 * `P [string]` – same as above, but without the newline.
 * `=` – print the line number.
 

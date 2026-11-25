@@ -243,20 +243,11 @@ fn read_string<R: Reader>(reader: &mut R) -> Result<String> {
     let Some(c) = reader.next()? else {
         return Err(Error::EndOfInput);
     };
-    let mut s = match c {
+    let s = match c {
         '\\' => read_escaped(reader)?,
         '"' | '\'' => unescape(&read_until(reader, c)?)?,
         _ => return Err(Error::Unexpected(c)),
     };
-
-    skip_whitespace(reader);
-    if let Some('*') = reader.peek()? {
-        reader.skip();
-        skip_whitespace(reader);
-        let n = usize::from_str(&read_integer(reader)?)?;
-        s = s.repeat(n);
-    }
-
     Ok(s)
 }
 

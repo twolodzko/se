@@ -163,13 +163,13 @@ mod tests {
     }
 
     #[test_case(
-        r"i'>'*3",
+        r"i'>>>'",
         "foo",
         ">>>foo";
         "prepend"
     )]
     #[test_case(
-        r"a'='*2",
+        r"a'=='",
         "foo",
         "foo==";
         "append"
